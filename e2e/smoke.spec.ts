@@ -256,6 +256,69 @@ test.describe("Claim Card drawer (Story 1.8)", () => {
   });
 });
 
+test.describe("Human override & caveat (Story 1.9)", () => {
+  // Audit the seeded board (idempotent) then open the first claim card.
+  async function openFirstClaim(page: import("@playwright/test").Page) {
+    await page.goto("/");
+    const run = page.getByRole("button", { name: /audit/i });
+    await expect(async () => {
+      await run.click();
+      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+    }).toPass({ timeout: 15000 });
+    const firstRow = page.locator(".pd-ledger__row").first();
+    await expect(async () => {
+      await firstRow.click();
+      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+    return page.getByRole("dialog");
+  }
+
+  test("override switch sets the effective status while the machine verdict stays pinned + attributed", async ({
+    page,
+  }) => {
+    const dialog = await openFirstClaim(page);
+    const override = dialog.getByRole("region", { name: "Human override" });
+
+    // The machine verdict is pinned before any override (AD-6).
+    await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
+
+    // The switch is a real role="switch", off by default with an ever-present word.
+    const toggle = override.getByRole("switch", { name: "Operator override" });
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    // Turn it on → the three Proof Status options appear; choose "Can't claim".
+    await toggle.click();
+    await override.getByRole("button", { name: "Can't claim" }).click();
+
+    // The switch reads on, the machine verdict is STILL visible (never hidden),
+    // and the change is attributed "by [operator] · [agency]".
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
+    await expect(override.getByText(/by operator · ProofDesk/)).toBeVisible();
+
+    // Toggling off clears the override.
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("a caveat records with its operator attribution", async ({ page }) => {
+    const dialog = await openFirstClaim(page);
+    const caveatSection = dialog.getByRole("region", { name: "Caveat" });
+
+    await caveatSection.getByRole("button", { name: /Add caveat/ }).click();
+    await caveatSection
+      .getByRole("textbox", { name: "Caveat" })
+      .fill("Rests on the creator's word — needs a timestamped clip.");
+    await caveatSection.getByRole("button", { name: "Record caveat" }).click();
+
+    // The caveat surfaces with its mono "by [operator]" attribution.
+    await expect(
+      caveatSection.getByText("Rests on the creator's word — needs a timestamped clip."),
+    ).toBeVisible();
+    await expect(caveatSection.getByText("by operator")).toBeVisible();
+  });
+});
+
 test("health route responds ok behind basic auth", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.ok()).toBeTruthy();

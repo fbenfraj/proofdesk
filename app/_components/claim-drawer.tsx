@@ -21,8 +21,11 @@ import { useClaimDrawer } from "./claim-drawer-context";
 // the originating Board row, and step-to-next-claim without closing. Provenance
 // (machine/human) is read from persisted data (AD-3) and rendered on a
 // cool-slate/warm-taupe channel kept OFF the R/Y/G scale (NFR-D1). The Caveat
-// and Human override sections are read-only structural placeholders here; their
-// authoring/toggle is Story 1.9.
+// well and Human override switch are interactive (Story 1.9): they POST to the
+// override/caveat write seams and re-render from the refreshed view the route
+// returns (single round-trip). The machine verdict stays pinned under an
+// override, never hidden (AD-6); `authoredBy` is server-resolved, never trusted
+// from the client.
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
@@ -30,7 +33,7 @@ type LoadState = "idle" | "loading" | "ready" | "error";
  *  (UX-DR24). The drawer + scrim are siblings of these, so they stay live. */
 const BACKGROUND_SELECTORS = [".pd-topbar", ".pd-rail", ".pd-main"];
 
-export function ClaimDrawer({ locale }: { locale: Locale }) {
+export function ClaimDrawer({ locale, agency }: { locale: Locale; agency: string }) {
   const { selectedClaimId, close, stepToNext, hasNext } = useClaimDrawer();
   const open = selectedClaimId !== null;
   const strings = localeStrings(locale);
@@ -38,6 +41,21 @@ export function ClaimDrawer({ locale }: { locale: Locale }) {
   const drawerRef = useRef<HTMLElement>(null);
   const [view, setView] = useState<ClaimCardView | null>(null);
   const [state, setState] = useState<LoadState>("idle");
+
+  // The currently-selected claim, tracked in a ref so the mutation-apply guard
+  // below reads the LATEST value (not the one captured when a section rendered).
+  const selectedClaimIdRef = useRef(selectedClaimId);
+  selectedClaimIdRef.current = selectedClaimId;
+
+  // Apply a mutation's refreshed card ONLY if the drawer is still on that claim.
+  // An override/caveat request can resolve after the operator has stepped to the
+  // next claim or closed the drawer; without this guard the in-flight response
+  // would overwrite the current card with a stale one (mirrors the fetch path's
+  // cancellation guard).
+  const applyUpdated = useCallback((updated: ClaimCardView) => {
+    if (updated.claimId !== selectedClaimIdRef.current) return;
+    setView(updated);
+  }, []);
 
   // Fetch the read-only card on open / claim change. The route is a pure read —
   // it never runs the audit (AD-6).
@@ -170,9 +188,12 @@ export function ClaimDrawer({ locale }: { locale: Locale }) {
             state={state}
             view={view}
             locale={locale}
+            agency={agency}
+            claimId={selectedClaimId}
             hasNext={hasNext}
             onClose={close}
             onStepToNext={onStepToNext}
+            onUpdated={applyUpdated}
           />
         ) : null}
       </aside>
@@ -185,17 +206,23 @@ function DrawerContent({
   state,
   view,
   locale,
+  agency,
+  claimId,
   hasNext,
   onClose,
   onStepToNext,
+  onUpdated,
 }: {
   titleId: string;
   state: LoadState;
   view: ClaimCardView | null;
   locale: Locale;
+  agency: string;
+  claimId: string | null;
   hasNext: boolean;
   onClose: () => void;
   onStepToNext: () => void;
+  onUpdated: (view: ClaimCardView) => void;
 }) {
   const strings = localeStrings(locale);
   const d = strings.drawer;
@@ -241,8 +268,14 @@ function DrawerContent({
           />
           <EvidenceSection requirements={view.requirements} locale={locale} />
           <FactsSection view={view} locale={locale} />
-          <CaveatSection locale={locale} />
-          <OverrideSection view={view} locale={locale} />
+          <CaveatSection view={view} locale={locale} claimId={claimId} onUpdated={onUpdated} />
+          <OverrideSection
+            view={view}
+            locale={locale}
+            agency={agency}
+            claimId={claimId}
+            onUpdated={onUpdated}
+          />
 
           {hasNext ? (
             <div className="pd-cc__nav">
@@ -416,32 +449,233 @@ function FactsSection({ view, locale }: { view: ClaimCardView; locale: Locale })
   );
 }
 
-/** Section 4 — Caveat: read-only structural placeholder (authoring is Story 1.9). */
-function CaveatSection({ locale }: { locale: Locale }) {
+/** POST/DELETE a Claim mutation; the route returns the refreshed Claim Card view
+ *  (single round-trip). Resolves the updated view, or null on any failure so the
+ *  caller can surface the error without swallowing it silently. */
+async function mutateClaim(
+  path: string,
+  method: "POST" | "DELETE",
+  body?: unknown,
+): Promise<ClaimCardView | null> {
+  try {
+    const res = await fetch(path, {
+      method,
+      headers: body ? { "content-type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ClaimCardView;
+  } catch {
+    return null;
+  }
+}
+
+/** Section 4 — Caveat well (Story 1.9, UX-DR16). Operator-authored narrative,
+ *  serif-italic on a paper fill set apart by fill-shade + hairline (never a
+ *  coloured side-tab). Editable here; read-only in the report. An effective-
+ *  Yellow with no caveat shows the report-includability note (AD-6, AD-20/21). */
+function CaveatSection({
+  view,
+  locale,
+  claimId,
+  onUpdated,
+}: {
+  view: ClaimCardView;
+  locale: Locale;
+  claimId: string | null;
+  onUpdated: (view: ClaimCardView) => void;
+}) {
   const d = localeStrings(locale).drawer;
+  const [drafting, setDrafting] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus the field when the operator opens it (explicit intent, not page-load
+  // autofocus) — the focus-trap keeps it inside the dialog.
+  useEffect(() => {
+    if (drafting) inputRef.current?.focus();
+  }, [drafting]);
+
+  async function submit() {
+    const trimmed = text.trim();
+    if (!claimId || trimmed.length === 0) return;
+    setBusy(true);
+    setError(false);
+    const updated = await mutateClaim(`/api/claims/${encodeURIComponent(claimId)}/caveat`, "POST", {
+      text: trimmed,
+    });
+    setBusy(false);
+    if (!updated) {
+      setError(true);
+      return;
+    }
+    onUpdated(updated);
+    setText("");
+    setDrafting(false);
+  }
+
   return (
     <section className="pd-cc__section" aria-label={d.sections.caveat}>
       <h3 className="label-caps pd-cc__section-title">{d.sections.caveat}</h3>
-      <div className="pd-cc__caveat pd-cc__caveat--empty">
-        <span className="pd-cc__caveat-glyph" aria-hidden="true">
-          ◐
-        </span>
-        {d.caveatEmpty}
-      </div>
+
+      {view.caveats.length === 0 ? (
+        <div className="pd-cc__caveat pd-cc__caveat--empty">
+          <span className="pd-cc__caveat-glyph" aria-hidden="true">
+            ◐
+          </span>
+          {d.caveatEmpty}
+        </div>
+      ) : (
+        <ul className="pd-cc__caveats">
+          {view.caveats.map((c) => (
+            <li key={c.caveatId} className="pd-cc__caveat">
+              <span className="pd-cc__caveat-glyph" aria-hidden="true">
+                ◐
+              </span>
+              <span className="pd-cc__caveat-body">
+                <span className="pd-cc__caveat-text">{c.text}</span>
+                <span className="pd-cc__caveat-attr pd-mono">{d.caveat.by(c.authoredBy)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {view.requiresCaveat ? (
+        <p className="pd-cc__caveat-required">{d.caveat.requiresNote}</p>
+      ) : null}
+
+      {drafting ? (
+        <div className="pd-cc__caveat-form">
+          <textarea
+            ref={inputRef}
+            className="pd-cc__caveat-input"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={d.caveat.placeholder}
+            rows={3}
+            aria-label={d.sections.caveat}
+          />
+          <div className="pd-cc__caveat-actions">
+            <button
+              type="button"
+              className="pd-cc__btn pd-cc__btn--primary"
+              onClick={submit}
+              disabled={busy || text.trim().length === 0}
+            >
+              {d.caveat.save}
+            </button>
+            <button
+              type="button"
+              className="pd-cc__btn"
+              onClick={() => {
+                setDrafting(false);
+                setText("");
+                setError(false);
+              }}
+              disabled={busy}
+            >
+              {d.caveat.cancel}
+            </button>
+          </div>
+          {error ? <p className="pd-cc__note pd-cc__note--error">{d.mutationError}</p> : null}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="pd-cc__btn pd-cc__caveat-add"
+          onClick={() => setDrafting(true)}
+        >
+          <span aria-hidden="true">+ </span>
+          {d.caveat.add}
+        </button>
+      )}
     </section>
   );
 }
 
-/** Section 5 — Human override: read-only structural placeholder. The machine
- *  verdict stays pinned/visible (AD-6); the toggle + authoring is Story 1.9. */
-function OverrideSection({ view, locale }: { view: ClaimCardView; locale: Locale }) {
+/** Section 5 — Human override (Story 1.9, FR-10, UX-DR17). The machine verdict
+ *  stays pinned above and is NEVER hidden (AD-6). The switch is a real
+ *  role="switch" with an ever-present on/off WORD (never colour/knob-position
+ *  alone); turning it on reveals the three Proof Status options; the change is
+ *  stamped "by [operator] · [agency]" in mono. Provenance stays on the human
+ *  channel, off the R/Y/G scale (AD-3). */
+function OverrideSection({
+  view,
+  locale,
+  agency,
+  claimId,
+  onUpdated,
+}: {
+  view: ClaimCardView;
+  locale: Locale;
+  agency: string;
+  claimId: string | null;
+  onUpdated: (view: ClaimCardView) => void;
+}) {
   const d = localeStrings(locale).drawer;
+  const attrId = useId();
+  const [arming, setArming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+
   const machineKey =
     view.machineVerdict != null ? proofStatusToDisplayKey(view.machineVerdict) : null;
   const machineToken = machineKey ? PROOF_STATUS_TOKENS[machineKey] : null;
+
+  // Pre-audit there is no machine verdict to pin — the override has nothing to
+  // sit over, so the control stays inert (never fabricates a verdict, AD-6).
+  const audited = view.machineVerdict != null;
+  const isOn = view.overrideStatus != null;
+  const showPicker = audited && (isOn || arming);
+
+  const statusLabelOf = (s: "green" | "yellow" | "red") =>
+    s === "green"
+      ? d.override.statusLabel.green
+      : s === "yellow"
+        ? d.override.statusLabel.yellow
+        : d.override.statusLabel.red;
+
+  async function run(promise: Promise<ClaimCardView | null>) {
+    setBusy(true);
+    setError(false);
+    const updated = await promise;
+    setBusy(false);
+    if (!updated) {
+      setError(true);
+      return;
+    }
+    onUpdated(updated);
+  }
+
+  function onToggle() {
+    if (!claimId || !audited) return;
+    if (isOn) {
+      // Turn OFF → clear the override; effective status returns to the machine
+      // verdict.
+      setArming(false);
+      void run(mutateClaim(`/api/claims/${encodeURIComponent(claimId)}/override`, "DELETE"));
+    } else {
+      // Turn ON → reveal the status picker; nothing is written until the
+      // operator chooses a status (an override must carry a final status).
+      setArming((a) => !a);
+      setError(false);
+    }
+  }
+
+  function choose(finalStatus: "green" | "yellow" | "red") {
+    if (!claimId) return;
+    void run(
+      mutateClaim(`/api/claims/${encodeURIComponent(claimId)}/override`, "POST", { finalStatus }),
+    ).then(() => setArming(false));
+  }
+
   return (
     <section className="pd-cc__section" aria-label={d.sections.override}>
       <h3 className="label-caps pd-cc__section-title">{d.sections.override}</h3>
+
       {machineToken ? (
         <p className="pd-cc__machine">
           <span className="pd-cc__machine-label">{d.machineVerdictLabel}</span>
@@ -453,7 +687,64 @@ function OverrideSection({ view, locale }: { view: ClaimCardView; locale: Locale
           </span>
         </p>
       ) : null}
-      <p className="pd-cc__note">{d.overrideEmpty}</p>
+
+      {!audited ? (
+        <p className="pd-cc__note">{d.pendingNote}</p>
+      ) : (
+        <>
+          <div className="pd-cc__override-control">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isOn || arming}
+              aria-label={d.override.switchLabel}
+              aria-describedby={isOn ? attrId : undefined}
+              className="pd-cc__switch"
+              onClick={onToggle}
+              disabled={busy}
+            >
+              <span className="pd-cc__switch-track" aria-hidden="true">
+                <span className="pd-cc__switch-thumb" />
+              </span>
+            </button>
+            <span className="pd-cc__switch-label">
+              {d.override.switchLabel}
+              {/* Ever-present WORD — the colour-independent on/off cue (UX-DR17). */}
+              <span className="pd-cc__switch-state">
+                {isOn || arming ? d.override.on : d.override.off}
+              </span>
+            </span>
+          </div>
+
+          {showPicker ? (
+            <fieldset className="pd-cc__override-picker">
+              <legend className="pd-cc__override-prompt">{d.override.setPrompt}</legend>
+              {(["green", "yellow", "red"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className="pd-cc__btn pd-cc__override-option"
+                  aria-pressed={view.overrideStatus === s}
+                  onClick={() => choose(s)}
+                  disabled={busy}
+                >
+                  {statusLabelOf(s)}
+                </button>
+              ))}
+            </fieldset>
+          ) : null}
+
+          {isOn && view.overrideAuthoredBy ? (
+            <p id={attrId} className="pd-cc__override-attr pd-mono">
+              {d.override.by(view.overrideAuthoredBy, agency)}
+            </p>
+          ) : (
+            <p className="pd-cc__note">{d.overrideEmpty}</p>
+          )}
+
+          {error ? <p className="pd-cc__note pd-cc__note--error">{d.mutationError}</p> : null}
+        </>
+      )}
     </section>
   );
 }

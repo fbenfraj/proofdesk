@@ -106,6 +106,9 @@ export interface EffectiveStatus {
   machineVerdict: ProofStatus;
   /** The operator override's final status, or null when none is set. */
   overrideStatus: ProofStatus | null;
+  /** Who authored the override (persisted `authored_by`), or null when none is
+   *  set — the attribution the Claim Card stamps "by [operator]" (FR-10, AD-3). */
+  overrideAuthoredBy: string | null;
   /** Verbatim machine trace — the ONLY home of machine reasoning (AD-6). */
   trace: TraceEntry[];
 }
@@ -152,6 +155,7 @@ function overlayOverride(
     effectiveStatus: overrideStatus ?? machineVerdict,
     machineVerdict,
     overrideStatus,
+    overrideAuthoredBy: override?.authoredBy ?? null,
     trace,
   };
 }

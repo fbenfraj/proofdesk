@@ -1,5 +1,6 @@
 import "./shell.css";
 import type { ReactNode } from "react";
+import { resolveOperatorIdentity } from "@/src/services";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { ClaimDrawer } from "./claim-drawer";
 import { ClaimDrawerProvider } from "./claim-drawer-context";
@@ -36,6 +37,10 @@ function SealMark() {
 // main canvas + right-side drawer slot. Depth is fill-shade + hairline only.
 export function AppShell({ locale, children }: { locale: Locale; children: ReactNode }) {
   const strings = localeStrings(locale);
+  // The single operator's display agency, resolved server-side (AD-14) — the
+  // "[agency]" half of the override attribution "by [operator] · [agency]"
+  // (FR-10, UX-DR17). The "[operator]" half is the persisted `authored_by`.
+  const { agency } = resolveOperatorIdentity();
 
   return (
     <div className="pd-shell">
@@ -76,7 +81,7 @@ export function AppShell({ locale, children }: { locale: Locale; children: React
         <div className="pd-workspace">
           <Rail locale={locale} />
           <main className="pd-main">{children}</main>
-          <ClaimDrawer locale={locale} />
+          <ClaimDrawer locale={locale} agency={agency} />
           {/* Reserved standing-disclaimer slot (AD-3 / AD-22) — populated where
               verdicts appear, in later stories. Left empty by design here. */}
         </div>

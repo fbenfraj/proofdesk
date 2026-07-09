@@ -108,6 +108,32 @@ interface Strings {
     readonly unsatisfied: string;
     readonly satisfiedBy: (provenance: "machine" | "human") => string;
     readonly confirmedBy: (who: string, when: string) => string;
+    /** Human override & caveat authoring (Story 1.9, FR-10, UX-DR16/DR17). The
+     *  on/off word is ever-present (never colour/knob-position alone); the
+     *  attribution lines render in mono. `overrideStatusLabel` names the three
+     *  Proof Status options the override can set (TITLE-case reading voice, like
+     *  `audit.statusLabel`). */
+    readonly override: {
+      readonly switchLabel: string;
+      readonly on: string;
+      readonly off: string;
+      readonly setPrompt: string;
+      readonly statusLabel: {
+        readonly green: string;
+        readonly yellow: string;
+        readonly red: string;
+      };
+      readonly by: (operator: string, agency: string) => string;
+    };
+    readonly caveat: {
+      readonly add: string;
+      readonly placeholder: string;
+      readonly save: string;
+      readonly cancel: string;
+      readonly by: (who: string) => string;
+      readonly requiresNote: string;
+    };
+    readonly mutationError: string;
     readonly liveness: {
       readonly live: string;
       readonly dead: string;
@@ -204,6 +230,24 @@ const EN: Strings = {
         ? "satisfied by machine-checked fact"
         : "satisfied by human assertion",
     confirmedBy: (who, when) => `Confirmed by ${who} · ${when}`,
+    override: {
+      switchLabel: "Operator override",
+      on: "On",
+      off: "Off",
+      setPrompt: "Set the effective Proof Status:",
+      statusLabel: { green: "Defensible", yellow: "Caveated", red: "Can't claim" },
+      by: (operator, agency) => `by ${operator} · ${agency}`,
+    },
+    caveat: {
+      add: "Add caveat",
+      placeholder: "State the missing evidence…",
+      save: "Record caveat",
+      cancel: "Cancel",
+      by: (who) => `by ${who}`,
+      requiresNote:
+        "A Caveated claim needs at least one caveat before it can be included in a report.",
+    },
+    mutationError: "Couldn't save. Try again.",
     liveness: {
       live: "link resolves — content not verified",
       dead: "link doesn't resolve",
@@ -308,6 +352,26 @@ const FR: Strings = {
         ? "satisfait par un fait vérifié par la machine"
         : "satisfait par une déclaration humaine",
     confirmedBy: (who, when) => `Confirmé par ${who} · ${when}`,
+    override: {
+      // Locked FR glossary term (EXPERIENCE.md#L77): Human override → Arbitrage humain.
+      switchLabel: "Arbitrage humain",
+      on: "Activé",
+      off: "Désactivé",
+      setPrompt: "Définir le statut de preuve effectif :",
+      // Locked FR glossary status terms (EXPERIENCE.md#Proof Status) — verbatim.
+      statusLabel: { green: "Défendable", yellow: "Sous réserve", red: "Non défendable" },
+      by: (operator, agency) => `par ${operator} · ${agency}`,
+    },
+    caveat: {
+      add: "Ajouter une réserve",
+      placeholder: "Indiquez la preuve manquante…",
+      save: "Enregistrer la réserve",
+      cancel: "Annuler",
+      by: (who) => `par ${who}`,
+      requiresNote:
+        "Une revendication sous réserve nécessite au moins une réserve avant de pouvoir figurer dans un rapport.",
+    },
+    mutationError: "Échec de l’enregistrement. Réessayez.",
     liveness: {
       live: "le lien répond — contenu non vérifié",
       dead: "le lien ne répond pas",

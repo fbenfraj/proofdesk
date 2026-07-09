@@ -208,3 +208,54 @@ describe("Claim Card drawer copy (Story 1.8, EN|FR)", () => {
     expect(en.confirmedBy("camille@x", "2026-05-12")).toBe("Confirmed by camille@x · 2026-05-12");
   });
 });
+
+describe("Human override & caveat copy (Story 1.9, EN|FR)", () => {
+  test("every override + caveat authoring string resolves non-empty in EN and FR", () => {
+    for (const locale of LOCALES) {
+      const d = localeStrings(locale).drawer;
+      const fixed = [
+        d.override.switchLabel,
+        d.override.on,
+        d.override.off,
+        d.override.setPrompt,
+        d.override.statusLabel.green,
+        d.override.statusLabel.yellow,
+        d.override.statusLabel.red,
+        d.caveat.add,
+        d.caveat.placeholder,
+        d.caveat.save,
+        d.caveat.cancel,
+        d.caveat.requiresNote,
+        d.mutationError,
+      ];
+      for (const value of fixed) {
+        expect(value.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test("FR override uses the locked glossary terms (Arbitrage humain + status labels)", () => {
+    const d = localeStrings("fr").drawer;
+    expect(d.override.switchLabel).toBe("Arbitrage humain");
+    expect(d.override.statusLabel.green).toBe("Défendable");
+    expect(d.override.statusLabel.yellow).toBe("Sous réserve");
+    expect(d.override.statusLabel.red).toBe("Non défendable");
+  });
+
+  test("attribution builders render the mono 'by [operator] · [agency]' line", () => {
+    expect(localeStrings("en").drawer.override.by("Farouk", "Frajtech")).toBe(
+      "by Farouk · Frajtech",
+    );
+    expect(localeStrings("fr").drawer.override.by("Farouk", "Frajtech")).toBe(
+      "par Farouk · Frajtech",
+    );
+    expect(localeStrings("en").drawer.caveat.by("Farouk")).toBe("by Farouk");
+  });
+
+  test("the on/off word differs so it is a real color-independent cue (UX-DR17)", () => {
+    for (const locale of LOCALES) {
+      const o = localeStrings(locale).drawer.override;
+      expect(o.on).not.toBe(o.off);
+    }
+  });
+});

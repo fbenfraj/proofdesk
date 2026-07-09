@@ -11,8 +11,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { type SeedSummary, seedDemoCampaign } from "@/seed/demo-campaign";
 import {
+  createCaveat,
   createEvidenceItem,
   createEvidenceLink,
+  createHumanOverride,
   createTestDb,
   type Db,
   type DbHandle,
@@ -121,6 +123,56 @@ describe("getClaimCard — after the audit resolves (Story 1.8)", () => {
     for (const e of allEvidence) {
       if (e.evidenceType.endsWith("screenshot")) expect(e.machineOrHuman).toBe("human");
     }
+  });
+});
+
+describe("getClaimCard — caveats + requiresCaveat gate (Story 1.9, AD-6)", () => {
+  test("pre-audit: no caveats and requiresCaveat is false (no verdict to gate)", () => {
+    const claimId = claimByVerdict("yellow");
+    const card = getClaimCard(db, claimId);
+    expect(card?.caveats).toEqual([]);
+    expect(card?.requiresCaveat).toBe(false);
+  });
+
+  test("effective-Yellow with zero caveats → requiresCaveat is true", () => {
+    const claimId = claimByVerdict("yellow");
+    resolveEffectiveStatus(db, claimId, NOW);
+    const card = getClaimCard(db, claimId);
+    expect(card?.effectiveStatus).toBe("yellow");
+    expect(card?.caveats).toEqual([]);
+    expect(card?.requiresCaveat).toBe(true);
+  });
+
+  test("effective-Yellow with a caveat → requiresCaveat clears; the caveat surfaces with its author", () => {
+    const claimId = claimByVerdict("yellow");
+    resolveEffectiveStatus(db, claimId, NOW);
+    createCaveat(db, { claimId, text: "Rests on the creator's word.", authoredBy: "Farouk" });
+    const card = getClaimCard(db, claimId);
+    expect(card?.requiresCaveat).toBe(false);
+    expect(card?.caveats).toHaveLength(1);
+    expect(card?.caveats[0]).toMatchObject({
+      text: "Rests on the creator's word.",
+      authoredBy: "Farouk",
+    });
+  });
+
+  test("an override TO yellow (over a green machine verdict) also triggers the gate (source-independent)", () => {
+    const claimId = claimByVerdict("green");
+    resolveEffectiveStatus(db, claimId, NOW);
+    createHumanOverride(db, { claimId, finalStatus: "yellow", authoredBy: "Farouk" });
+    const card = getClaimCard(db, claimId);
+    expect(card?.machineVerdict).toBe("green"); // machine verdict stays pinned
+    expect(card?.effectiveStatus).toBe("yellow"); // override is the effective status
+    expect(card?.overrideStatus).toBe("yellow");
+    expect(card?.requiresCaveat).toBe(true);
+  });
+
+  test("effective-Green (or Red) never requires a caveat", () => {
+    const claimId = claimByVerdict("green");
+    resolveEffectiveStatus(db, claimId, NOW);
+    const card = getClaimCard(db, claimId);
+    expect(card?.effectiveStatus).toBe("green");
+    expect(card?.requiresCaveat).toBe(false);
   });
 });
 

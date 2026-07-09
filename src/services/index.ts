@@ -10,3 +10,7 @@ export * from "./audit";
 export * from "./board";
 // The Claim Card drawer view model (Story 1.8).
 export * from "./claim-card";
+// Server-resolved operator display identity for attribution (Story 1.9).
+export * from "./operator-identity";
+// Override & caveat write orchestration (Story 1.9).
+export * from "./override-caveat";

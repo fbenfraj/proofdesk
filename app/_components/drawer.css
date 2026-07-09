@@ -267,7 +267,103 @@
   font-style: normal;
 }
 
-/* --- Human override (read-only in 1.8; machine verdict stays pinned) ---- */
+/* Caveat list (Story 1.9 authoring) — each caveat is its own paper well with a
+ * mono attribution line. */
+.pd-cc__caveats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.pd-cc__caveat-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.pd-cc__caveat-text {
+  font: var(--type-serif-body);
+  font-style: italic;
+  color: var(--ink);
+}
+.pd-cc__caveat-attr {
+  font: var(--type-mono);
+  font-style: normal;
+  color: var(--muted);
+}
+/* The report-includability reminder for an un-caveated effective-Yellow. */
+.pd-cc__caveat-required {
+  margin: var(--space-3) 0 0;
+  font: var(--type-body-sm);
+  color: var(--status-amber);
+}
+
+/* Caveat authoring form. */
+.pd-cc__caveat-form {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.pd-cc__caveat-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: var(--type-serif-body);
+  font-style: italic;
+  color: var(--ink);
+  background: var(--caveat-fill);
+  border: 1px solid var(--caveat-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+}
+.pd-cc__caveat-input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.pd-cc__caveat-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.pd-cc__caveat-add {
+  margin-top: var(--space-3);
+}
+
+/* Shared drawer button — fill-shade + hairline, no status colour. */
+.pd-cc__btn {
+  appearance: none;
+  border: 1px solid var(--hairline);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: var(--type-body);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pd-cc__btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.pd-cc__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pd-cc__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.pd-cc__btn--primary {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+.pd-cc__override-option[aria-pressed="true"] {
+  border-color: var(--seal);
+  color: var(--seal);
+  font-weight: 600;
+}
+
+/* --- Human override (Story 1.9) — machine verdict stays pinned above ----- */
 .pd-cc__machine {
   margin: 0 0 var(--space-2);
   display: flex;
@@ -277,6 +373,102 @@
 .pd-cc__machine-label {
   font: var(--type-body-sm);
   color: var(--muted);
+}
+
+/* Operator-override switch — a real role="switch". The on/off WORD carries the
+ * state (never colour or knob position alone, UX-DR17). */
+.pd-cc__override-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+}
+.pd-cc__switch {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.pd-cc__switch:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.pd-cc__switch-track {
+  display: block;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  position: relative;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.pd-cc__switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--muted);
+  transition:
+    transform 120ms ease,
+    background 120ms ease;
+}
+.pd-cc__switch[aria-checked="true"] .pd-cc__switch-track {
+  background: var(--human-bg);
+  border-color: var(--human-ink);
+}
+.pd-cc__switch[aria-checked="true"] .pd-cc__switch-thumb {
+  transform: translateX(16px);
+  background: var(--human-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pd-cc__switch-track,
+  .pd-cc__switch-thumb {
+    transition: none;
+  }
+}
+.pd-cc__switch-label {
+  font: var(--type-body);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.pd-cc__switch-state {
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* Override status picker (the three Proof Status options). */
+.pd-cc__override-picker {
+  margin: var(--space-2) 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.pd-cc__override-prompt {
+  font: var(--type-body-sm);
+  color: var(--muted);
+  padding: 0;
+  width: 100%;
+}
+
+/* Attribution — mono, warm-taupe human channel (OFF the R/Y/G scale, AD-3). */
+.pd-cc__override-attr {
+  margin: var(--space-2) 0 0;
+  font: var(--type-mono);
+  color: var(--human-ink);
 }
 
 /* --- Step-to-next-claim ------------------------------------------------- */

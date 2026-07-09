@@ -357,6 +357,16 @@ export function getCaveat(db: Db, id: string) {
   return db.select().from(caveat).where(eq(caveat.id, id)).get();
 }
 
+/** All Caveats authored against a Claim (append-only, 1..*, AD-18). Ordered by
+ *  id so the render is deterministic — the caveat table carries no timestamp and
+ *  the pk is a random UUID, so id-order is stable-but-not-chronological, which is
+ *  all the display + export need (order is not a domain fact here). Consumed by
+ *  the Claim Card drawer and the effective-Yellow report-includability gate (the
+ *  gate itself is enforced in the export layer, Epic 4 — AD-20/21). */
+export function listCaveatsForClaim(db: Db, claimId: string) {
+  return db.select().from(caveat).where(eq(caveat.claimId, claimId)).orderBy(asc(caveat.id)).all();
+}
+
 // --- Campaign-scoped list reads (used by the seed test to sweep honesty
 //     columns, and by the Story-1.5 snapshot assembler) ---------------------
 
@@ -542,6 +552,15 @@ export function createHumanOverride(db: Db, values: NewHumanOverride) {
     })
     .returning()
     .get();
+}
+
+/** Clear the operator's HumanOverride for a Claim — the "Operator override"
+ *  toggle's OFF path (Story 1.9). Idempotent (deleting when none is set is a
+ *  no-op). Removing the overlay returns the effective status to the pure machine
+ *  verdict; it NEVER writes an AuditResult — override is an overlay, not a
+ *  recompute (AD-6). */
+export function deleteHumanOverride(db: Db, claimId: string): void {
+  db.delete(humanOverride).where(eq(humanOverride.claimId, claimId)).run();
 }
 
 // --- AuditResult cache read / upsert (AD-4) --------------------------------

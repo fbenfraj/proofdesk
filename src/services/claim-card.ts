@@ -12,6 +12,7 @@
 import {
   type Db,
   getClaimHeader,
+  listCaveatsForClaim,
   listClaimEvidenceDetail,
   listHumanConfirmationsForClaim,
   listProofRequirementsForClaim,
@@ -29,6 +30,15 @@ import { readEffectiveStatus } from "./audit";
 /** Requirement-level state for the ✓/○ display (UX-DR14). `pending` = no audit
  *  has run yet (no persisted verdict) — distinct from a resolved `unsatisfied`. */
 export type RequirementSatisfaction = "satisfied" | "unsatisfied" | "pending";
+
+/** One operator-authored Caveat shown in the Caveat well (Story 1.9, UX-DR16).
+ *  Operator narrative only — machine reasons live in the trace, never here
+ *  (AD-6). `authoredBy` is persisted (who set it), never inferred (AD-3). */
+export interface ClaimCardCaveat {
+  caveatId: string;
+  text: string;
+  authoredBy: string;
+}
 
 /** One operator-affirmed EvidenceLink shown in the Evidence trail, with its
  *  EvidenceItem's first-class provenance (AD-3) and any confirmations on it. */
@@ -66,9 +76,21 @@ export interface ClaimCardView {
   machineVerdict: ProofStatus | null;
   /** The operator override's final status, or null when none is set. */
   overrideStatus: ProofStatus | null;
+  /** Who authored the override (persisted), or null when none is set — the
+   *  "[operator]" the attribution line stamps (FR-10, AD-3). */
+  overrideAuthoredBy: string | null;
   requirements: ClaimCardRequirement[];
   /** The whole verbatim trace (also split per requirement above). */
   trace: TraceEntry[];
+  /** Operator-authored caveats on this Claim (append-only, 1..*, AD-18). */
+  caveats: ClaimCardCaveat[];
+  /** An effective-Yellow (machine OR override) with no caveat yet: it needs at
+   *  least one operator-authored Caveat before it is report-includable (AD-6,
+   *  AD-20/21). The gate is enforced in the export layer (Epic 4); the card
+   *  surfaces it so the operator knows to write one. Source-independent: it keys
+   *  off the effective status, not whether the Yellow came from the machine or an
+   *  override. */
+  requiresCaveat: boolean;
 }
 
 /**
@@ -84,6 +106,7 @@ export function getClaimCard(db: Db, claimId: string): ClaimCardView | null {
   const requirements = listProofRequirementsForClaim(db, claimId);
   const evidenceRows = listClaimEvidenceDetail(db, claimId);
   const confirmations = listHumanConfirmationsForClaim(db, claimId);
+  const caveatRows = listCaveatsForClaim(db, claimId);
 
   // Read-only: null pre-audit (no persisted AuditResult). NEVER the write path.
   const effective = readEffectiveStatus(db, claimId);
@@ -117,15 +140,30 @@ export function getClaimCard(db: Db, claimId: string): ClaimCardView | null {
     };
   });
 
+  const caveats: ClaimCardCaveat[] = caveatRows.map((c) => ({
+    caveatId: c.id,
+    text: c.text,
+    authoredBy: c.authoredBy,
+  }));
+
+  const effectiveStatus = effective?.effectiveStatus ?? null;
+  // An effective-Yellow with no caveat yet must be flagged — it cannot be
+  // report-included until an operator writes one (AD-6). Source-independent: a
+  // machine-Yellow and an override-to-Yellow gate identically.
+  const requiresCaveat = effectiveStatus === "yellow" && caveats.length === 0;
+
   return {
     claimId,
     creatorName: header.creatorName,
     deliverableType: header.deliverableType,
-    effectiveStatus: effective?.effectiveStatus ?? null,
+    effectiveStatus,
     machineVerdict: effective?.machineVerdict ?? null,
     overrideStatus: effective?.overrideStatus ?? null,
+    overrideAuthoredBy: effective?.overrideAuthoredBy ?? null,
     requirements: reqs,
     trace,
+    caveats,
+    requiresCaveat,
   };
 }
 
