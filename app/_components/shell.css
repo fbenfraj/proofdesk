@@ -1,0 +1,238 @@
+/*
+ * Desktop operator shell layout (UX-DR7). Depth is fill-shade + hairline only;
+ * the sole literal-object shadow is the drawer's left slide-shadow. All chrome
+ * text sizes to content with nowrap so the longer FR strings never truncate.
+ */
+
+.pd-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+/* ---- Top bar ---------------------------------------------------------- */
+.pd-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.pd-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--seal);
+  white-space: nowrap;
+}
+
+.pd-sealmark {
+  display: block;
+  color: var(--seal);
+}
+
+.pd-wordmark__text {
+  font: 600 17px / 1 var(--font-record);
+  letter-spacing: 0.2px;
+  color: var(--ink);
+}
+
+.pd-wordmark__dot {
+  color: var(--seal);
+  padding: 0 1px;
+}
+
+.pd-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font: var(--type-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pd-switcher__cap {
+  color: var(--muted);
+}
+
+.pd-switcher__name {
+  color: var(--ink);
+}
+
+.pd-switcher__chevron {
+  color: var(--muted);
+}
+
+.pd-topbar__right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+}
+
+/* ---- EN|FR toggle ----------------------------------------------------- */
+.pd-langtoggle {
+  display: inline-flex;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+
+.pd-langtoggle__btn {
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 11px / 1.4 var(--font-chrome);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pd-langtoggle__btn[aria-pressed="true"] {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* ---- Operator identity ------------------------------------------------ */
+.pd-operator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.pd-operator__label {
+  color: var(--muted);
+  font: var(--type-body-sm);
+}
+
+.pd-operator__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: var(--seal);
+  color: var(--surface-card);
+  font: 600 12px / 1 var(--font-record);
+}
+
+/* ---- Workspace: rail + main + drawer ---------------------------------- */
+.pd-workspace {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.pd-rail {
+  flex-shrink: 0;
+  width: var(--rail-width);
+  padding: var(--space-4) var(--space-3);
+  background: var(--surface-card);
+  border-right: 1px solid var(--hairline);
+}
+
+.pd-rail__cap {
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-3);
+}
+
+.pd-rail__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pd-rail__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 9px 11px;
+  margin-bottom: var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font: var(--type-body);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pd-rail__icon {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.pd-rail__label {
+  flex: 1;
+}
+
+/* Active surface: canvas fill + hairline + seal icon + weight (aria-current). */
+.pd-rail__item[aria-current="page"] {
+  background: var(--canvas);
+  border-color: var(--hairline);
+  font-weight: 600;
+}
+
+.pd-rail__item[aria-current="page"] .pd-rail__icon {
+  color: var(--seal);
+}
+
+/* Quiet count badge — muted count on surface-raised + hairline, never a dot. */
+.pd-rail__badge {
+  padding: 1px var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+
+.pd-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6) var(--space-8) var(--space-10);
+  background: var(--canvas);
+}
+
+/* Right-side Claim Card drawer slot + scrim (empty in Story 1.2). */
+.pd-scrim {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(30, 27, 20, 0.1);
+  cursor: default;
+}
+
+.pd-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--drawer-width);
+  max-width: 100%;
+  background: var(--surface-card);
+  border-left: 1px solid var(--hairline);
+  /* The one sanctioned literal-object shadow: the drawer slides over the board. */
+  box-shadow: -6px 0 22px rgba(30, 27, 20, 0.1);
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 180ms ease;
+}
+
+.pd-drawer[data-open="true"] {
+  transform: translateX(0);
+}

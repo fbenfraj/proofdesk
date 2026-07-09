@@ -1,16 +1,23 @@
+import "./globals.css";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
+import { LOCALE_COOKIE, parseLocale } from "./_lib/i18n";
+import { fontVariables } from "./fonts";
 
 export const metadata = {
   title: "ProofDesk",
   description: "Client-safe proof-of-performance layer for creator campaigns.",
 };
 
-// Root layout. The design system, tokens, three type voices, and the EN|FR
-// toggle land in Story 1.2 — this is a bare, OS-default shell for Phase 0.
-// `lang` defaults to English; the EN|FR toggle will drive it in Story 1.2.
-export default function RootLayout({ children }: { children: ReactNode }) {
+// Root layout. Reads the persisted locale cookie server-side so <html lang> is
+// correct on first paint (no flash), and applies the three embedded type-voice
+// font variables (UX-DR4). The design tokens live in ./globals.css.
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const store = await cookies();
+  const locale = parseLocale(store.get(LOCALE_COOKIE)?.value);
+
   return (
-    <html lang="en">
+    <html lang={locale} className={fontVariables}>
       <body>{children}</body>
     </html>
   );
