@@ -1,0 +1,41 @@
+name: CI
+
+# CI gate (AD): every push and PR must pass, in order:
+#   biome check  ·  tsc --noEmit  ·  vitest run  ·  next build
+# Any step failing fails the build. Playwright is smoke-only and runs locally
+# (`npm run test:e2e`) — it is deliberately NOT part of this required gate.
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node 24 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint & format check (Biome)
+        run: npx biome check
+
+      # Generate Next.js route/global type defs so `tsc` is self-contained
+      # (next-env.d.ts + .next/types are gitignored and absent on a fresh checkout).
+      - name: Generate Next types
+        run: npx next typegen
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit/integration tests (Vitest)
+        run: npx vitest run
+
+      - name: Production build (Next.js standalone)
+        run: npx next build
