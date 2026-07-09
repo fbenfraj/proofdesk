@@ -2,6 +2,7 @@ import "./shell.css";
 import type { ReactNode } from "react";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { ClaimDrawer } from "./claim-drawer";
+import { ClaimDrawerProvider } from "./claim-drawer-context";
 import { LangToggle } from "./lang-toggle";
 import { Rail } from "./rail";
 
@@ -69,13 +70,17 @@ export function AppShell({ locale, children }: { locale: Locale; children: React
         </div>
       </header>
 
-      <div className="pd-workspace">
-        <Rail locale={locale} />
-        <main className="pd-main">{children}</main>
-        <ClaimDrawer />
-        {/* Reserved standing-disclaimer slot (AD-3 / AD-22) — populated where
-            verdicts appear, in later stories. Left empty by design here. */}
-      </div>
+      {/* The drawer context spans the rail, the board (page content) and the
+          drawer so a Board row can open the Claim Card (Story 1.6). */}
+      <ClaimDrawerProvider>
+        <div className="pd-workspace">
+          <Rail locale={locale} />
+          <main className="pd-main">{children}</main>
+          <ClaimDrawer locale={locale} />
+          {/* Reserved standing-disclaimer slot (AD-3 / AD-22) — populated where
+              verdicts appear, in later stories. Left empty by design here. */}
+        </div>
+      </ClaimDrawerProvider>
     </div>
   );
 }

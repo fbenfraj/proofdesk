@@ -6,3 +6,7 @@
 
 // The snapshot assembler + effective-status resolver (Story 1.5).
 export * from "./audit";
+// The Campaign Board view model (Story 1.6).
+export * from "./board";
+// The Claim Card drawer view model (Story 1.8).
+export * from "./claim-card";

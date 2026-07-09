@@ -8,7 +8,7 @@
 // update/delete path for `human_confirmation` — it is append-only by
 // construction (AD-18).
 
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import {
   auditResult,
   campaign,
@@ -411,6 +411,42 @@ export function countMatchSuggestions(db: Db, campaignId: string): number {
     .all().length;
 }
 
+// --- Campaign Board read (Story 1.6) --------------------------------------
+//     One joined row per Deliverable for the claimed-vs-proven ledger: the
+//     Claim id (so status resolves through the ONE resolver, AD-6), plus the
+//     Creator name, Deliverable type and the human-set claimed marker. Status is
+//     deliberately NOT read here — the board service resolves it per Claim so a
+//     pre-audit Claim can show `pending` without triggering the recompute path.
+
+export interface BoardRow {
+  claimId: string;
+  deliverableId: string;
+  creatorName: string;
+  deliverableType: string;
+  claimedStatus: string;
+}
+
+/** The ledger rows for a Campaign: Claim ⋈ Deliverable ⋈ Creator. Ordered
+ *  deterministically (creator, then type, then id) so the board render is stable
+ *  — determinism is a project value, never insertion order (AD-2/AD-10: this is
+ *  the only Drizzle-touching layer). */
+export function listCampaignBoardRows(db: Db, campaignId: string): BoardRow[] {
+  return db
+    .select({
+      claimId: claim.id,
+      deliverableId: deliverable.id,
+      creatorName: creator.name,
+      deliverableType: deliverable.type,
+      claimedStatus: deliverable.claimedStatus,
+    })
+    .from(claim)
+    .innerJoin(deliverable, eq(claim.deliverableId, deliverable.id))
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(eq(deliverable.campaignId, campaignId))
+    .orderBy(asc(creator.name), asc(deliverable.type), asc(deliverable.id))
+    .all();
+}
+
 // --- Claim-scoped reads for the Story-1.5 snapshot assembler (AD-16) -------
 //     One assembler is the SOLE producer of AuditSnapshot; these reads give it
 //     exactly a Claim's requirements, its operator-only evidence (AD-17), and
@@ -548,4 +584,54 @@ export function upsertAuditResult(db: Db, values: UpsertAuditResult) {
     })
     .returning()
     .get();
+}
+
+// --- Claim Card drawer reads (Story 1.8) -----------------------------------
+//     Read-only detail for the right-side Claim Card. Kept SEPARATE from
+//     `listOperatorEvidenceForClaim` (whose exact projection the snapshot
+//     assembler hashes — AD-4) so the drawer can surface the extra EvidenceItem
+//     columns (type / provenance / uploaded_at) without perturbing the audit
+//     cache identity. Still `source = operator` only (AD-17).
+
+/** The Claim's Deliverable header (creator + type) for the drawer title.
+ *  `undefined` when the Claim does not exist. */
+export function getClaimHeader(db: Db, claimId: string) {
+  return db
+    .select({
+      claimId: claim.id,
+      deliverableId: deliverable.id,
+      creatorName: creator.name,
+      deliverableType: deliverable.type,
+    })
+    .from(claim)
+    .innerJoin(deliverable, eq(claim.deliverableId, deliverable.id))
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(eq(claim.id, claimId))
+    .get();
+}
+
+/** A Claim's `source = operator` EvidenceLinks joined to their EvidenceItem's
+ *  display columns (type, first-class provenance, uploaded_at, liveness). The
+ *  drawer read: richer than the assembler's `listOperatorEvidenceForClaim`, but
+ *  still operator-only so `suggested` links / MatchSuggestions never surface
+ *  (AD-17). Ordered by link id for a stable render. */
+export function listClaimEvidenceDetail(db: Db, claimId: string) {
+  return db
+    .select({
+      proofRequirementId: evidenceLink.proofRequirementId,
+      evidenceLinkId: evidenceLink.id,
+      evidenceItemId: evidenceItem.id,
+      evidenceType: evidenceItem.type,
+      machineOrHuman: evidenceItem.machineOrHuman,
+      uploadedAt: evidenceItem.uploadedAt,
+      livenessLabel: evidenceItem.livenessLabel,
+    })
+    .from(evidenceLink)
+    .innerJoin(evidenceItem, eq(evidenceLink.evidenceItemId, evidenceItem.id))
+    .innerJoin(proofRequirement, eq(evidenceLink.proofRequirementId, proofRequirement.id))
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(claim, eq(claim.deliverableId, deliverable.id))
+    .where(and(eq(claim.id, claimId), eq(evidenceLink.source, "operator")))
+    .orderBy(asc(evidenceLink.id))
+    .all();
 }

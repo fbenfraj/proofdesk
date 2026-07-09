@@ -114,17 +114,45 @@ export interface EffectiveStatus {
  * The single resolver every consumer reads for a Claim's status (AD-6). No
  * consumer calls `audit()` directly. Recomputes-and-persists the machine verdict
  * first if the AuditResult cache is stale, then overlays the human override.
+ * This is the WRITE-capable path — only the explicit "Run Proof Audit" action
+ * (Story 1.7) should reach it. Read-only consumers use `readEffectiveStatus`.
  */
 export function resolveEffectiveStatus(db: Db, claimId: string, now?: string): EffectiveStatus {
   const machine = resolveMachineVerdict(db, claimId, now);
+  return overlayOverride(db, claimId, machine.machineVerdict, machine.trace);
+}
+
+/**
+ * READ-ONLY effective status: overlays the human override on the PERSISTED
+ * machine verdict without ever recomputing or writing. Returns null when no
+ * AuditResult exists yet (pre-audit). Consumers that must not trigger an audit
+ * run — the Campaign Board (Story 1.6) — read through this, so merely loading a
+ * surface after evidence/ruleset changes never runs the audit behind the
+ * operator's back. A stale cache is refreshed only by the explicit re-run.
+ */
+export function readEffectiveStatus(db: Db, claimId: string): EffectiveStatus | null {
+  const cached = readAuditResult(db, claimId);
+  if (!cached) return null;
+  return overlayOverride(db, claimId, cached.machineVerdict, cached.trace);
+}
+
+/** Overlay the human override on a machine verdict — the ONE definition of
+ *  `effective = override.final_status ?? machine_verdict` (AD-6), shared by the
+ *  write-capable resolver and the read-only reader so they can never diverge. */
+function overlayOverride(
+  db: Db,
+  claimId: string,
+  machineVerdict: ProofStatus,
+  trace: TraceEntry[],
+): EffectiveStatus {
   const override = getHumanOverride(db, claimId);
   const overrideStatus = override?.finalStatus ?? null;
   return {
     claimId,
-    effectiveStatus: overrideStatus ?? machine.machineVerdict,
-    machineVerdict: machine.machineVerdict,
+    effectiveStatus: overrideStatus ?? machineVerdict,
+    machineVerdict,
     overrideStatus,
-    trace: machine.trace,
+    trace,
   };
 }
 
