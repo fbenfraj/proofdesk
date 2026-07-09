@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "node --env-file-if-exists=.env --env-file-if-exists=.env.local .next/standalone/server.js",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "format": "biome format --write",
