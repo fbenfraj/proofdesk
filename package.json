@@ -18,21 +18,31 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "seed:demo": "tsx seed/index.ts",
+    "seed": "npm run db:migrate && npm run seed:demo",
     "ci": "biome check && next typegen && tsc --noEmit && vitest run && next build",
     "review": "codex exec review --uncommitted",
     "review:base": "codex exec review --base main"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "drizzle-orm": "^0.45.2",
     "next": "^16.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@playwright/test": "^1.49.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.0",
     "typescript": "^5.6.0",
     "vitest": "^3.0.0"
   }
