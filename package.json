@@ -18,7 +18,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "ci": "biome check && next typegen && tsc --noEmit && vitest run && next build"
+    "ci": "biome check && next typegen && tsc --noEmit && vitest run && next build",
+    "review": "codex exec review --uncommitted",
+    "review:base": "codex exec review --base main"
   },
   "dependencies": {
     "next": "^16.0.0",
