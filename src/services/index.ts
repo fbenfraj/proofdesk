@@ -14,6 +14,8 @@ export * from "./claim-card";
 export * from "./evidence-ingest";
 // Deterministic Evidence→Deliverable matching + operator affirmation (Story 2.2).
 export * from "./evidence-matching";
+// "Page shows the Deliverable" HumanConfirmation write orchestration (Story 2.3).
+export * from "./human-confirmation";
 // Server-resolved operator display identity for attribution (Story 1.9).
 export * from "./operator-identity";
 // Override & caveat write orchestration (Story 1.9).

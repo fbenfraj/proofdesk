@@ -270,7 +270,7 @@ function DrawerContent({
             locale={locale}
             audited={view.effectiveStatus != null}
           />
-          <EvidenceSection requirements={view.requirements} locale={locale} />
+          <EvidenceSection view={view} locale={locale} claimId={claimId} onUpdated={onUpdated} />
           <FactsSection view={view} locale={locale} />
           <CaveatSection view={view} locale={locale} claimId={claimId} onUpdated={onUpdated} />
           <OverrideSection
@@ -351,17 +351,27 @@ function RequirementState({ req, locale }: { req: ClaimCardRequirement; locale: 
   );
 }
 
-/** Section 2 — Evidence trail: each item carries a provenance chip (UX-DR10). */
+/** Section 2 — Evidence trail: each item carries a provenance chip (UX-DR10). A
+ *  proof-of-posting link that is not yet confirmed also offers the operator the
+ *  "page shows the Deliverable" confirmation (Story 2.3, AD-5/AD-18). */
 function EvidenceSection({
-  requirements,
+  view,
   locale,
+  claimId,
+  onUpdated,
 }: {
-  requirements: ClaimCardRequirement[];
+  view: ClaimCardView;
   locale: Locale;
+  claimId: string | null;
+  onUpdated: (view: ClaimCardView) => void;
 }) {
   const d = localeStrings(locale).drawer;
-  const items = requirements.flatMap((req) =>
-    req.evidence.map((ev) => ({ ev, kind: req.kind, key: ev.evidenceLinkId })),
+  const items = view.requirements.flatMap((req) =>
+    req.evidence.map((ev) => ({
+      ev,
+      satisfactionType: req.satisfactionType,
+      key: ev.evidenceLinkId,
+    })),
   );
   return (
     <section className="pd-cc__section" aria-label={d.sections.evidence}>
@@ -370,8 +380,16 @@ function EvidenceSection({
         <p className="pd-cc__note">—</p>
       ) : (
         <ul className="pd-cc__evidence">
-          {items.map(({ ev, key }) => (
-            <EvidenceRow key={key} ev={ev} locale={locale} />
+          {items.map(({ ev, satisfactionType, key }) => (
+            <EvidenceRow
+              key={key}
+              ev={ev}
+              satisfactionType={satisfactionType}
+              deliverableType={view.deliverableType}
+              locale={locale}
+              claimId={claimId}
+              onUpdated={onUpdated}
+            />
           ))}
         </ul>
       )}
@@ -379,9 +397,29 @@ function EvidenceSection({
   );
 }
 
-function EvidenceRow({ ev, locale }: { ev: ClaimCardEvidence; locale: Locale }) {
+function EvidenceRow({
+  ev,
+  satisfactionType,
+  deliverableType,
+  locale,
+  claimId,
+  onUpdated,
+}: {
+  ev: ClaimCardEvidence;
+  satisfactionType: ClaimCardRequirement["satisfactionType"];
+  deliverableType: string;
+  locale: Locale;
+  claimId: string | null;
+  onUpdated: (view: ClaimCardView) => void;
+}) {
   const d = localeStrings(locale).drawer;
   const liveness = ev.livenessLabel ? d.liveness[ev.livenessLabel] : null;
+  // The "page shows the Deliverable" confirmation is offered ONLY on a
+  // proof-of-posting (link-reachability) link that has no confirmation yet (AD-5,
+  // AD-18). Screenshots/metrics are human assertions by nature and need no
+  // separate page confirmation. Once confirmed, the attribution below replaces
+  // the control — there is no revoke (append-only).
+  const canConfirm = satisfactionType === "link-reachability" && ev.confirmations.length === 0;
   return (
     <li className="pd-cc__ev">
       <div className="pd-cc__ev-head">
@@ -399,7 +437,72 @@ function EvidenceRow({ ev, locale }: { ev: ClaimCardEvidence; locale: Locale }) 
           {d.confirmedBy(c.confirmedBy, c.confirmedAt)}
         </p>
       ))}
+      {canConfirm && claimId ? (
+        <ConfirmControl
+          claimId={claimId}
+          evidenceLinkId={ev.evidenceLinkId}
+          deliverableType={deliverableType}
+          locale={locale}
+          onUpdated={onUpdated}
+        />
+      ) : null}
     </li>
+  );
+}
+
+/** The "Confirm page shows the Deliverable" control — a HUMAN attestation on the
+ *  warm-taupe channel (AD-3), never implying machine verification. POSTs to the
+ *  confirm write seam and re-renders the drawer from the refreshed view returned
+ *  (single round-trip). Immediate, no confirmation dialog (UX-DR20). */
+function ConfirmControl({
+  claimId,
+  evidenceLinkId,
+  deliverableType,
+  locale,
+  onUpdated,
+}: {
+  claimId: string;
+  evidenceLinkId: string;
+  deliverableType: string;
+  locale: Locale;
+  onUpdated: (view: ClaimCardView) => void;
+}) {
+  const d = localeStrings(locale).drawer;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+
+  async function confirm() {
+    setBusy(true);
+    setError(false);
+    const updated = await mutateClaim(
+      `/api/claims/${encodeURIComponent(claimId)}/confirm`,
+      "POST",
+      {
+        evidenceLinkId,
+      },
+    );
+    setBusy(false);
+    if (!updated) {
+      setError(true);
+      return;
+    }
+    onUpdated(updated);
+  }
+
+  return (
+    <div className="pd-cc__ev-confirm-action">
+      <button
+        type="button"
+        className="pd-cc__btn pd-cc__ev-confirm-btn"
+        onClick={confirm}
+        disabled={busy}
+        aria-label={d.confirm.ariaLabel(deliverableType)}
+      >
+        <span aria-hidden="true">❝ </span>
+        {d.confirm.action}
+      </button>
+      {error ? <p className="pd-cc__note pd-cc__note--error">{d.mutationError}</p> : null}
+    </div>
   );
 }
 
