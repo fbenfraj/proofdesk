@@ -403,6 +403,60 @@ test.describe("Deterministic matching & operator affirmation (Story 2.2)", () =>
   });
 });
 
+test.describe("Confirm the page shows the Deliverable (Story 2.3)", () => {
+  test("an operator confirms a matched link and it surfaces as a Human assertion", async ({
+    page,
+  }) => {
+    // 1. Create an UNCONFIRMED operator link: paste a link that the deterministic
+    //    rule matches to PixelForge's D1 (Twitch sponsor segment), then Confirm the
+    //    match. That writes an operator EvidenceLink with no confirmation yet — the
+    //    exact pre-state Story 2.3 acts on.
+    await page.goto("/evidence-inbox");
+    const url = `https://twitch.tv/pixelforge/segment-aurora/confirm-${Date.now()}`;
+    await page.getByRole("radio", { name: "Paste a link" }).check();
+    await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
+    await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
+    await expect(async () => {
+      await page.getByRole("button", { name: "Add to Inbox" }).click();
+      await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+    const card = page.locator(".pd-ev", { hasText: url });
+    await expect(async () => {
+      await card.getByRole("button", { name: "Confirm" }).click();
+      await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+
+    // 2. Open D1's Claim Card from the board (creator + type pin the exact row).
+    await page.goto("/");
+    const run = page.getByRole("button", { name: /audit/i });
+    await expect(async () => {
+      await run.click();
+      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+    }).toPass({ timeout: 15000 });
+    const row = page
+      .locator(".pd-ledger__row")
+      .filter({ has: page.locator(".pd-ledger__creator", { hasText: "PixelForge" }) })
+      .filter({ has: page.locator(".pd-ledger__type", { hasText: "Twitch sponsor segment" }) });
+    await expect(async () => {
+      await row.click();
+      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+
+    // 3. The Evidence trail offers "Confirm page shows the Deliverable" on the
+    //    unconfirmed matched link. Confirming it records a Human assertion and the
+    //    control gives way to the "Confirmed by [operator]" attribution (no revoke).
+    const dialog = page.getByRole("dialog");
+    const confirmBtn = dialog.getByRole("button", {
+      name: /Confirm the resolved page shows the Deliverable/,
+    });
+    await expect(confirmBtn.first()).toBeVisible();
+    await expect(async () => {
+      await confirmBtn.first().click();
+      await expect(dialog.getByText(/Confirmed by operator/)).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+  });
+});
+
 test("health route responds ok behind basic auth", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.ok()).toBeTruthy();

@@ -110,6 +110,15 @@ interface Strings {
     readonly unsatisfied: string;
     readonly satisfiedBy: (provenance: "machine" | "human") => string;
     readonly confirmedBy: (who: string, when: string) => string;
+    /** "Confirm page shows the Deliverable" control (Story 2.3, AD-18). The
+     *  action label asserts a HUMAN attestation — it must never imply machine
+     *  verification of the page's content (AD-3). `ariaLabel` names the
+     *  Deliverable so the control is unambiguous to screen readers. Sizes to
+     *  content (no fixed widths); FR runs longer (UX-DR26). */
+    readonly confirm: {
+      readonly action: string;
+      readonly ariaLabel: (deliverable: string) => string;
+    };
     /** Human override & caveat authoring (Story 1.9, FR-10, UX-DR16/DR17). The
      *  on/off word is ever-present (never colour/knob-position alone); the
      *  attribution lines render in mono. `overrideStatusLabel` names the three
@@ -285,6 +294,10 @@ const EN: Strings = {
         ? "satisfied by machine-checked fact"
         : "satisfied by human assertion",
     confirmedBy: (who, when) => `Confirmed by ${who} · ${when}`,
+    confirm: {
+      action: "Confirm page shows the Deliverable",
+      ariaLabel: (deliverable) => `Confirm the resolved page shows the Deliverable: ${deliverable}`,
+    },
     override: {
       switchLabel: "Operator override",
       on: "On",
@@ -452,6 +465,11 @@ const FR: Strings = {
         ? "satisfait par un fait vérifié par la machine"
         : "satisfait par une déclaration humaine",
     confirmedBy: (who, when) => `Confirmé par ${who} · ${when}`,
+    confirm: {
+      action: "Confirmer que la page montre le livrable",
+      ariaLabel: (deliverable) =>
+        `Confirmer que la page ouverte montre le livrable : ${deliverable}`,
+    },
     override: {
       // Locked FR glossary term (EXPERIENCE.md#L77): Human override → Arbitrage humain.
       switchLabel: "Arbitrage humain",

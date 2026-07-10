@@ -203,6 +203,22 @@
   color: var(--muted);
 }
 
+/* "Page shows the Deliverable" confirmation control (Story 2.3, AD-3/AD-18). It
+   produces a HUMAN attestation, so the affordance sits on the warm-taupe human
+   channel — never on the R/Y/G status scale. Quiet by default; the human fill
+   surfaces on hover. Focus ring + nowrap come from the shared .pd-cc__btn. */
+.pd-cc__ev-confirm-action {
+  margin-top: var(--space-2);
+}
+.pd-cc__ev-confirm-btn {
+  font: var(--type-body-sm);
+  color: var(--human-ink);
+}
+.pd-cc__ev-confirm-btn:hover:not(:disabled) {
+  border-color: var(--human-ink);
+  background: var(--human-bg);
+}
+
 /* --- Machine/Human facts (the trace) ------------------------------------ */
 .pd-cc__fact {
   display: flex;
