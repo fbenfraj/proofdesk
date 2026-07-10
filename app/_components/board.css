@@ -1,0 +1,316 @@
+/*
+ * Campaign Board — the claimed-vs-proven ledger (Story 1.6, UX-DR12/DR9/DR27).
+ * A document-register table: mono index, serif Creator, muted Deliverable type,
+ * a neutral claimed marker, and the three-channel Proof Status stamp. Depth is
+ * hairline-only; the selected row carries the surface-raised fill + oxblood
+ * inset edge. Status is NEVER colour-alone — glyph + uppercase label always ride
+ * with the colour, so it survives grayscale and colourblind viewing (AD-12).
+ */
+
+.pd-board {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.pd-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--type-body);
+}
+
+.pd-ledger__head th {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--muted);
+  font: 600 10px / 1.4 var(--font-chrome);
+  letter-spacing: 0.09em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pd-ledger__row {
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+}
+
+.pd-ledger__row:last-child {
+  border-bottom: 0;
+}
+
+/* Selected row: surface-raised fill + oxblood inset edge (UX-DR12). */
+.pd-ledger__row[aria-selected="true"] {
+  background: var(--surface-raised);
+  box-shadow: inset 3px 0 0 var(--seal);
+}
+
+.pd-ledger__row td {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+}
+
+.pd-ledger__index {
+  width: 1%;
+  color: var(--muted);
+  font: var(--type-mono);
+  white-space: nowrap;
+}
+
+.pd-ledger__creator {
+  color: var(--ink);
+  font: var(--type-serif-body);
+  white-space: nowrap;
+}
+
+.pd-ledger__type {
+  color: var(--muted);
+}
+
+/* Neutral claimed marker — a human claim, kept OFF the R/Y/G status scale so it
+   never collides with the Proof Status colour system. */
+.pd-claimed {
+  display: inline-block;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--muted);
+  font: 600 10px / 1.4 var(--font-chrome);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Three-channel status stamp: colour + shape glyph + uppercase label. */
+.pd-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border: 1px solid;
+  border-radius: var(--radius-stamp);
+  font: var(--type-stamp);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Glyph-font fallback: force the geometric shapes ● ◐ ▲ ◯ to render as
+   monochrome text glyphs from the ledger/symbol stack — never as OS colour
+   emoji, which would weaken the AD-12 shape channel (deferred from Story 1.2). */
+.pd-stamp__glyph {
+  font-family: var(--font-ledger), "Segoe UI Symbol", "Noto Sans Symbols2", monospace;
+  font-size: 11px;
+  font-variant-emoji: text;
+  line-height: 1;
+}
+
+.pd-stamp--defensible {
+  border-color: var(--status-green-border);
+  background: var(--status-green-fill);
+  color: var(--status-green);
+}
+
+.pd-stamp--caveated {
+  border-color: var(--status-amber-border);
+  background: var(--status-amber-fill);
+  color: var(--status-amber);
+}
+
+.pd-stamp--cant-claim {
+  border-color: var(--status-red-border);
+  background: var(--status-red-fill);
+  color: var(--status-red);
+}
+
+/* Pending — the pre-audit state. Muted, OFF the R/Y/G scale (AD-12); still
+   three-channel (hollow glyph + uppercase label + neutral colour). */
+.pd-stamp--pending {
+  border-color: var(--hairline);
+  background: var(--surface-raised);
+  color: var(--muted);
+}
+
+.pd-board__empty {
+  padding: var(--space-6) var(--space-4);
+  color: var(--muted);
+  font: var(--type-serif-body);
+}
+
+/* -------------------------------------------------------------------------
+ * Audit Cockpit — Run Proof Audit + staged reveal + Proof-Readiness (Story 1.7)
+ * ------------------------------------------------------------------------- */
+
+/* Page head: RECORD-voice title on the left, the quiet Run button on the right. */
+.pd-cockpit__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.pd-cockpit__head .pd-page-title {
+  margin: 0;
+}
+
+/* UX-DR18 — Run Proof Audit button: a QUIET outline, never a saturated/seal
+   fill. Sans label; the mono timestamp rides inside. */
+.pd-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: var(--type-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pd-run-btn:hover {
+  border-color: var(--muted);
+}
+
+.pd-run-btn[disabled] {
+  color: var(--muted);
+  cursor: progress;
+}
+
+/* Ledger-voice "last run" timestamp. */
+.pd-run-btn__time {
+  font: var(--type-mono);
+  color: var(--muted);
+}
+
+/* Proof-Readiness summary (UX-DR15): a calm surface-card panel. Counts are the
+   whole story — there is deliberately NO score, %, or gauge (AD-12). */
+.pd-readiness {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.pd-readiness__label {
+  margin: 0 0 var(--space-3);
+}
+
+/* Serif RECORD-voice counts, each preceded by its shape glyph. */
+.pd-readiness__counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+
+.pd-readiness__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.pd-readiness__glyph {
+  align-self: center;
+}
+
+.pd-readiness__count--defensible .pd-readiness__glyph {
+  color: var(--status-green);
+}
+
+.pd-readiness__count--caveated .pd-readiness__glyph {
+  color: var(--status-amber);
+}
+
+.pd-readiness__count--cant-claim .pd-readiness__glyph {
+  color: var(--status-red);
+}
+
+.pd-readiness__n {
+  font: var(--type-page-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.pd-readiness__count-label {
+  font: var(--type-body);
+  color: var(--muted);
+}
+
+.pd-readiness__sep {
+  margin-left: var(--space-2);
+  color: var(--hairline);
+}
+
+.pd-readiness__pending {
+  margin: 0;
+  font: var(--type-serif-body);
+  color: var(--muted);
+}
+
+/* Subtle "reads as rules, not AI" progress line during the staged reveal. */
+.pd-run-line {
+  margin: var(--space-3) 0 0;
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+/* Plain reading note — separated by a hairline. Bold numbers stay RECORD-voice. */
+.pd-readiness__note {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+  font: var(--type-body);
+  color: var(--muted);
+}
+
+.pd-readiness__caption {
+  margin: var(--space-3) 0 0;
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+/* FR-16 automation disclaimer — verdicts appear here, so it must (AD-3). */
+.pd-readiness__disclaimer {
+  margin: var(--space-2) 0 0;
+  font: var(--type-body-sm);
+  color: var(--muted);
+  max-width: var(--report-measure);
+}
+
+/* Visually-hidden live region: announced by AT, invisible on screen. */
+.pd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Decorative settle for a stamp as it resolves during the reveal (UX-DR25).
+   Motion is decorative-only: prefers-reduced-motion (globals.css) zeroes the
+   duration, so the final stamp appears immediately and identically. */
+@keyframes pd-stamp-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pd-cockpit .pd-stamp:not(.pd-stamp--pending) {
+  animation: pd-stamp-settle 360ms ease both;
+}

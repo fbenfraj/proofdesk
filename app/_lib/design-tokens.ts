@@ -91,6 +91,15 @@ export const PROOF_STATUS_TOKENS: Record<ProofStatusKey, ProofStatusToken> = {
   },
 };
 
+// The pre-audit UI state (Story 1.6). NOT a Proof Status — it never enters the
+// domain enum or STATUS_ORDER. Rendered as a muted stamp (hollow glyph + label,
+// never colour-alone, AD-12) kept OFF the R/Y/G scale.
+export const PENDING_TOKEN = {
+  glyph: "◯",
+  labelEn: "PENDING",
+  labelFr: "EN ATTENTE",
+} as const;
+
 export interface ProvenanceToken {
   readonly glyph: string;
   readonly ink: string;

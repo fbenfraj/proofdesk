@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   PALETTE,
+  PENDING_TOKEN,
   PROOF_STATUS_TOKENS,
   PROVENANCE_TOKENS,
   STATUS_ORDER,
@@ -33,6 +34,16 @@ describe("Proof Status vocabulary (UX-DR2, three-channel AD-12)", () => {
       (a, b) => b.length - a.length,
     )[0];
     expect(longest).toBe("NON DÉFENDABLE");
+  });
+});
+
+describe("Pending stamp (pre-audit UI state, Story 1.6)", () => {
+  test("carries a hollow glyph + EN/FR label, kept off the R/Y/G scale (AD-12)", () => {
+    expect(PENDING_TOKEN.glyph).toBe("◯");
+    expect(PENDING_TOKEN.labelEn).toBe("PENDING");
+    expect(PENDING_TOKEN.labelFr).toBe("EN ATTENTE");
+    // Pending is not a Proof Status — it must never appear in STATUS_ORDER.
+    expect(STATUS_ORDER as readonly string[]).not.toContain("pending");
   });
 });
 
