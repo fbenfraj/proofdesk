@@ -36,6 +36,19 @@ test("audit cockpit renders the claimed-vs-proven board region", async ({ page }
   await expect(page.locator(".pd-board")).toBeVisible();
 });
 
+test("the standing disclaimers are present wherever verdicts appear (Story 1.10)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const footer = page.locator(".pd-disclaimer");
+  // Both the FR-16 automation disclaimer AND the distinct AD-22 legal disclaimer
+  // render together in the persistent shell footer (UX-DR23).
+  await expect(footer).toContainText(
+    "It does not automatically watch streams or validate viewer metrics",
+  );
+  await expect(footer).toContainText("not legal advice or a guarantee of compliance");
+});
+
 test("EN|FR toggle is present with EN active by default", async ({ page }) => {
   await page.goto("/");
   // Buttons are labelled with the full language name for AT; the visible glyph
@@ -177,13 +190,17 @@ test.describe("Claim Card drawer (Story 1.8)", () => {
     // R/Y/G scale (UX-DR10).
     await expect(dialog.locator(".pd-prov").first()).toBeVisible();
 
-    // The background is inert while the dialog is open (UX-DR24).
+    // The background is inert while the dialog is open (UX-DR24) — including the
+    // standing-disclaimer footer, a background sibling outside .pd-workspace
+    // (Story 1.10), so SR/browse-mode users can't reach it past the modal.
     expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
+    expect(await page.locator(".pd-disclaimer").getAttribute("inert")).not.toBeNull();
 
     // Esc closes; focus returns to the exact originating row (UX-DR24).
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.locator(".pd-main")).not.toHaveAttribute("inert", /.*/);
+    await expect(page.locator(".pd-disclaimer")).not.toHaveAttribute("inert", /.*/);
     await expect
       .poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-claim-id")))
       .toBe(claimId);

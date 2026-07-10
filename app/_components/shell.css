@@ -236,3 +236,35 @@
 .pd-drawer[data-open="true"] {
   transform: translateX(0);
 }
+
+/* ---- Standing disclaimers (UX-DR23, AD-3 / AD-22) --------------------- */
+/* A persistent, muted footer present under every operator surface where a
+ * verdict appears. body-sm on --muted (verified ≥ 4.5:1 on both canvas and
+ * surface-card). The info mark is decorative; the text carries the meaning. */
+.pd-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-card);
+  border-top: 1px solid var(--hairline);
+}
+
+.pd-disclaimer__glyph {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.pd-disclaimer__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-disclaimer__line {
+  margin: 0;
+  max-width: var(--report-measure);
+  font: var(--type-body-sm);
+  color: var(--muted);
+}

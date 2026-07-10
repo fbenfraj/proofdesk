@@ -276,14 +276,6 @@
   color: var(--muted);
 }
 
-/* FR-16 automation disclaimer — verdicts appear here, so it must (AD-3). */
-.pd-readiness__disclaimer {
-  margin: var(--space-2) 0 0;
-  font: var(--type-body-sm);
-  color: var(--muted);
-  max-width: var(--report-measure);
-}
-
 /* Visually-hidden live region: announced by AT, invisible on screen. */
 .pd-sr-only {
   position: absolute;
