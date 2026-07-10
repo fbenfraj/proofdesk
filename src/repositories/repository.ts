@@ -280,6 +280,48 @@ export function createEvidenceItem(db: Db, values: NewEvidenceItem) {
     .get();
 }
 
+/** The result of one SSRF-hardened liveness check, ready to persist (Story 2.4).
+ *  `status` is the raw HTTP status as text (NULL when no response was received —
+ *  DNS/SSRF/transport failure). `checkedAt` is server-UTC (AD-11), stamped by the
+ *  shell, never the core. */
+export interface EvidenceLivenessUpdate {
+  label: LivenessLabel;
+  status?: string | null;
+  finalUrl?: string | null;
+  reason?: string | null;
+  checkedAt?: string;
+}
+
+/** Write the last-known four-value liveness label + its audit trail onto an
+ *  EvidenceItem (Story 2.4, AD-5/AD-7). This is the Epic-2 liveness writer the
+ *  schema comment foretold.
+ *
+ *  AD-18 GUARD: this updates ONLY the evidence_item liveness columns. A liveness
+ *  re-check may invalidate the *link*, but it must NEVER mutate or delete a
+ *  `HumanConfirmation` row, nor smear `machine` provenance onto a human-written
+ *  one — so this function deliberately touches no other table. There remains NO
+ *  update/delete path for `human_confirmation` anywhere in this repository.
+ *
+ *  Returns the updated row, or `undefined` when no EvidenceItem has that id. */
+export function updateEvidenceLiveness(
+  db: Db,
+  evidenceItemId: string,
+  update: EvidenceLivenessUpdate,
+) {
+  return db
+    .update(evidenceItem)
+    .set({
+      livenessLabel: update.label,
+      livenessStatus: update.status ?? null,
+      livenessFinalUrl: update.finalUrl ?? null,
+      livenessReason: update.reason ?? null,
+      livenessCheckedAt: update.checkedAt ?? new Date().toISOString(),
+    })
+    .where(eq(evidenceItem.id, evidenceItemId))
+    .returning()
+    .get();
+}
+
 export interface NewEvidenceLink {
   evidenceItemId: string;
   proofRequirementId: string;

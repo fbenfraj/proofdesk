@@ -42,6 +42,17 @@ export const evidenceItem = sqliteTable("evidence_item", {
    *  Two writers already in sight (AD-10): the seed sets it now, the Epic-2
    *  SSRF-hardened link-checker (Story 2.4) sets it for real links later. */
   livenessLabel: text("liveness_label", { enum: LIVENESS_LABEL }),
+  /** Audit trail for the last liveness check (Story 2.4, AD-7): the raw HTTP
+   *  status (as text; NULL when no response — DNS/SSRF/transport failures), the
+   *  final URL after manual redirect-following, a machine reason code
+   *  (e.g. `ssrf-blocked`, `nxdomain`, `redirect-loop`, `http-404`), and the
+   *  server-UTC time the check ran (AD-11). Stored so the four-value label is
+   *  auditable; NULL on rows the SSRF-hardened checker has never touched. These
+   *  columns are additive-nullable so the migration is safe on existing rows. */
+  livenessStatus: text("liveness_status"),
+  livenessFinalUrl: text("liveness_final_url"),
+  livenessReason: text("liveness_reason"),
+  livenessCheckedAt: text("liveness_checked_at"),
 });
 
 /** MatchSuggestion — the rule-based matcher's output (Epic 2). Deterministic,

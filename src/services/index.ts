@@ -12,6 +12,8 @@ export * from "./board";
 export * from "./claim-card";
 // Evidence Inbox ingest orchestration (Story 2.1).
 export * from "./evidence-ingest";
+// SSRF-hardened link-liveness check orchestration (Story 2.4).
+export * from "./evidence-liveness";
 // Deterministic Evidence→Deliverable matching + operator affirmation (Story 2.2).
 export * from "./evidence-matching";
 // "Page shows the Deliverable" HumanConfirmation write orchestration (Story 2.3).

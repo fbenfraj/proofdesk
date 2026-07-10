@@ -150,6 +150,9 @@ interface Strings {
       readonly dead: string;
       readonly blocked: string;
       readonly unresolved: string;
+      /** Verbatim inline prompt shown on a dead/unresolved link (Story 2.4,
+       *  UX-DR11/UX-DR29). The EN value is fixed by the spec — do not reword. */
+      readonly deadPrompt: string;
     };
     readonly requirementKind: Readonly<Record<string, string>>;
     readonly evidenceType: Readonly<Record<string, string>>;
@@ -321,6 +324,7 @@ const EN: Strings = {
       dead: "link doesn't resolve",
       blocked: "blocked — could not check (not gone)",
       unresolved: "couldn't be checked",
+      deadPrompt: "This link doesn't resolve. Capture an alternative.",
     },
     requirementKind: {
       "proof-of-posting": "Proof of posting",
@@ -495,6 +499,7 @@ const FR: Strings = {
       dead: "le lien ne répond pas",
       blocked: "bloqué — vérification impossible (pas disparu)",
       unresolved: "n’a pas pu être vérifié",
+      deadPrompt: "Ce lien ne répond pas. Capturez une alternative.",
     },
     requirementKind: {
       "proof-of-posting": "Preuve de publication",

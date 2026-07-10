@@ -293,4 +293,14 @@ describe("Human override & caveat copy (Story 1.9, EN|FR)", () => {
       expect(o.on).not.toBe(o.off);
     }
   });
+
+  test("the dead/unresolved capture prompt is the verbatim UX-DR29 string (Story 2.4)", () => {
+    // The EN copy is fixed by the spec — a reword is a regression.
+    expect(localeStrings("en").drawer.liveness.deadPrompt).toBe(
+      "This link doesn't resolve. Capture an alternative.",
+    );
+    expect(localeStrings("fr").drawer.liveness.deadPrompt).toBe(
+      "Ce lien ne répond pas. Capturez une alternative.",
+    );
+  });
 });

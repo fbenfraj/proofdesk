@@ -29,6 +29,13 @@
       "when": 1783691205246,
       "tag": "0003_redundant_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1783695076836,
+      "tag": "0004_loving_solo",
+      "breakpoints": true
     }
   ]
 }

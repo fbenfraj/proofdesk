@@ -414,6 +414,12 @@ function EvidenceRow({
 }) {
   const d = localeStrings(locale).drawer;
   const liveness = ev.livenessLabel ? d.liveness[ev.livenessLabel] : null;
+  // A dead OR unresolved link gets a mono DEAD/UNRESOLVED stamp + the verbatim
+  // "capture an alternative" prompt (Story 2.4, UX-DR11/UX-DR29). A `dead` link
+  // can never satisfy a link-type Proof Requirement — that gate lives in the pure
+  // core (AD-5); this is purely how the operator is told to re-capture.
+  const deadStamp =
+    ev.livenessLabel === "dead" ? "DEAD" : ev.livenessLabel === "unresolved" ? "UNRESOLVED" : null;
   // The "page shows the Deliverable" confirmation is offered ONLY on a
   // proof-of-posting (link-reachability) link that has no confirmation yet (AD-5,
   // AD-18). Screenshots/metrics are human assertions by nature and need no
@@ -432,6 +438,12 @@ function EvidenceRow({
         </span>
         {liveness ? <span className="pd-cc__ev-liveness">{liveness}</span> : null}
       </p>
+      {deadStamp ? (
+        <p className="pd-cc__ev-liveness-prompt">
+          <span className="pd-mono pd-cc__ev-liveness-stamp">{deadStamp}</span>
+          <span>{d.liveness.deadPrompt}</span>
+        </p>
+      ) : null}
       {ev.confirmations.map((c) => (
         <p key={`${c.confirmedBy}-${c.confirmedAt}`} className="pd-cc__ev-confirm">
           {d.confirmedBy(c.confirmedBy, c.confirmedAt)}
