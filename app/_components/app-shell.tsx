@@ -33,6 +33,26 @@ function SealMark() {
   );
 }
 
+// A small info mark for the standing disclaimer (UX-DR23). Inline SVG so it
+// never depends on a glyph font subset (avoids the ● ◐ ▲ tofu risk) and stays
+// decorative — the disclaimer text carries the meaning.
+function InfoMark() {
+  return (
+    <svg
+      className="pd-disclaimer__glyph"
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      role="presentation"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="8" cy="4.6" r="0.95" fill="currentColor" />
+      <path d="M8 7v5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // Desktop operator shell (UX-DR7): full-width top bar + persistent 214px rail +
 // main canvas + right-side drawer slot. Depth is fill-shade + hairline only.
 export function AppShell({ locale, children }: { locale: Locale; children: ReactNode }) {
@@ -82,10 +102,21 @@ export function AppShell({ locale, children }: { locale: Locale; children: React
           <Rail locale={locale} />
           <main className="pd-main">{children}</main>
           <ClaimDrawer locale={locale} agency={agency} />
-          {/* Reserved standing-disclaimer slot (AD-3 / AD-22) — populated where
-              verdicts appear, in later stories. Left empty by design here. */}
         </div>
       </ClaimDrawerProvider>
+
+      {/* Standing disclaimers (UX-DR23) — the shell wraps every operator surface
+          where a verdict appears (Board, Cockpit, Claim Card drawer), so this one
+          persistent footer satisfies "wherever verdicts appear" for all of them.
+          The FR-16 automation disclaimer (AD-3) and the DISTINCT legal disclaimer
+          (AD-22) both render — never one substituting for the other. */}
+      <footer className="pd-disclaimer">
+        <InfoMark />
+        <div className="pd-disclaimer__lines">
+          <p className="pd-disclaimer__line">{strings.automationDisclaimer}</p>
+          <p className="pd-disclaimer__line">{strings.legalDisclaimer}</p>
+        </div>
+      </footer>
     </div>
   );
 }

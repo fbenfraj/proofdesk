@@ -242,8 +242,9 @@ export function AuditCockpit({
         )}
 
         <p className="pd-readiness__caption">{t.readinessCaption}</p>
-        {/* FR-16 automation disclaimer — verdicts appear here (AD-3). */}
-        <p className="pd-readiness__disclaimer">{strings.automationDisclaimer}</p>
+        {/* The FR-16 automation disclaimer + the AD-22 legal disclaimer render
+            once as a standing footer in AppShell (Story 1.10), covering every
+            verdict surface — not repeated per-surface here. */}
 
         {/* aria-live status message: announced once at completion, on BOTH motion
             paths (UX-DR25 / WCAG 4.1.3). Not the visible counts, so the staged

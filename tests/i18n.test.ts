@@ -77,6 +77,41 @@ describe("locale catalog", () => {
   });
 });
 
+describe("Standing disclaimers (Story 1.10, FR-16 / AD-22, EN|FR)", () => {
+  test("EN automation disclaimer is the verbatim FR-16 string", () => {
+    expect(localeStrings("en").automationDisclaimer).toBe(
+      "ProofDesk verifies structured proof fields and link status. " +
+        "It does not automatically watch streams or validate viewer metrics.",
+    );
+  });
+
+  test("EN legal disclaimer is the verbatim AD-22 string, distinct from the automation one", () => {
+    const en = localeStrings("en");
+    expect(en.legalDisclaimer).toBe(
+      "Evidence management and reporting support — not legal advice or a guarantee of compliance.",
+    );
+    // AD-22: the legal disclaimer is a DISTINCT artifact, never a substitute.
+    expect(en.legalDisclaimer).not.toBe(en.automationDisclaimer);
+  });
+
+  test("both disclaimers resolve non-empty and distinct in EN and FR", () => {
+    for (const locale of LOCALES) {
+      const s = localeStrings(locale);
+      expect(s.automationDisclaimer.length, `${locale}:automation`).toBeGreaterThan(0);
+      expect(s.legalDisclaimer.length, `${locale}:legal`).toBeGreaterThan(0);
+      expect(s.legalDisclaimer).not.toBe(s.automationDisclaimer);
+    }
+  });
+
+  test("the load-bearing honesty phrases survive copy drift (FR-16, AD-22)", () => {
+    const en = localeStrings("en");
+    expect(en.automationDisclaimer).toContain(
+      "does not automatically watch streams or validate viewer metrics",
+    );
+    expect(en.legalDisclaimer).toContain("not legal advice or a guarantee of compliance");
+  });
+});
+
 describe("Campaign Board copy (Story 1.6, EN|FR no-truncation)", () => {
   test("every board string resolves non-empty in EN and FR", () => {
     for (const locale of LOCALES) {

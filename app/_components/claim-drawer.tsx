@@ -30,8 +30,11 @@ import { useClaimDrawer } from "./claim-drawer-context";
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 /** Selectors for the background regions inerted while the dialog is open
- *  (UX-DR24). The drawer + scrim are siblings of these, so they stay live. */
-const BACKGROUND_SELECTORS = [".pd-topbar", ".pd-rail", ".pd-main"];
+ *  (UX-DR24). The drawer + scrim are siblings of these, so they stay live. The
+ *  standing-disclaimer footer (Story 1.10) is also a background sibling outside
+ *  `.pd-workspace`, so it MUST be inerted too — otherwise browse-mode / SR users
+ *  could reach it outside the `aria-modal` dialog, breaking modal isolation. */
+const BACKGROUND_SELECTORS = [".pd-topbar", ".pd-rail", ".pd-main", ".pd-disclaimer"];
 
 export function ClaimDrawer({ locale, agency }: { locale: Locale; agency: string }) {
   const { selectedClaimId, close, stepToNext, hasNext } = useClaimDrawer();
