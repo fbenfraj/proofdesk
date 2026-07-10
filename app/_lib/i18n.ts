@@ -175,6 +175,27 @@ interface Strings {
     readonly listHeading: string;
     /** Card footer: the mono server timestamp, prefixed. */
     readonly capturedClientLabel: string;
+    /** Deterministic Evidence→Deliverable matching (Story 2.2, FR-6, UX-DR19).
+     *  Sober register — NO confidence/ranking/"most likely" copy anywhere. The
+     *  suggestion is a machine act; the confirmed match is operator-affirmed. */
+    readonly match: {
+      readonly helper: string;
+      readonly suggestedHeading: string;
+      readonly byRule: string;
+      readonly noMatchHeading: string;
+      readonly unassigned: string;
+      readonly unassignedReason: string;
+      readonly assignedHeading: string;
+      readonly confirm: string;
+      readonly reassign: string;
+      readonly assign: string;
+      readonly choose: string;
+      readonly undo: string;
+      readonly seeded: string;
+      readonly toastConfirmed: string;
+      readonly toastReassigned: string;
+      readonly deliverable: (creator: string, type: string) => string;
+    };
   };
 }
 
@@ -325,6 +346,25 @@ const EN: Strings = {
     empty: "No evidence yet. Add the first receipt above.",
     listHeading: "Collected evidence",
     capturedClientLabel: "Captured",
+    match: {
+      helper:
+        'ProofDesk suggests a match by rule. It never ranks or guesses a "most likely" — confirm or reassign. Items it can’t place stay Unassigned.',
+      suggestedHeading: "Suggested match",
+      byRule: "by rule",
+      noMatchHeading: "No automatic match",
+      unassigned: "Unassigned",
+      unassignedReason: "This evidence couldn’t be matched to a single Deliverable by rule.",
+      assignedHeading: "Matched",
+      confirm: "Confirm",
+      reassign: "Reassign",
+      assign: "Assign to…",
+      choose: "Choose a Deliverable…",
+      undo: "Undo",
+      seeded: "seeded",
+      toastConfirmed: "Match confirmed.",
+      toastReassigned: "Reassigned.",
+      deliverable: (creator, type) => `${creator} · ${type}`,
+    },
   },
 };
 
@@ -476,6 +516,25 @@ const FR: Strings = {
     empty: "Aucune preuve pour l’instant. Ajoutez le premier élément ci-dessus.",
     listHeading: "Preuves collectées",
     capturedClientLabel: "Capturé",
+    match: {
+      helper:
+        "ProofDesk suggère une correspondance par règle. Il ne classe jamais et ne devine pas une « plus probable » — confirmez ou réattribuez. Les éléments qu’il ne peut placer restent Non attribués.",
+      suggestedHeading: "Correspondance suggérée",
+      byRule: "par règle",
+      noMatchHeading: "Aucune correspondance automatique",
+      unassigned: "Non attribué",
+      unassignedReason: "Cette preuve n’a pas pu être associée à un seul Livrable par règle.",
+      assignedHeading: "Associé",
+      confirm: "Confirmer",
+      reassign: "Réattribuer",
+      assign: "Attribuer à…",
+      choose: "Choisir un Livrable…",
+      undo: "Annuler",
+      seeded: "amorcé",
+      toastConfirmed: "Correspondance confirmée.",
+      toastReassigned: "Réattribué.",
+      deliverable: (creator, type) => `${creator} · ${type}`,
+    },
   },
 };
 

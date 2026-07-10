@@ -17,7 +17,7 @@
 
 import { z } from "zod";
 import { getDb } from "@/src/repositories";
-import { ingestEvidence } from "@/src/services";
+import { ingestEvidence, readMatchState, runMatchForEvidenceItem } from "@/src/services";
 import { getStorage } from "@/src/storage";
 
 /** Upload size cap. The spine prescribes none for ingest; this is a sane bound
@@ -112,5 +112,11 @@ export async function POST(request: Request): Promise<Response> {
   if (!view) {
     return Response.json({ error: "Campaign not found" }, { status: 404 });
   }
-  return Response.json(view, { status: 201 });
+  // Deterministic matching runs at ingest so every receipt gets its single
+  // MatchSuggestion (Story 2.2, FR-6/AD-17) — a suggestion ONLY, never an
+  // EvidenceLink. Bundled into the response so the inbox renders the suggested
+  // match (or Unassigned) immediately, without a reload.
+  runMatchForEvidenceItem(db, view.id);
+  const match = readMatchState(db, view.id);
+  return Response.json({ ...view, match }, { status: 201 });
 }
