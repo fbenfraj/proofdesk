@@ -364,6 +364,45 @@ test.describe("Evidence Inbox ingest (Story 2.1)", () => {
   });
 });
 
+test.describe("Deterministic matching & operator affirmation (Story 2.2)", () => {
+  test("a matching link is suggested by rule, then Confirmed into an operator match", async ({
+    page,
+  }) => {
+    await page.goto("/evidence-inbox");
+    await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
+
+    // Paste a link that is a sub-path of PixelForge's D1 platform URL — the
+    // deterministic URL rule resolves it to exactly one Deliverable.
+    const url = `https://twitch.tv/pixelforge/segment-aurora/vod-${Date.now()}`;
+    await page.getByRole("radio", { name: "Paste a link" }).check();
+    await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
+    await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
+
+    await expect(async () => {
+      await page.getByRole("button", { name: "Add to Inbox" }).click();
+      await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+
+    const card = page.locator(".pd-ev", { hasText: url });
+    // The suggested-match block shows the ONE rule-matched Deliverable + Creator,
+    // with no confidence/ranking — just the deterministic suggestion.
+    await expect(card.locator(".pd-match__cap")).toContainText("Suggested match");
+    await expect(card.locator(".pd-match__target")).toContainText(
+      "PixelForge · Twitch sponsor segment",
+    );
+
+    // Confirm affirms it — writing the operator link that (alone) enters the audit.
+    await expect(async () => {
+      await card.getByRole("button", { name: "Confirm" }).click();
+      await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+    await expect(card.locator(".pd-match__cap")).toContainText("Matched");
+    await expect(card.locator(".pd-match__target")).toContainText(
+      "PixelForge · Twitch sponsor segment",
+    );
+  });
+});
+
 test("health route responds ok behind basic auth", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.ok()).toBeTruthy();

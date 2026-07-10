@@ -45,12 +45,28 @@ type ProofShape =
   | "yellow-attestation" // confirmed human attestation, NO live link → intended Yellow
   | "red-absent"; // no evidence at all                  → intended Red
 
+/** Creator platform handles (no leading `@`, lower-case) — the deterministic
+ *  matcher's handle key (Story 2.2, FR-6). A matching key ONLY, never a
+ *  confidence signal (AD-17). */
+const CREATOR_HANDLES: Readonly<Record<string, string>> = {
+  PixelForge: "pixelforge",
+  NovaStream: "novastream",
+  EmberPlays: "emberplays",
+  "Lise Moreau": "lisemoreau",
+  "Théo Blanc": "theoblanc",
+  "Camille Dubois": "camilledubois",
+};
+
 interface DeliverableSpec {
   key: string; // "D1".."D9" — traceability only
   lane: "twitch" | "broader";
   creator: string;
   type: string;
   shape: ProofShape;
+  /** The canonical platform URL this Deliverable lives at — the matcher's URL
+   *  key (Story 2.2, FR-6). Distinct per Deliverable so a pasted link resolves
+   *  to exactly one (never fetched here — liveness is Story 2.4). */
+  platformUrl: string;
   /** Optional supporting requirement (present = satisfied, missing → caps at
    *  Yellow in 1.5). Always a Human assertion (AD-19). */
   supporting?: "reach-metric" | "segment-timestamp";
@@ -68,6 +84,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "PixelForge",
     type: "Twitch sponsor segment",
     shape: "green-link",
+    platformUrl: "https://twitch.tv/pixelforge/segment-aurora",
     supporting: "reach-metric",
     intendedVerdict: "green",
     day: "2026-05-12",
@@ -78,6 +95,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "NovaStream",
     type: "Twitch sponsor segment",
     shape: "green-link",
+    platformUrl: "https://twitch.tv/novastream/segment-aurora",
     supporting: "reach-metric",
     intendedVerdict: "green",
     day: "2026-05-13",
@@ -88,6 +106,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "PixelForge",
     type: "Twitch highlight clip",
     shape: "green-link",
+    platformUrl: "https://twitch.tv/pixelforge/clip/aurora-highlight",
     intendedVerdict: "green",
     day: "2026-05-14",
   },
@@ -97,6 +116,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "EmberPlays",
     type: "Twitch sponsor segment",
     shape: "yellow-attestation",
+    platformUrl: "https://twitch.tv/emberplays/segment-aurora",
     supporting: "segment-timestamp",
     intendedVerdict: "yellow",
     day: "2026-05-15",
@@ -107,6 +127,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "Lise Moreau",
     type: "Instagram Reel",
     shape: "green-link",
+    platformUrl: "https://instagram.com/lisemoreau/reel/aurora-1",
     supporting: "reach-metric",
     intendedVerdict: "green",
     day: "2026-05-16",
@@ -117,6 +138,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "Théo Blanc",
     type: "TikTok video",
     shape: "green-link",
+    platformUrl: "https://tiktok.com/@theoblanc/video/aurora-1",
     intendedVerdict: "green",
     day: "2026-05-17",
   },
@@ -126,6 +148,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "Lise Moreau",
     type: "Instagram Reel",
     shape: "green-link",
+    platformUrl: "https://instagram.com/lisemoreau/reel/aurora-2",
     intendedVerdict: "green",
     day: "2026-05-18",
   },
@@ -135,6 +158,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "Camille Dubois",
     type: "Instagram Story",
     shape: "red-absent",
+    platformUrl: "https://instagram.com/camilledubois/story/aurora-1",
     intendedVerdict: "red",
     day: "2026-05-19",
   },
@@ -144,6 +168,7 @@ const PLAN: readonly DeliverableSpec[] = [
     creator: "Théo Blanc",
     type: "Sponsored Instagram post",
     shape: "green-link",
+    platformUrl: "https://instagram.com/theoblanc/p/aurora-1",
     supporting: "reach-metric",
     intendedVerdict: "green",
     day: "2026-05-20",
@@ -204,7 +229,7 @@ export function seedDemoCampaign(db: Db): SeedSummary {
   const creatorId = (name: string): string => {
     const existing = creatorIds.get(name);
     if (existing) return existing;
-    const created = createCreator(db, campaign.id, name);
+    const created = createCreator(db, campaign.id, name, CREATOR_HANDLES[name]);
     creatorIds.set(name, created.id);
     return created.id;
   };
@@ -233,6 +258,7 @@ function seedDeliverable(
     creatorId,
     type: spec.type,
     claimedStatus: CLAIMED_STATUS,
+    platformUrl: spec.platformUrl,
   });
   const claim = createClaim(db, deliverable.id);
 

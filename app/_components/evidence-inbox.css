@@ -181,3 +181,127 @@
   font: var(--type-body-sm);
   color: var(--muted);
 }
+
+/* --- Deterministic match block (Story 2.2, UX-DR19) --------------------- */
+/* A suggestion is a MACHINE act shown WITHOUT confidence/ranking. Kept off the
+   R/Y/G status scale — labels are muted/ink on hairline, never an alarm colour.
+   Decision buttons are the shared quiet outline (never filled). */
+.pd-inbox__helper {
+  margin: 0 0 var(--space-3);
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+.pd-match {
+  margin-top: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pd-match__cap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+}
+
+/* Seeded tag — an honest "seeded" marker (AD-9); muted, never "smart match". */
+.pd-match__seeded {
+  font: 600 10px / 1.2 var(--font-chrome);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 1px var(--space-2);
+}
+
+.pd-match__target {
+  font: var(--type-serif-body);
+  color: var(--ink);
+}
+
+/* The inspectable rule that fired ("matched by URL pattern …") — never a score. */
+.pd-match__rule {
+  font: var(--type-mono);
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.pd-match__reason {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+/* Unassigned stamp — a quiet, non-alarming marker (UX-DR19: not an error). */
+.pd-match__stamp {
+  align-self: flex-start;
+  font: 700 10.5px / 1.2 var(--font-chrome);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+
+.pd-match__controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pd-match__picker {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-match__picker-label {
+  color: var(--muted);
+}
+
+.pd-match__select {
+  font: 600 12px / 1.2 var(--font-chrome);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+/* Undo toast (NFR-D7): immediate action + reversal, never a confirm dialog. */
+.pd-inbox__toast {
+  position: sticky;
+  bottom: var(--space-4);
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  font: var(--type-body-sm);
+  color: var(--ink);
+}
+
+.pd-inbox__toast-undo {
+  font: 600 12px / 1.2 var(--font-chrome);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+}

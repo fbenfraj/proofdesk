@@ -9,4 +9,10 @@ export const creator = sqliteTable("creator", {
     .notNull()
     .references(() => campaign.id),
   name: text("name").notNull(),
+  /** The creator's platform handle (no leading `@`, lower-case), e.g.
+   *  `pixelforge`. Used by the deterministic Evidence→Deliverable matcher
+   *  (Story 2.2, FR-6): a handle appearing in ingested evidence maps to this
+   *  Creator. NULL when no handle is known. It is a matching key ONLY — never a
+   *  confidence signal (AD-17). */
+  handle: text("handle"),
 });

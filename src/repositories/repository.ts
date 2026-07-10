@@ -191,13 +191,19 @@ export function updateCampaign(
 
 // --- Minimal parent chain (so tests can reach a Claim) --------------------
 
-export function createCreator(db: Db, campaignId: string, name: string) {
-  return db.insert(creator).values({ campaignId, name }).returning().get();
+export function createCreator(db: Db, campaignId: string, name: string, handle?: string) {
+  return db.insert(creator).values({ campaignId, name, handle }).returning().get();
 }
 
 export function createDeliverable(
   db: Db,
-  values: { campaignId: string; creatorId: string; type: string; claimedStatus: string },
+  values: {
+    campaignId: string;
+    creatorId: string;
+    type: string;
+    claimedStatus: string;
+    platformUrl?: string;
+  },
 ) {
   // The Creator must belong to the same Campaign; otherwise the Deliverable's
   // parent chain would split across campaigns and its Claims/ProofRequirements
@@ -462,6 +468,154 @@ export function countMatchSuggestions(db: Db, campaignId: string): number {
     .innerJoin(evidenceItem, eq(matchSuggestion.evidenceItemId, evidenceItem.id))
     .where(eq(evidenceItem.campaignId, campaignId))
     .all().length;
+}
+
+// --- Story 2.2: deterministic matching writes + reads (FR-6, AD-17) --------
+//     The matcher writes a MatchSuggestion ONLY; only an operator affirmation
+//     writes an `EvidenceLink source=operator`, and ONLY those enter the
+//     AuditSnapshot (see listOperatorEvidenceForClaim). A MatchSuggestion can
+//     never lift a verdict; the core never sees suggestions.
+
+export interface NewMatchSuggestion {
+  evidenceItemId: string;
+  proofRequirementId: string;
+  /** The deterministic rule that fired (auditable provenance, NOT a score). */
+  rule: string;
+}
+
+/** Write the matcher's MatchSuggestion (deterministic; no score/rank — AD-17).
+ *  Rejects a cross-campaign suggestion (item vs requirement) as createEvidenceLink
+ *  does (AD-9), though the row itself carries no data_origin. */
+export function createMatchSuggestion(db: Db, values: NewMatchSuggestion) {
+  const itemCampaignId = campaignIdOfEvidenceItem(db, values.evidenceItemId);
+  const reqCampaignId = campaignIdOfProofRequirement(db, values.proofRequirementId);
+  if (itemCampaignId !== reqCampaignId) {
+    throw new MixedOriginError(
+      `Cross-campaign suggestion rejected: evidence item in ${itemCampaignId}, requirement in ${reqCampaignId} (AD-9)`,
+    );
+  }
+  return db
+    .insert(matchSuggestion)
+    .values({
+      evidenceItemId: values.evidenceItemId,
+      proofRequirementId: values.proofRequirementId,
+      rule: values.rule,
+    })
+    .returning()
+    .get();
+}
+
+/** Remove all MatchSuggestions for an EvidenceItem — the matcher keeps at most
+ *  one (idempotent re-match), and affirmation consumes it. */
+export function deleteMatchSuggestionsForEvidence(db: Db, evidenceItemId: string): void {
+  db.delete(matchSuggestion).where(eq(matchSuggestion.evidenceItemId, evidenceItemId)).run();
+}
+
+/** The 0..1 MatchSuggestion for an item, joined to its Deliverable + Creator and
+ *  carrying the fired rule — the inbox suggested-match card. Lowest id wins
+ *  deterministically if several exist. Read-only. */
+export function getMatchSuggestionForEvidence(db: Db, evidenceItemId: string) {
+  return db
+    .select({
+      matchSuggestionId: matchSuggestion.id,
+      proofRequirementId: matchSuggestion.proofRequirementId,
+      rule: matchSuggestion.rule,
+      deliverableId: deliverable.id,
+      creatorName: creator.name,
+      deliverableType: deliverable.type,
+    })
+    .from(matchSuggestion)
+    .innerJoin(proofRequirement, eq(matchSuggestion.proofRequirementId, proofRequirement.id))
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(eq(matchSuggestion.evidenceItemId, evidenceItemId))
+    .orderBy(asc(matchSuggestion.id))
+    .get();
+}
+
+/** The 0..1 operator EvidenceLink assignment for an item, joined to its
+ *  Deliverable + Creator. `suggested` links are excluded (AD-17). Read-only. */
+export function getOperatorAssignmentForEvidence(db: Db, evidenceItemId: string) {
+  return db
+    .select({
+      evidenceLinkId: evidenceLink.id,
+      proofRequirementId: evidenceLink.proofRequirementId,
+      deliverableId: deliverable.id,
+      creatorName: creator.name,
+      deliverableType: deliverable.type,
+    })
+    .from(evidenceLink)
+    .innerJoin(proofRequirement, eq(evidenceLink.proofRequirementId, proofRequirement.id))
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(
+      and(eq(evidenceLink.evidenceItemId, evidenceItemId), eq(evidenceLink.source, "operator")),
+    )
+    .orderBy(asc(evidenceLink.id))
+    .get();
+}
+
+/** Delete an item's `source=operator` EvidenceLinks — the Reassign/Unassign
+ *  reversal (NFR-D7), and how assign keeps exactly one operator link per item.
+ *  `suggested` links are never touched (AD-17). */
+export function deleteOperatorEvidenceLinksForItem(db: Db, evidenceItemId: string): void {
+  db.delete(evidenceLink)
+    .where(
+      and(eq(evidenceLink.evidenceItemId, evidenceItemId), eq(evidenceLink.source, "operator")),
+    )
+    .run();
+}
+
+export interface MatchCandidateRow {
+  deliverableId: string;
+  creatorName: string;
+  creatorHandle: string | null;
+  deliverableType: string;
+  platformUrl: string | null;
+}
+
+/** All Deliverables in a Campaign with their two matcher keys (creator handle,
+ *  platform URL) — the deterministic matcher's candidate set (Story 2.2). One
+ *  row per Deliverable, ordered deterministically by id. Read-only. */
+export function listDeliverableMatchCandidates(db: Db, campaignId: string): MatchCandidateRow[] {
+  return db
+    .select({
+      deliverableId: deliverable.id,
+      creatorName: creator.name,
+      creatorHandle: creator.handle,
+      deliverableType: deliverable.type,
+      platformUrl: deliverable.platformUrl,
+    })
+    .from(deliverable)
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(eq(deliverable.campaignId, campaignId))
+    .orderBy(asc(deliverable.id))
+    .all();
+}
+
+/** The ProofRequirement an affirmed match links to for a Deliverable (blocker
+ *  #2 — the ONE place this decision lives). A Deliverable has 1..* requirements;
+ *  a link/URL receipt attaches to the canonical proof-of-posting requirement.
+ *  Precedence: kind `proof-of-posting` → else the first `critical` → else the
+ *  first (deterministic by id). Returns undefined for a Deliverable with no
+ *  requirements (or an unknown id). */
+export function matchTargetRequirementId(db: Db, deliverableId: string): string | undefined {
+  const reqs = db
+    .select({
+      id: proofRequirement.id,
+      kind: proofRequirement.kind,
+      criticality: proofRequirement.criticality,
+    })
+    .from(proofRequirement)
+    .where(eq(proofRequirement.deliverableId, deliverableId))
+    .orderBy(asc(proofRequirement.id))
+    .all();
+  if (reqs.length === 0) return undefined;
+  return (
+    reqs.find((r) => r.kind === "proof-of-posting")?.id ??
+    reqs.find((r) => r.criticality === "critical")?.id ??
+    reqs[0].id
+  );
 }
 
 // --- Campaign Board read (Story 1.6) --------------------------------------

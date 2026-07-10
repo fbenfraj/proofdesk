@@ -4,34 +4,46 @@ import "./evidence-inbox.css";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { INTAKE_KIND, type IntakeKind } from "@/src/schema/enums";
-import type { EvidenceItemView } from "@/src/services";
+import type { DeliverableOption, InboxItemView, MatchState } from "@/src/services";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { ProvenanceChip } from "./provenance-chip";
 
-// The Evidence Inbox surface (Story 2.1, FR-5, UX Evidence-Inbox intake). Single
+// The Evidence Inbox surface (Story 2.1 ingest + Story 2.2 matching). Single
 // intake surface for the four kinds; on add it POSTs multipart/form-data to
-// /api/evidence and prepends the returned view. Decision/submit buttons are quiet
-// outline + focus ring (the inbox mock's filled fills are superseded by the
-// spine). No confidence, no ranking, no "smart" affordance — matching lands in
-// Story 2.2. Provenance is shown via the shared cool/warm chip, off the R/Y/G
-// scale. `router.refresh()` re-reads the server rail-badge count after an add.
+// /api/evidence and prepends the returned view — which now carries the item's
+// deterministic match state (a suggested Deliverable, or Unassigned).
+//
+// Matching honesty (FR-6, AD-17, UX-DR19): a suggestion is a MACHINE act shown
+// with NO confidence score, NO ranking, NO "most likely". The operator Confirms
+// (affirms the suggested Deliverable) or Reassigns (picks another) — writing an
+// operator EvidenceLink, the only kind that enters the audit. Decision buttons
+// are quiet outline (the spine supersedes the mock's filled fills). Actions are
+// immediate — no confirmation dialog — and reversible via Undo (NFR-D7).
 
 const ACCEPT_IMAGE = "image/png,image/jpeg,image/webp";
+
+/** A transient undo affordance after an affirmation (NFR-D7). */
+interface Toast {
+  itemId: string;
+  message: string;
+}
 
 export function EvidenceInbox({
   locale,
   campaignId,
   initialItems,
+  deliverables,
 }: {
   locale: Locale;
   campaignId: string;
-  initialItems: EvidenceItemView[];
+  initialItems: InboxItemView[];
+  deliverables: DeliverableOption[];
 }) {
   const s = localeStrings(locale);
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [items, setItems] = useState<EvidenceItemView[]>(initialItems);
+  const [items, setItems] = useState<InboxItemView[]>(initialItems);
   const [kind, setKind] = useState<IntakeKind>("url");
   const [type, setType] = useState("");
   const [url, setUrl] = useState("");
@@ -39,6 +51,7 @@ export function EvidenceInbox({
   const [clientCaptured, setClientCaptured] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
 
   const isFileKind = kind === "image" || kind === "metric";
 
@@ -48,6 +61,10 @@ export function EvidenceInbox({
     setNote("");
     setClientCaptured("");
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function setItemMatch(itemId: string, match: MatchState) {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, match } : it)));
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -72,7 +89,7 @@ export function EvidenceInbox({
         setError(s.inbox.error);
         return;
       }
-      const view = (await res.json()) as EvidenceItemView;
+      const view = (await res.json()) as InboxItemView;
       setItems((prev) => [view, ...prev]);
       resetForm();
       // Refresh the server-rendered rail-badge count.
@@ -81,6 +98,46 @@ export function EvidenceInbox({
       setError(s.inbox.error);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  /** Affirm/reassign: POST an operator link; update the card + offer Undo. */
+  async function assign(itemId: string, deliverableId: string, message: string) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/evidence/${itemId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliverableId }),
+      });
+      if (!res.ok) {
+        setError(s.inbox.error);
+        return;
+      }
+      const { match } = (await res.json()) as { match: MatchState };
+      setItemMatch(itemId, match);
+      setToast({ itemId, message });
+      router.refresh();
+    } catch {
+      setError(s.inbox.error);
+    }
+  }
+
+  /** Undo an assignment: drop the operator link, restore the suggestion. */
+  async function unassign(itemId: string) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/evidence/${itemId}/unassign`, { method: "POST" });
+      if (!res.ok) {
+        setError(s.inbox.error);
+        return;
+      }
+      const { match } = (await res.json()) as { match: MatchState };
+      setItemMatch(itemId, match);
+      setToast(null);
+      router.refresh();
+    } catch {
+      setError(s.inbox.error);
     }
   }
 
@@ -184,21 +241,62 @@ export function EvidenceInbox({
         ) : null}
       </form>
 
+      <p className="pd-inbox__helper">{s.inbox.match.helper}</p>
+
       <h2 className="label-caps pd-inbox__list-heading">{s.inbox.listHeading}</h2>
       {items.length === 0 ? (
         <p className="pd-inbox__empty">{s.inbox.empty}</p>
       ) : (
         <ul className="pd-inbox__list">
           {items.map((item) => (
-            <EvidenceCard key={item.id} item={item} locale={locale} />
+            <EvidenceCard
+              key={item.id}
+              item={item}
+              deliverables={deliverables}
+              locale={locale}
+              onConfirm={(deliverableId) =>
+                assign(item.id, deliverableId, s.inbox.match.toastConfirmed)
+              }
+              onReassign={(deliverableId) =>
+                assign(item.id, deliverableId, s.inbox.match.toastReassigned)
+              }
+              onUndo={() => unassign(item.id)}
+            />
           ))}
         </ul>
       )}
+
+      {toast ? (
+        <div className="pd-inbox__toast" role="status">
+          <span>{toast.message}</span>
+          <button
+            type="button"
+            className="pd-inbox__toast-undo"
+            onClick={() => unassign(toast.itemId)}
+          >
+            {s.inbox.match.undo}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function EvidenceCard({ item, locale }: { item: EvidenceItemView; locale: Locale }) {
+function EvidenceCard({
+  item,
+  deliverables,
+  locale,
+  onConfirm,
+  onReassign,
+  onUndo,
+}: {
+  item: InboxItemView;
+  deliverables: DeliverableOption[];
+  locale: Locale;
+  onConfirm: (deliverableId: string) => void;
+  onReassign: (deliverableId: string) => void;
+  onUndo: () => void;
+}) {
   const s = localeStrings(locale);
   return (
     <li className="pd-ev">
@@ -221,6 +319,16 @@ function EvidenceCard({ item, locale }: { item: EvidenceItemView; locale: Locale
         ) : null}
       </div>
 
+      <MatchBlock
+        match={item.match}
+        seeded={item.dataOrigin === "seeded"}
+        deliverables={deliverables}
+        locale={locale}
+        onConfirm={onConfirm}
+        onReassign={onReassign}
+        onUndo={onUndo}
+      />
+
       <div className="pd-ev__foot">
         <ProvenanceChip provenance={item.machineOrHuman} locale={locale} />
         {item.clientCapturedAt ? (
@@ -231,5 +339,149 @@ function EvidenceCard({ item, locale }: { item: EvidenceItemView; locale: Locale
         ) : null}
       </div>
     </li>
+  );
+}
+
+/** The deterministic-match block (UX-DR19). Three states: suggested (Confirm /
+ *  Reassign), unassigned (Assign-to-Deliverable), assigned (Reassign / Undo). No
+ *  confidence, no ranking anywhere — a suggestion shows only the one rule-matched
+ *  Deliverable and the rule that fired (inspectable). */
+function MatchBlock({
+  match,
+  seeded,
+  deliverables,
+  locale,
+  onConfirm,
+  onReassign,
+  onUndo,
+}: {
+  match: MatchState;
+  seeded: boolean;
+  deliverables: DeliverableOption[];
+  locale: Locale;
+  onConfirm: (deliverableId: string) => void;
+  onReassign: (deliverableId: string) => void;
+  onUndo: () => void;
+}) {
+  const m = localeStrings(locale).inbox.match;
+
+  if (match.status === "suggested") {
+    const { suggestion } = match;
+    return (
+      <div className="pd-match">
+        <span className="label-caps pd-match__cap">
+          {m.suggestedHeading} · {m.byRule}
+          {seeded ? <span className="pd-match__seeded">{m.seeded}</span> : null}
+        </span>
+        <span className="pd-match__target">
+          {m.deliverable(suggestion.creatorName, suggestion.deliverableType)}
+        </span>
+        {suggestion.rule ? <span className="pd-match__rule">{suggestion.rule}</span> : null}
+        <div className="pd-match__controls">
+          <button
+            type="button"
+            className="pd-btn-outline pd-match__confirm"
+            onClick={() => onConfirm(suggestion.deliverableId)}
+          >
+            {m.confirm}
+          </button>
+          <DeliverablePicker
+            label={m.reassign}
+            deliverables={deliverables}
+            onPick={onReassign}
+            locale={locale}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (match.status === "assigned") {
+    const { assignment } = match;
+    return (
+      <div className="pd-match pd-match--assigned">
+        <span className="label-caps pd-match__cap">{m.assignedHeading}</span>
+        <span className="pd-match__target">
+          {m.deliverable(assignment.creatorName, assignment.deliverableType)}
+        </span>
+        <div className="pd-match__controls">
+          <DeliverablePicker
+            label={m.reassign}
+            deliverables={deliverables}
+            onPick={onReassign}
+            locale={locale}
+          />
+          <button type="button" className="pd-btn-outline" onClick={onUndo}>
+            {m.undo}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Unassigned — no guess is forced.
+  return (
+    <div className="pd-match pd-match--unassigned">
+      <span className="label-caps pd-match__cap">{m.noMatchHeading}</span>
+      <span className="pd-match__stamp">{m.unassigned}</span>
+      <p className="pd-match__reason">{m.unassignedReason}</p>
+      <div className="pd-match__controls">
+        <DeliverablePicker
+          label={m.assign}
+          deliverables={deliverables}
+          onPick={onReassign}
+          locale={locale}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** A native <select> Deliverable picker (grouped by Creator) — accessible, no
+ *  modal. Picking one acts immediately (no confirm dialog, NFR-D7). */
+function DeliverablePicker({
+  label,
+  deliverables,
+  onPick,
+  locale,
+}: {
+  label: string;
+  deliverables: DeliverableOption[];
+  onPick: (deliverableId: string) => void;
+  locale: Locale;
+}) {
+  const m = localeStrings(locale).inbox.match;
+  // Group options by Creator for the picker.
+  const byCreator = new Map<string, DeliverableOption[]>();
+  for (const d of deliverables) {
+    const list = byCreator.get(d.creatorName) ?? [];
+    list.push(d);
+    byCreator.set(d.creatorName, list);
+  }
+  return (
+    <label className="pd-match__picker">
+      <span className="label-caps pd-match__picker-label">{label}</span>
+      <select
+        className="pd-match__select"
+        defaultValue=""
+        onChange={(e) => {
+          if (e.target.value) onPick(e.target.value);
+          e.target.value = "";
+        }}
+      >
+        <option value="" disabled>
+          {m.choose}
+        </option>
+        {[...byCreator.entries()].map(([creator, list]) => (
+          <optgroup key={creator} label={creator}>
+            {list.map((d) => (
+              <option key={d.deliverableId} value={d.deliverableId}>
+                {d.deliverableType}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </label>
   );
 }

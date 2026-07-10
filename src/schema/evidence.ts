@@ -56,6 +56,13 @@ export const matchSuggestion = sqliteTable("match_suggestion", {
   proofRequirementId: text("proof_requirement_id")
     .notNull()
     .references(() => proofRequirement.id),
+  /** The deterministic rule that fired, e.g. `url:twitch.tv/pixelforge/…` or
+   *  `handle:@pixelforge`. This is auditable PROVENANCE — it lets the operator
+   *  inspect exactly why the match was suggested ("matched by URL pattern"). It
+   *  is NOT a confidence/score/rank (there is deliberately none — AD-17). The
+   *  `''` default keeps the additive migration safe on any DB that already holds
+   *  match_suggestion rows (the matcher always writes a real rule at runtime). */
+  rule: text("rule").notNull().default(""),
   // Intentionally NO confidence / score / rank column (AD-17).
 });
 
