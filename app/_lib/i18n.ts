@@ -44,6 +44,8 @@ interface Strings {
   readonly cockpitLead: string;
   readonly surfaceComingSoon: string;
   readonly railBadgeEmpty: string;
+  /** Rail count badge title when N unassigned items exist (UX rail-badge). */
+  readonly railBadgeCount: (n: number) => string;
   readonly langToggleAria: string;
   /** Reserved standing-disclaimer slot copy — rendered where verdicts appear
    * (AD-3 / AD-22). Present as a token so later stories wire it, not the shell. */
@@ -143,6 +145,37 @@ interface Strings {
     readonly requirementKind: Readonly<Record<string, string>>;
     readonly evidenceType: Readonly<Record<string, string>>;
   };
+  /** Evidence Inbox ingest copy (Story 2.1, FR-5, UX Evidence-Inbox intake).
+   *  Sober/audit register (UX-DR29) — no hype, no "smart"/confidence language.
+   *  `intakeKind` labels name the four intake choices; the operator-editable
+   *  `type` label is a separate free-text field. FR "Boîte à preuves" is the
+   *  locked glossary term; controls size-to-content (no fixed widths, UX-DR26). */
+  readonly inbox: {
+    readonly title: string;
+    readonly lead: string;
+    readonly addHeading: string;
+    readonly intakeKind: {
+      readonly url: string;
+      readonly image: string;
+      readonly text: string;
+      readonly metric: string;
+    };
+    readonly urlLabel: string;
+    readonly urlPlaceholder: string;
+    readonly noteLabel: string;
+    readonly notePlaceholder: string;
+    readonly fileLabel: string;
+    readonly typeLabel: string;
+    readonly typePlaceholder: string;
+    readonly clientCapturedLabel: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly error: string;
+    readonly empty: string;
+    readonly listHeading: string;
+    /** Card footer: the mono server timestamp, prefixed. */
+    readonly capturedClientLabel: string;
+  };
 }
 
 /** The numbers the aria-live audit-complete announcement is built from. */
@@ -171,6 +204,7 @@ const EN: Strings = {
   surfaceComingSoon:
     "This surface is part of the persistent shell. Its content arrives in a later story.",
   railBadgeEmpty: "No campaign loaded",
+  railBadgeCount: (n) => `${n} evidence ${n === 1 ? "item" : "items"} in the Inbox`,
   langToggleAria: "Switch language",
   automationDisclaimer:
     "ProofDesk verifies structured proof fields and link status. It does not automatically watch streams or validate viewer metrics.",
@@ -267,6 +301,31 @@ const EN: Strings = {
       "metric-screenshot": "Metric screenshot",
     },
   },
+  inbox: {
+    title: "Evidence Inbox",
+    lead: "Drop any messy evidence here — nothing lands in a pile nobody sorts later.",
+    addHeading: "Add evidence",
+    intakeKind: {
+      url: "Paste a link",
+      image: "Upload a screenshot",
+      text: "Paste a note",
+      metric: "Upload a metric screenshot",
+    },
+    urlLabel: "Link",
+    urlPlaceholder: "https://…",
+    noteLabel: "Note",
+    notePlaceholder: "Paste a message or note…",
+    fileLabel: "Choose file",
+    typeLabel: "Type label",
+    typePlaceholder: "e.g. Twitch sponsor segment",
+    clientCapturedLabel: "Captured at (optional)",
+    submit: "Add to Inbox",
+    submitting: "Adding…",
+    error: "Couldn't add this evidence. Try again.",
+    empty: "No evidence yet. Add the first receipt above.",
+    listHeading: "Collected evidence",
+    capturedClientLabel: "Captured",
+  },
 };
 
 const FR: Strings = {
@@ -289,6 +348,7 @@ const FR: Strings = {
   surfaceComingSoon:
     "Cette surface fait partie de l’interface persistante. Son contenu arrivera dans une prochaine étape.",
   railBadgeEmpty: "Aucune campagne chargée",
+  railBadgeCount: (n) => `${n} élément${n === 1 ? "" : "s"} de preuve dans la Boîte`,
   langToggleAria: "Changer de langue",
   automationDisclaimer:
     "ProofDesk vérifie les champs de preuve structurés et l’état des liens. Il ne visionne pas automatiquement les diffusions et ne valide pas les métriques d’audience.",
@@ -390,6 +450,32 @@ const FR: Strings = {
       "disclosure-screenshot": "Capture de divulgation",
       "metric-screenshot": "Capture de métrique",
     },
+  },
+  inbox: {
+    // Locked FR glossary term (EXPERIENCE.md#L77): Evidence Inbox → Boîte à preuves.
+    title: "Boîte à preuves",
+    lead: "Déposez ici toute preuve, même en vrac — rien ne finit dans une pile que personne ne trie.",
+    addHeading: "Ajouter une preuve",
+    intakeKind: {
+      url: "Coller un lien",
+      image: "Téléverser une capture d’écran",
+      text: "Coller une note",
+      metric: "Téléverser une capture de métrique",
+    },
+    urlLabel: "Lien",
+    urlPlaceholder: "https://…",
+    noteLabel: "Note",
+    notePlaceholder: "Collez un message ou une note…",
+    fileLabel: "Choisir un fichier",
+    typeLabel: "Étiquette de type",
+    typePlaceholder: "ex. Segment sponsorisé Twitch",
+    clientCapturedLabel: "Capturé le (facultatif)",
+    submit: "Ajouter à la Boîte",
+    submitting: "Ajout…",
+    error: "Impossible d’ajouter cette preuve. Réessayez.",
+    empty: "Aucune preuve pour l’instant. Ajoutez le premier élément ci-dessus.",
+    listHeading: "Preuves collectées",
+    capturedClientLabel: "Capturé",
   },
 };
 

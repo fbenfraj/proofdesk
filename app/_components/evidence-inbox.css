@@ -1,0 +1,183 @@
+/* Evidence Inbox surface (Story 2.1, UX Evidence-Inbox intake). Depth is
+   fill-shade + hairline only (no shadows to rank content). Decision/submit
+   buttons are quiet outline + focus ring — never filled (spine supersedes the
+   inbox mock). Provenance chips carry the cool/warm honesty axis, off R/Y/G. */
+
+.pd-inbox {
+  max-width: 720px;
+}
+
+/* --- Add-evidence form -------------------------------------------------- */
+.pd-inbox__add {
+  margin: var(--space-5) 0 var(--space-6);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pd-inbox__legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+}
+
+.pd-inbox__kinds {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pd-inbox__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font: var(--type-body-sm);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pd-inbox__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-inbox__input {
+  font: var(--type-body);
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+
+.pd-inbox__input--mono {
+  font: var(--type-mono);
+}
+
+.pd-inbox__textarea {
+  resize: vertical;
+  min-height: 4.5em;
+}
+
+.pd-inbox__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Quiet outline decision/submit button (DESIGN §Components/Buttons). */
+.pd-btn-outline {
+  font: 600 12px / 1.2 var(--font-chrome);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+}
+.pd-btn-outline:hover {
+  background: var(--surface-raised);
+}
+.pd-btn-outline:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.pd-inbox__error {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--seal);
+}
+
+/* --- Collected evidence list ------------------------------------------- */
+.pd-inbox__list-heading {
+  display: block;
+  margin: 0 0 var(--space-3);
+}
+
+.pd-inbox__empty {
+  margin: 0;
+  font: var(--type-serif-body);
+  color: var(--muted);
+}
+
+.pd-inbox__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Evidence item card — surface-raised, radius-md; kind label (uppercase muted),
+   mono timestamp, content (mono link / serif-italic note / mono file), footer
+   with the provenance chip. */
+.pd-ev {
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pd-ev__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pd-ev__kind {
+  color: var(--muted);
+}
+
+.pd-ev__time {
+  font: var(--type-mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pd-ev__body {
+  min-width: 0;
+}
+
+.pd-ev__link {
+  font: var(--type-mono);
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.pd-ev__note {
+  margin: 0;
+  font: var(--type-serif-body);
+  font-style: italic;
+  color: var(--ink);
+}
+
+.pd-ev__file {
+  margin: 0;
+  font: var(--type-mono);
+  color: var(--ink);
+}
+
+.pd-ev__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.pd-ev__captured {
+  font: var(--type-body-sm);
+  color: var(--muted);
+}

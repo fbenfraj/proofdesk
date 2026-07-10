@@ -55,7 +55,17 @@ function InfoMark() {
 
 // Desktop operator shell (UX-DR7): full-width top bar + persistent 214px rail +
 // main canvas + right-side drawer slot. Depth is fill-shade + hairline only.
-export function AppShell({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function AppShell({
+  locale,
+  children,
+  evidenceCount = 0,
+}: {
+  locale: Locale;
+  children: ReactNode;
+  /** Evidence Inbox count for the active campaign — server-resolved in the
+   *  layout, shown on the rail badge (Story 2.1). */
+  evidenceCount?: number;
+}) {
   const strings = localeStrings(locale);
   // The single operator's display agency, resolved server-side (AD-14) — the
   // "[agency]" half of the override attribution "by [operator] · [agency]"
@@ -99,7 +109,7 @@ export function AppShell({ locale, children }: { locale: Locale; children: React
           drawer so a Board row can open the Claim Card (Story 1.6). */}
       <ClaimDrawerProvider>
         <div className="pd-workspace">
-          <Rail locale={locale} />
+          <Rail locale={locale} evidenceCount={evidenceCount} />
           <main className="pd-main">{children}</main>
           <ClaimDrawer locale={locale} agency={agency} />
         </div>

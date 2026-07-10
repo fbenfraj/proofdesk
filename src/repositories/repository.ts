@@ -8,7 +8,7 @@
 // update/delete path for `human_confirmation` — it is append-only by
 // construction (AD-18).
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import {
   auditResult,
   campaign,
@@ -22,6 +22,7 @@ import {
   evidenceLink,
   humanConfirmation,
   humanOverride,
+  type IntakeKind,
   type LivenessLabel,
   type MachineOrHuman,
   matchSuggestion,
@@ -224,9 +225,23 @@ export function createProofRequirement(
 // --- Exportable children (data_origin inherited via the single site) ------
 
 export interface NewEvidenceItem {
+  /** Optional explicit id. The ingest service sets it so a file can be stored
+   *  under a storage key derived from the row id BEFORE the insert. Omitted
+   *  elsewhere → the `pk()` default generates one. */
+  id?: string;
   campaignId: string;
   type: string;
   machineOrHuman: MachineOrHuman;
+  /** How the receipt was captured (Story 2.1). Omitted on abstract seed rows. */
+  intakeKind?: IntakeKind;
+  /** Payload columns — exactly one is populated per intake kind (Story 2.1).
+   *  `url`/`note` for link/text; `storageKey`+`contentType`+`originalFilename`
+   *  for `image`/`metric` file uploads. */
+  url?: string;
+  note?: string;
+  storageKey?: string;
+  contentType?: string;
+  originalFilename?: string;
   /** Server-authoritative; defaults to server `now` (AD-11). */
   uploadedAt?: string;
   clientCapturedAt?: string;
@@ -240,9 +255,16 @@ export function createEvidenceItem(db: Db, values: NewEvidenceItem) {
   return db
     .insert(evidenceItem)
     .values({
+      ...(values.id ? { id: values.id } : {}),
       campaignId: values.campaignId,
       type: values.type,
       machineOrHuman: values.machineOrHuman,
+      intakeKind: values.intakeKind,
+      url: values.url,
+      note: values.note,
+      storageKey: values.storageKey,
+      contentType: values.contentType,
+      originalFilename: values.originalFilename,
       uploadedAt: values.uploadedAt ?? new Date().toISOString(),
       clientCapturedAt: values.clientCapturedAt,
       livenessLabel: values.livenessLabel,
@@ -370,9 +392,30 @@ export function listCaveatsForClaim(db: Db, claimId: string) {
 // --- Campaign-scoped list reads (used by the seed test to sweep honesty
 //     columns, and by the Story-1.5 snapshot assembler) ---------------------
 
-/** All EvidenceItems in a Campaign. */
+/** All EvidenceItems in a Campaign — including the abstract Epic-1 seed rows
+ *  (used by the seed honesty sweep and the Story-1.5 snapshot assembler). */
 export function listEvidenceItems(db: Db, campaignId: string) {
   return db.select().from(evidenceItem).where(eq(evidenceItem.campaignId, campaignId)).all();
+}
+
+/** Inbox receipts in a Campaign — only items actually ingested through the Story
+ *  2.1 Evidence Inbox (`intake_kind` set). The abstract Epic-1 seed rows (linked
+ *  proof evidence, `intake_kind IS NULL`) are NOT inbox receipts and are excluded
+ *  so they never render as empty inbox cards or inflate the rail badge. Read-only.
+ *  (Until matching lands in Story 2.2 every ingested item is unassigned; this is
+ *  the "unassigned/new" set the inbox + badge show.) */
+export function listInboxEvidenceItems(db: Db, campaignId: string) {
+  return db
+    .select()
+    .from(evidenceItem)
+    .where(and(eq(evidenceItem.campaignId, campaignId), isNotNull(evidenceItem.intakeKind)))
+    .all();
+}
+
+/** Count of Evidence Inbox receipts in a Campaign — the rail badge (Story 2.1).
+ *  Scoped to ingested items (see `listInboxEvidenceItems`). Read-only. */
+export function countEvidenceItems(db: Db, campaignId: string): number {
+  return listInboxEvidenceItems(db, campaignId).length;
 }
 
 /** All EvidenceLinks in a Campaign (scoped via each link's EvidenceItem). */

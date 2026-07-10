@@ -34,6 +34,15 @@ export type DataOrigin = (typeof DATA_ORIGIN)[number];
 export const EVIDENCE_LINK_SOURCE = ["operator", "suggested"] as const;
 export type EvidenceLinkSource = (typeof EVIDENCE_LINK_SOURCE)[number];
 
+/** How an EvidenceItem was captured at ingest (Story 2.1). System-set, never
+ *  operator-editable (the operator edits the free-text `type` label instead).
+ *  This is the rule that derives `machine_or_human` (AD-3/AD-19): `url` →
+ *  `machine` (its liveness is machine-checkable — the actual check is Story 2.4);
+ *  `image`/`text`/`metric` → `human` (a screenshot, a pasted note and a metric
+ *  capture are never machine-verified). Drives which content column is used. */
+export const INTAKE_KIND = ["url", "image", "text", "metric"] as const;
+export type IntakeKind = (typeof INTAKE_KIND)[number];
+
 /** ReportItem audience split — Red is internal_only (AD-21). */
 export const REPORT_ITEM_AUDIENCE = ["client_visible", "internal_only"] as const;
 export type ReportItemAudience = (typeof REPORT_ITEM_AUDIENCE)[number];
@@ -47,3 +56,4 @@ export const criticalitySchema = z.enum(CRITICALITY);
 export const dataOriginSchema = z.enum(DATA_ORIGIN);
 export const evidenceLinkSourceSchema = z.enum(EVIDENCE_LINK_SOURCE);
 export const reportItemAudienceSchema = z.enum(REPORT_ITEM_AUDIENCE);
+export const intakeKindSchema = z.enum(INTAKE_KIND);

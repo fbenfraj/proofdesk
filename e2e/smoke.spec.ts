@@ -336,6 +336,34 @@ test.describe("Human override & caveat (Story 1.9)", () => {
   });
 });
 
+test.describe("Evidence Inbox ingest (Story 2.1)", () => {
+  test("renders the intake surface and ingests a note as a Human assertion", async ({ page }) => {
+    await page.goto("/evidence-inbox");
+    // The single intake surface renders (FR-5).
+    await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
+    // The four intake kinds are offered as native radios.
+    await expect(page.getByRole("radio", { name: "Paste a link" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "Upload a metric screenshot" })).toBeVisible();
+
+    // Add a free-text note. Retry the submit click to ride out client hydration.
+    await page.getByRole("radio", { name: "Paste a note" }).check();
+    const noteText = `E2E note ${Date.now()}`;
+    await page.getByRole("textbox", { name: "Note", exact: true }).fill(noteText);
+    await page
+      .getByRole("textbox", { name: "Type label", exact: true })
+      .fill("Discord confirmation");
+    await expect(async () => {
+      await page.getByRole("button", { name: "Add to Inbox" }).click();
+      await expect(page.getByText(noteText)).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+
+    // The new card carries a warm-taupe Human-assertion provenance chip (AD-3/AD-19),
+    // OFF the R/Y/G status scale — a note is never machine-verified.
+    const card = page.locator(".pd-ev", { hasText: noteText });
+    await expect(card.locator(".pd-prov--human")).toContainText("Human assertion");
+  });
+});
+
 test("health route responds ok behind basic auth", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.ok()).toBeTruthy();

@@ -10,6 +10,8 @@ export * from "./audit";
 export * from "./board";
 // The Claim Card drawer view model (Story 1.8).
 export * from "./claim-card";
+// Evidence Inbox ingest orchestration (Story 2.1).
+export * from "./evidence-ingest";
 // Server-resolved operator display identity for attribution (Story 1.9).
 export * from "./operator-identity";
 // Override & caveat write orchestration (Story 1.9).

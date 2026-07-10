@@ -15,6 +15,13 @@
       "when": 1783611804981,
       "tag": "0001_clammy_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783686888120,
+      "tag": "0002_parallel_screwball",
+      "breakpoints": true
     }
   ]
 }
