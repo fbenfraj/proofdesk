@@ -163,29 +163,8 @@
 }
 
 /* --- Provenance chip (cool slate / warm taupe, OFF the R/Y/G scale) ----- */
-.pd-prov {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: var(--type-stamp);
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 7px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-.pd-prov__glyph {
-  font-family: var(--font-ledger), "Segoe UI Symbol", "Noto Sans Symbols2", monospace;
-  font-weight: 700;
-}
-.pd-prov--machine {
-  color: var(--machine-ink);
-  background: var(--machine-bg);
-}
-.pd-prov--human {
-  color: var(--human-ink);
-  background: var(--human-bg);
-}
+/* Provenance chip styles moved to provenance-chip.css (shared with the Evidence
+   Inbox, Story 2.1); the chip component pulls them in. */
 
 /* --- Evidence trail ----------------------------------------------------- */
 .pd-cc__ev {

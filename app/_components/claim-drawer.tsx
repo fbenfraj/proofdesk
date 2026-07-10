@@ -6,10 +6,11 @@ import "./board.css";
 import "./drawer.css";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { ClaimCardEvidence, ClaimCardRequirement, ClaimCardView } from "@/src/services";
-import { PROOF_STATUS_TOKENS, PROVENANCE_TOKENS } from "../_lib/design-tokens";
+import { PROOF_STATUS_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { proofStatusToDisplayKey } from "../_lib/proof-status";
 import { useClaimDrawer } from "./claim-drawer-context";
+import { ProvenanceChip } from "./provenance-chip";
 
 // The Claim Card right-side drawer (Story 1.8, UX-DR13/DR14/DR10/DR24). It fills
 // the Story-1.6 slot: on open it fetches the READ-ONLY claim-card view model
@@ -399,28 +400,6 @@ function EvidenceRow({ ev, locale }: { ev: ClaimCardEvidence; locale: Locale }) 
         </p>
       ))}
     </li>
-  );
-}
-
-/** The cool-slate / warm-taupe provenance chip, kept OFF the R/Y/G scale
- *  (AD-3 / NFR-D1). The glyph is decorative; the label carries the meaning. */
-function ProvenanceChip({
-  provenance,
-  locale,
-}: {
-  provenance: "machine" | "human";
-  locale: Locale;
-}) {
-  const d = localeStrings(locale).drawer;
-  const token = PROVENANCE_TOKENS[provenance];
-  const label = provenance === "machine" ? d.provenance.machine : d.provenance.human;
-  return (
-    <span className={`pd-prov pd-prov--${provenance}`}>
-      <span className="pd-prov__glyph" aria-hidden="true">
-        {token.glyph}
-      </span>
-      {label}
-    </span>
   );
 }
 

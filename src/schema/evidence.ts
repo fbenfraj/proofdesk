@@ -1,6 +1,6 @@
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { campaign } from "./campaign";
-import { EVIDENCE_LINK_SOURCE, LIVENESS_LABEL, MACHINE_OR_HUMAN } from "./enums";
+import { EVIDENCE_LINK_SOURCE, INTAKE_KIND, LIVENESS_LABEL, MACHINE_OR_HUMAN } from "./enums";
 import { proofRequirement } from "./proof-requirement";
 import { dataOriginCol, pk } from "./shared-columns";
 
@@ -16,6 +16,22 @@ export const evidenceItem = sqliteTable("evidence_item", {
   type: text("type").notNull(),
   machineOrHuman: text("machine_or_human", { enum: MACHINE_OR_HUMAN }).notNull(),
   dataOrigin: dataOriginCol(),
+  /** How this receipt was captured at ingest (Story 2.1). System-set from the
+   *  intake surface; derives `machine_or_human` (AD-3/AD-19). NULL on the
+   *  abstract Epic-1 seed rows, which predate the ingest path. */
+  intakeKind: text("intake_kind", { enum: INTAKE_KIND }),
+  /** The pasted link, for `url`-kind items. NULL otherwise. Story 2.4's
+   *  SSRF-hardened link-checker reads this; Story 2.1 only stores it. */
+  url: text("url"),
+  /** Free-text paste (e.g. a Discord message), for `text`-kind items. */
+  note: text("note"),
+  /** S3-shaped object key into the `src/storage/` adapter, for file-kind items
+   *  (`image`/`metric`). The bytes live in the storage adapter, never the DB. */
+  storageKey: text("storage_key"),
+  /** MIME type of the stored file (`image/png` | `image/jpeg` | `image/webp`). */
+  contentType: text("content_type"),
+  /** Original client filename, for display/download of file-kind items. */
+  originalFilename: text("original_filename"),
   /** Server-authoritative UTC ISO-8601 (AD-11). */
   uploadedAt: text("uploaded_at").notNull(),
   /** Optional, clearly labelled; never overrides `uploaded_at` (AD-11). */
