@@ -14,8 +14,14 @@
 
 import type { Criticality, LivenessLabel, MachineOrHuman } from "./enums";
 
-/** Bump when the snapshot SHAPE changes; persisted on AuditResult (AD-4). */
-export const SNAPSHOT_VERSION = 1 as const;
+/** Bump when the snapshot SHAPE changes; persisted on AuditResult (AD-4).
+ *  v2 (Story 1.5): each requirement row carries its `kind` (the core resolves the
+ *  satisfaction predicate from it via the ruleset taxonomy, AD-19) and one
+ *  `operatorEvidence` entry per source=operator EvidenceLink (AD-17). Liveness
+ *  and confirmations are kept associated PER LINK so proof-of-posting Green
+ *  requires a single link that is BOTH `live` AND confirmed (AD-5) — they can
+ *  never be combined across different links. */
+export const SNAPSHOT_VERSION = 2 as const;
 
 /** Disclosure tiers are firmed in Epic 3 (AD-13); nullable placeholder now. */
 export type DisclosureState = string | null;
@@ -30,14 +36,31 @@ export interface SnapshotHumanConfirmation {
   machineOrHuman: "human";
 }
 
+/** One `source = operator` EvidenceLink affirming a requirement (AD-17), with
+ *  its own pre-resolved liveness and the confirmations recorded against IT.
+ *  Keeping liveness and confirmation associated per link is what stops the core
+ *  from combining a `live` label on one link with a confirmation on another
+ *  (AD-5). Suggestions are never represented here — the core never sees them. */
+export interface SnapshotEvidenceLink {
+  /** Pre-resolved four-value liveness of this link's EvidenceItem (AD-7); null
+   *  when no check has run. Only `live` satisfies the reachability half (AD-5). */
+  livenessLabel: LivenessLabel | null;
+  /** Confirmations recorded against THIS link (AD-18). */
+  humanConfirmations: SnapshotHumanConfirmation[];
+}
+
 export interface SnapshotProofRequirement {
   proofRequirementId: string;
+  /** The requirement kind (e.g. `proof-of-posting`). The pure core maps it to a
+   *  satisfaction predicate via the ruleset taxonomy (AD-19); it is data, not a
+   *  classification the core re-derives. */
+  kind: string;
   criticality: Criticality;
-  /** Pre-resolved by the shell (AD-7); null when no operator-affirmed link. */
-  livenessLabel: LivenessLabel | null;
-  /** Keyed to this ProofRequirement (AD-18). Only operator links contribute. */
-  humanConfirmations: SnapshotHumanConfirmation[];
   disclosureState: DisclosureState;
+  /** One entry per `source = operator` EvidenceLink affirming this requirement
+   *  (AD-17). Empty means no operator-affirmed evidence — the requirement is
+   *  unmet by absence, distinct from present-but-unconfirmed. */
+  operatorEvidence: SnapshotEvidenceLink[];
 }
 
 export interface SnapshotClaim {

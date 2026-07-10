@@ -5,7 +5,7 @@ import { type AuditSnapshot, PROOF_STATUS, SNAPSHOT_VERSION } from "@/src/schema
 
 describe("AuditSnapshot contract (AD-16, AD-17)", () => {
   test("snapshot version is frozen", () => {
-    expect(SNAPSHOT_VERSION).toBe(1);
+    expect(SNAPSHOT_VERSION).toBe(2);
   });
 
   test("a snapshot requirement row carries only pre-resolved values, never suggestions (AD-17)", () => {
@@ -17,10 +17,10 @@ describe("AuditSnapshot contract (AD-16, AD-17)", () => {
         requirements: [
           {
             proofRequirementId: "req-1",
+            kind: "proof-of-posting",
             criticality: "critical",
-            livenessLabel: "live",
-            humanConfirmations: [],
             disclosureState: null,
+            operatorEvidence: [{ livenessLabel: "live", humanConfirmations: [] }],
           },
         ],
       },

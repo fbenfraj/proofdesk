@@ -8,8 +8,9 @@
 // update/delete path for `human_confirmation` — it is append-only by
 // construction (AD-18).
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
+  auditResult,
   campaign,
   caveat,
   claim,
@@ -20,10 +21,13 @@ import {
   evidenceItem,
   evidenceLink,
   humanConfirmation,
+  humanOverride,
   type LivenessLabel,
   type MachineOrHuman,
   matchSuggestion,
+  type ProofStatus,
   proofRequirement,
+  type TraceEntry,
 } from "@/src/schema";
 import { client } from "@/src/schema/client";
 import type { Db } from "./db";
@@ -405,4 +409,143 @@ export function countMatchSuggestions(db: Db, campaignId: string): number {
     .innerJoin(evidenceItem, eq(matchSuggestion.evidenceItemId, evidenceItem.id))
     .where(eq(evidenceItem.campaignId, campaignId))
     .all().length;
+}
+
+// --- Claim-scoped reads for the Story-1.5 snapshot assembler (AD-16) -------
+//     One assembler is the SOLE producer of AuditSnapshot; these reads give it
+//     exactly a Claim's requirements, its operator-only evidence (AD-17), and
+//     its human confirmations (AD-18) — no more.
+
+/** The ProofRequirements of a Claim (via its Deliverable). */
+export function listProofRequirementsForClaim(db: Db, claimId: string) {
+  return db
+    .select({
+      id: proofRequirement.id,
+      kind: proofRequirement.kind,
+      criticality: proofRequirement.criticality,
+    })
+    .from(proofRequirement)
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(claim, eq(claim.deliverableId, deliverable.id))
+    .where(eq(claim.id, claimId))
+    .all();
+}
+
+/** A Claim's `source = operator` EvidenceLinks with their EvidenceItem's
+ *  liveness label. `suggested` links and MatchSuggestions are excluded here, so
+ *  they can never enter the snapshot or lift a verdict (AD-17). */
+export function listOperatorEvidenceForClaim(db: Db, claimId: string) {
+  return db
+    .select({
+      proofRequirementId: evidenceLink.proofRequirementId,
+      evidenceLinkId: evidenceLink.id,
+      livenessLabel: evidenceItem.livenessLabel,
+    })
+    .from(evidenceLink)
+    .innerJoin(evidenceItem, eq(evidenceLink.evidenceItemId, evidenceItem.id))
+    .innerJoin(proofRequirement, eq(evidenceLink.proofRequirementId, proofRequirement.id))
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(claim, eq(claim.deliverableId, deliverable.id))
+    .where(and(eq(claim.id, claimId), eq(evidenceLink.source, "operator")))
+    .all();
+}
+
+/** A Claim's HumanConfirmations, reached only through operator EvidenceLinks
+ *  (AD-17, AD-18), keyed to the ProofRequirement. */
+export function listHumanConfirmationsForClaim(db: Db, claimId: string) {
+  return db
+    .select({
+      proofRequirementId: humanConfirmation.proofRequirementId,
+      evidenceLinkId: humanConfirmation.evidenceLinkId,
+      confirmedBy: humanConfirmation.confirmedBy,
+      confirmedAt: humanConfirmation.confirmedAt,
+      machineOrHuman: humanConfirmation.machineOrHuman,
+    })
+    .from(humanConfirmation)
+    .innerJoin(evidenceLink, eq(humanConfirmation.evidenceLinkId, evidenceLink.id))
+    .innerJoin(proofRequirement, eq(humanConfirmation.proofRequirementId, proofRequirement.id))
+    .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))
+    .innerJoin(claim, eq(claim.deliverableId, deliverable.id))
+    .where(and(eq(claim.id, claimId), eq(evidenceLink.source, "operator")))
+    .all();
+}
+
+// --- HumanOverride read (the effective-status resolver's overlay, AD-6) ----
+
+/** The 0..1 HumanOverride for a Claim; its `final_status` overlays the machine
+ *  verdict in the effective-status resolver (AD-6). */
+export function getHumanOverride(db: Db, claimId: string) {
+  return db.select().from(humanOverride).where(eq(humanOverride.claimId, claimId)).get();
+}
+
+export interface NewHumanOverride {
+  claimId: string;
+  finalStatus: ProofStatus;
+  authoredBy: string;
+  /** Normally omitted; a disagreeing value triggers MixedOriginError (AD-9). */
+  dataOrigin?: DataOrigin;
+}
+
+/** Set the operator's HumanOverride for a Claim (0..1 per Claim — the table's
+ *  `claim_id` is unique). Upserts so an operator can change the override status
+ *  after setting it once; without this the second call would violate the unique
+ *  constraint. The Story-1.9 UI (switch + caveat gating) builds on this; the
+ *  resolver already reads it today (AD-6). `data_origin` is inherited at the
+ *  single site (AD-9). */
+export function createHumanOverride(db: Db, values: NewHumanOverride) {
+  const campaignId = campaignIdOfClaim(db, values.claimId);
+  const dataOrigin = inheritDataOrigin(db, campaignId, values.dataOrigin);
+  db.delete(humanOverride).where(eq(humanOverride.claimId, values.claimId)).run();
+  return db
+    .insert(humanOverride)
+    .values({
+      claimId: values.claimId,
+      finalStatus: values.finalStatus,
+      authoredBy: values.authoredBy,
+      dataOrigin,
+    })
+    .returning()
+    .get();
+}
+
+// --- AuditResult cache read / upsert (AD-4) --------------------------------
+//     One row per Claim: the current machine verdict + verbatim trace + the
+//     identity tuple. The effective-status resolver recomputes-and-persists
+//     here before reading when the tuple is stale (AD-6).
+
+/** The cached AuditResult for a Claim, if any. */
+export function readAuditResult(db: Db, claimId: string) {
+  return db.select().from(auditResult).where(eq(auditResult.claimId, claimId)).get();
+}
+
+export interface UpsertAuditResult {
+  claimId: string;
+  machineVerdict: ProofStatus;
+  trace: TraceEntry[];
+  snapshotVersion: number;
+  rulesetVersion: string;
+  campaignOverrideHash: string;
+  evidenceSnapshotHash: string;
+}
+
+/** Replace the Claim's cached AuditResult (delete-then-insert keeps exactly one
+ *  cache row per Claim). `data_origin` is inherited at the single site (AD-9). */
+export function upsertAuditResult(db: Db, values: UpsertAuditResult) {
+  const campaignId = campaignIdOfClaim(db, values.claimId);
+  const dataOrigin = inheritDataOrigin(db, campaignId);
+  db.delete(auditResult).where(eq(auditResult.claimId, values.claimId)).run();
+  return db
+    .insert(auditResult)
+    .values({
+      claimId: values.claimId,
+      machineVerdict: values.machineVerdict,
+      trace: values.trace,
+      snapshotVersion: values.snapshotVersion,
+      rulesetVersion: values.rulesetVersion,
+      campaignOverrideHash: values.campaignOverrideHash,
+      evidenceSnapshotHash: values.evidenceSnapshotHash,
+      dataOrigin,
+    })
+    .returning()
+    .get();
 }

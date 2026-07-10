@@ -2,5 +2,7 @@
 // assembler (AD-16), the audit-run service, and the report assembler. Services
 // orchestrate via repository / storage / verification adapters and the pure core;
 // they never touch the DB driver, filesystem, or outbound HTTP directly (AD-2).
-// Domain services are filled in Stories 1.5+. Basic-auth helper: ./basic-auth.ts.
-export {};
+// Basic-auth helper: ./basic-auth.ts.
+
+// The snapshot assembler + effective-status resolver (Story 1.5).
+export * from "./audit";
