@@ -209,6 +209,31 @@ interface Strings {
       readonly deliverable: (creator: string, type: string) => string;
     };
   };
+  /** Mobile capture-only surface (Story 2.5, UX-DR8, FR-5). A stripped three-
+   *  action intake — paste link / upload screenshot / paste note — that feeds the
+   *  SAME ingest pipeline as the desktop Inbox (no mobile-only path). Sober/audit
+   *  register (UX-DR29); the three action labels echo the locked `inbox.intakeKind`
+   *  wording. Glossary terms stay English in code; only rendered copy localises. */
+  readonly capture: {
+    readonly title: string;
+    readonly lead: string;
+    readonly action: {
+      readonly url: string;
+      readonly image: string;
+      readonly text: string;
+    };
+    readonly urlLabel: string;
+    readonly urlPlaceholder: string;
+    readonly noteLabel: string;
+    readonly notePlaceholder: string;
+    readonly fileLabel: string;
+    readonly typeLabel: string;
+    readonly typePlaceholder: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly success: string;
+    readonly error: string;
+  };
 }
 
 /** The numbers the aria-live audit-complete announcement is built from. */
@@ -382,6 +407,26 @@ const EN: Strings = {
       toastReassigned: "Reassigned.",
       deliverable: (creator, type) => `${creator} · ${type}`,
     },
+  },
+  capture: {
+    title: "ProofDesk Capture",
+    lead: "Drop evidence into the Inbox while it still exists. It's sorted back at the desk.",
+    action: {
+      url: "Paste a link",
+      image: "Upload a screenshot",
+      text: "Paste a note",
+    },
+    urlLabel: "Link",
+    urlPlaceholder: "https://…",
+    noteLabel: "Note",
+    notePlaceholder: "Paste a message or note…",
+    fileLabel: "Choose a screenshot",
+    typeLabel: "Type label",
+    typePlaceholder: "e.g. Twitch sponsor segment",
+    submit: "Capture to Inbox",
+    submitting: "Capturing…",
+    success: "Captured. It's in the Inbox.",
+    error: "Couldn't capture this. Try again.",
   },
 };
 
@@ -558,6 +603,26 @@ const FR: Strings = {
       toastReassigned: "Réattribué.",
       deliverable: (creator, type) => `${creator} · ${type}`,
     },
+  },
+  capture: {
+    title: "ProofDesk Capture",
+    lead: "Déposez une preuve dans la Boîte tant qu'elle existe encore. Le tri se fait au bureau.",
+    action: {
+      url: "Coller un lien",
+      image: "Téléverser une capture d'écran",
+      text: "Coller une note",
+    },
+    urlLabel: "Lien",
+    urlPlaceholder: "https://…",
+    noteLabel: "Note",
+    notePlaceholder: "Collez un message ou une note…",
+    fileLabel: "Choisir une capture d'écran",
+    typeLabel: "Étiquette de type",
+    typePlaceholder: "ex. Segment sponsorisé Twitch",
+    submit: "Capturer vers la Boîte",
+    submitting: "Capture…",
+    success: "Capturé. C'est dans la Boîte.",
+    error: "Impossible de capturer. Réessayez.",
   },
 };
 

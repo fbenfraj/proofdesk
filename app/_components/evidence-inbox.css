@@ -71,24 +71,9 @@
   justify-content: flex-start;
 }
 
-/* Quiet outline decision/submit button (DESIGN §Components/Buttons). */
-.pd-btn-outline {
-  font: 600 12px / 1.2 var(--font-chrome);
-  letter-spacing: 0.02em;
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--muted);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-4);
-  cursor: pointer;
-}
-.pd-btn-outline:hover {
-  background: var(--surface-raised);
-}
-.pd-btn-outline:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
+/* `.pd-btn-outline` (quiet outline decision/submit button) now lives in
+   globals.css — it is shared by the desktop Inbox and the standalone mobile
+   capture surface, which does not import this component-scoped sheet. */
 
 .pd-inbox__error {
   margin: 0;

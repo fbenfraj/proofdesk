@@ -1,0 +1,105 @@
+/* Mobile capture-only surface (Story 2.5, UX-DR8). Mobile-first and
+   deliberately non-responsive: a single narrow column, touch-friendly targets,
+   quiet outline submit + visible focus ring. Depth is fill-shade + hairline
+   only (no shadows), consistent with the Evidence Inbox. All colour/space via
+   design tokens — no raw hexes. */
+
+.pd-capture {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+}
+
+.pd-capture__title {
+  font: var(--type-page-title);
+  color: var(--ink);
+  margin: 0 0 var(--space-2);
+}
+
+.pd-capture__lead {
+  font: var(--type-body);
+  color: var(--muted);
+  margin: 0 0 var(--space-5);
+}
+
+.pd-capture__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-capture__kinds {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pd-capture__legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  color: var(--muted);
+}
+
+.pd-capture__kind {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-body);
+  /* Touch target — the whole row is tappable (NFR-D8). */
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.pd-capture__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-capture__input {
+  font: var(--type-body);
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  min-height: 2.75rem;
+}
+
+.pd-capture__input--mono {
+  font: var(--type-mono);
+}
+
+.pd-capture__textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.pd-capture__input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.pd-capture__submit {
+  margin-top: var(--space-2);
+  min-height: 2.75rem;
+}
+
+.pd-capture__success {
+  font: var(--type-body-sm);
+  color: var(--machine-ink);
+  margin: 0;
+}
+
+.pd-capture__error {
+  font: var(--type-body-sm);
+  color: var(--status-red);
+  margin: 0;
+}

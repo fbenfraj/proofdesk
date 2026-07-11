@@ -134,6 +134,27 @@ body {
   max-width: var(--report-measure);
 }
 
+/* Quiet outline decision/submit button (DESIGN §Components/Buttons). Shared: the
+   desktop Inbox and the standalone mobile capture surface both use it, so it lives
+   in globals (loaded by the root layout) rather than a component-scoped sheet. */
+.pd-btn-outline {
+  font: 600 12px / 1.2 var(--font-chrome);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+}
+.pd-btn-outline:hover {
+  background: var(--surface-raised);
+}
+.pd-btn-outline:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* UX-DR27 — motion never carries meaning. Reduced-motion drops all animation
    and renders the identical final DOM immediately. */
 @media (prefers-reduced-motion: reduce) {
