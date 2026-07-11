@@ -14,7 +14,6 @@
 //      FIRST, so cache and recompute are one value by construction. No other code
 //      calls `audit()` for status.
 
-import { createHash } from "node:crypto";
 import { audit } from "@/src/core";
 import {
   campaignIdOfClaim,
@@ -26,7 +25,11 @@ import {
   readAuditResult,
   upsertAuditResult,
 } from "@/src/repositories";
-import { RULESET_VERSION, resolveCampaignRulesetOverrides } from "@/src/ruleset";
+import {
+  canonicalizeCampaignOverride,
+  RULESET_VERSION,
+  resolveCampaignRulesetOverrides,
+} from "@/src/ruleset";
 import {
   type AuditSnapshot,
   type ProofStatus,
@@ -35,6 +38,7 @@ import {
   type SnapshotProofRequirement,
   type TraceEntry,
 } from "@/src/schema";
+import { hashObject } from "./hash";
 
 // --- The snapshot assembler (AD-16) ----------------------------------------
 
@@ -173,7 +177,9 @@ function resolveMachineVerdict(
   const identity = {
     snapshotVersion: SNAPSHOT_VERSION,
     rulesetVersion: RULESET_VERSION,
-    campaignOverrideHash: hashObject(resolveCampaignRulesetOverrides(campaignId)),
+    campaignOverrideHash: hashObject(
+      canonicalizeCampaignOverride(resolveCampaignRulesetOverrides(campaignId)),
+    ),
     // Excludes `now` (it changes every run) so the cache is genuinely reusable
     // and a re-run over the same evidence is idempotent (AC-4).
     evidenceSnapshotHash: hashObject(snapshot.claim),
@@ -201,11 +207,4 @@ function resolveMachineVerdict(
     evidenceSnapshotHash: identity.evidenceSnapshotHash,
   });
   return { machineVerdict: verdict, trace };
-}
-
-/** Deterministic SHA-256 over a canonical JSON serialization. The assembler
- *  builds objects with stable key order and sorted arrays, so JSON.stringify is
- *  canonical here. */
-function hashObject(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
