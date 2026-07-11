@@ -179,6 +179,15 @@ describe("audit() R/Y/G contract (AC-2)", () => {
   test.each(cases)("%s", (_desc, snapshot, expected) => {
     expect(audit(snapshot).verdict).toBe(expected);
   });
+
+  test("no proof bar (empty requirement set) is Red, never a vacuous Green", () => {
+    const result = audit(snap([]));
+    expect(result.verdict).toBe("red");
+    // The trace carries an explicit reason — the honest history says WHY.
+    expect(result.trace).toHaveLength(1);
+    expect(result.trace[0].satisfied).toBe(false);
+    expect(result.trace[0].reason).toMatch(/no proof requirements/i);
+  });
 });
 
 // --- AD-5 reachability gate: only `live` satisfies -------------------------

@@ -42,6 +42,29 @@ interface RequirementEvaluation {
  *   - else                                       → Green
  */
 export function audit(snapshot: AuditSnapshot): AuditVerdict {
+  // No proof bar defined → nothing evidences delivery. An empty requirement set
+  // must NEVER be Green: with no critical requirement to be "unmet" the decision
+  // table would fall through to a vacuous-truth false pass. The honest floor is
+  // Red with an explicit reason. The Proof Brief (Story 3.2) treats an unset
+  // Deliverable as blocked for exactly this reason — "audits are blocked/
+  // meaningless until a bar exists" (AC4). Reachable only once requirements can
+  // be authored/removed (Story 3.2); the seed always ships a bar, so seeded
+  // verdicts are unaffected.
+  if (snapshot.claim.requirements.length === 0) {
+    return {
+      verdict: "red",
+      trace: [
+        {
+          requirementId: "",
+          satisfied: false,
+          reason:
+            "No Proof Requirements defined — the proof bar is unset, so delivery is unproven.",
+          machineOrHuman: "machine",
+        },
+      ],
+    };
+  }
+
   const results = snapshot.claim.requirements.map((req) => ({
     req,
     ev: evaluateRequirement(req),

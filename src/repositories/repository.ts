@@ -11,6 +11,7 @@
 import { and, asc, eq, isNotNull } from "drizzle-orm";
 import {
   auditResult,
+  type Criticality,
   campaign,
   caveat,
   claim,
@@ -223,9 +224,21 @@ export function createClaim(db: Db, deliverableId: string) {
 
 export function createProofRequirement(
   db: Db,
-  values: { deliverableId: string; kind: string; criticality: "critical" | "supporting" },
+  values: {
+    deliverableId: string;
+    kind: string;
+    criticality: "critical" | "supporting";
+    /** Human-readable brief text (Story 3.2). Optional — defaults to `''` so
+     *  existing callers (the seed) keep compiling; display-only, never in the
+     *  AuditSnapshot. */
+    label?: string;
+  },
 ) {
-  return db.insert(proofRequirement).values(values).returning().get();
+  return db
+    .insert(proofRequirement)
+    .values({ ...values, label: values.label ?? "" })
+    .returning()
+    .get();
 }
 
 // --- Exportable children (data_origin inherited via the single site) ------
@@ -694,6 +707,138 @@ export function listCampaignBoardRows(db: Db, campaignId: string): BoardRow[] {
     .where(eq(deliverable.campaignId, campaignId))
     .orderBy(asc(creator.name), asc(deliverable.type), asc(deliverable.id))
     .all();
+}
+
+// --- Proof Brief authoring reads/writes (Story 3.2) -----------------------
+//     The authored bar is persisted as `proof_requirement` rows per Deliverable
+//     — the SAME rows the snapshot assembler reads (rows-as-truth), so "the
+//     configured set is exactly what the audit evaluates" holds with no second
+//     source of truth, and edits invalidate the AuditResult cache through the
+//     evidence_snapshot_hash automatically (AD-4). This is the only Drizzle
+//     layer (AD-10); the proof-brief service orchestrates on top.
+
+export interface BriefRequirementRow {
+  id: string;
+  kind: string;
+  criticality: Criticality;
+  label: string;
+}
+
+/** A Deliverable's authored ProofRequirements, deterministically ordered by id.
+ *  Empty array for an unset Deliverable (or unknown id) — the caller renders the
+ *  proof-brief-unset state. */
+export function listProofRequirementsForDeliverable(
+  db: Db,
+  deliverableId: string,
+): BriefRequirementRow[] {
+  return db
+    .select({
+      id: proofRequirement.id,
+      kind: proofRequirement.kind,
+      criticality: proofRequirement.criticality,
+      label: proofRequirement.label,
+    })
+    .from(proofRequirement)
+    .where(eq(proofRequirement.deliverableId, deliverableId))
+    .orderBy(asc(proofRequirement.id))
+    .all();
+}
+
+export interface DeliverableRow {
+  id: string;
+  campaignId: string;
+  creatorName: string;
+  type: string;
+}
+
+/** A Deliverable with its campaign + creator display fields, or undefined for an
+ *  unknown id (→ the route returns 404). */
+export function getDeliverableRow(db: Db, deliverableId: string): DeliverableRow | undefined {
+  return db
+    .select({
+      id: deliverable.id,
+      campaignId: deliverable.campaignId,
+      creatorName: creator.name,
+      type: deliverable.type,
+    })
+    .from(deliverable)
+    .innerJoin(creator, eq(deliverable.creatorId, creator.id))
+    .where(eq(deliverable.id, deliverableId))
+    .get();
+}
+
+/** A single ProofRequirement with the Deliverable it belongs to, or undefined. */
+export function getProofRequirementRow(
+  db: Db,
+  requirementId: string,
+): (BriefRequirementRow & { deliverableId: string }) | undefined {
+  return db
+    .select({
+      id: proofRequirement.id,
+      deliverableId: proofRequirement.deliverableId,
+      kind: proofRequirement.kind,
+      criticality: proofRequirement.criticality,
+      label: proofRequirement.label,
+    })
+    .from(proofRequirement)
+    .where(eq(proofRequirement.id, requirementId))
+    .get();
+}
+
+/** Edit a ProofRequirement in place (criticality and/or label). Editing by id
+ *  keeps the row's id stable, so any linked EvidenceLink / HumanConfirmation
+ *  survives the edit — never delete-and-reinsert. A criticality change flows into
+ *  the AuditSnapshot (cache invalidates, AD-4); a label-only change is
+ *  verdict-neutral (label is not in the snapshot). */
+export function updateProofRequirement(
+  db: Db,
+  requirementId: string,
+  patch: { criticality?: Criticality; label?: string },
+): void {
+  const set: { criticality?: Criticality; label?: string } = {};
+  if (patch.criticality !== undefined) set.criticality = patch.criticality;
+  if (patch.label !== undefined) set.label = patch.label;
+  if (Object.keys(set).length === 0) return;
+  db.update(proofRequirement).set(set).where(eq(proofRequirement.id, requirementId)).run();
+}
+
+/** Clear all machine-generated MatchSuggestions pointing at a ProofRequirement.
+ *  Suggestions are transient matcher output (AD-17, no operator meaning, freely
+ *  regenerable), so removing a requirement clears them rather than being blocked
+ *  by them — and this must run BEFORE `deleteProofRequirement` or the FK aborts. */
+export function deleteMatchSuggestionsForRequirement(db: Db, requirementId: string): void {
+  db.delete(matchSuggestion).where(eq(matchSuggestion.proofRequirementId, requirementId)).run();
+}
+
+/** Delete a ProofRequirement by id. The caller MUST first ensure it has no REAL
+ *  dependents (see `proofRequirementHasDependents`) and clear any transient
+ *  match_suggestion rows (see `deleteMatchSuggestionsForRequirement`) — otherwise
+ *  the FK from evidence_link / match_suggestion / human_confirmation aborts the
+ *  delete, and orphaning real operator evidence is never acceptable (AC6). */
+export function deleteProofRequirement(db: Db, requirementId: string): void {
+  db.delete(proofRequirement).where(eq(proofRequirement.id, requirementId)).run();
+}
+
+/** True when a REAL operator receipt references this ProofRequirement — an
+ *  operator `evidence_link` or a `human_confirmation`. Removing such a
+ *  requirement would orphan real evidence, so the proof-brief service refuses it
+ *  (the operator unassigns evidence first, Story 2.2). Machine-generated
+ *  `match_suggestion` rows are deliberately EXCLUDED: they carry no operator
+ *  decision and there is no UI to clear them, so they must never make a
+ *  requirement undeletable — `removeRequirement` clears them instead. */
+export function proofRequirementHasDependents(db: Db, requirementId: string): boolean {
+  const link = db
+    .select({ id: evidenceLink.id })
+    .from(evidenceLink)
+    .where(eq(evidenceLink.proofRequirementId, requirementId))
+    .get();
+  if (link) return true;
+  const confirmation = db
+    .select({ id: humanConfirmation.id })
+    .from(humanConfirmation)
+    .where(eq(humanConfirmation.proofRequirementId, requirementId))
+    .get();
+  return confirmation !== undefined;
 }
 
 // --- Claim-scoped reads for the Story-1.5 snapshot assembler (AD-16) -------

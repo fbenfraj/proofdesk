@@ -234,7 +234,54 @@ interface Strings {
     readonly success: string;
     readonly error: string;
   };
+  /** Proof Brief — template picker + per-Deliverable requirement authoring
+   *  (Story 3.2, FR-3, UX-DR21). Criticality labels reuse `drawer.criticality`.
+   *  The `provisional` copy carries the GATE b/3 honesty (default sets are not
+   *  yet confirmed against real platform rules — never authoritative). */
+  readonly proofBrief: {
+    readonly title: string;
+    readonly lead: string;
+    readonly unsetHeading: string;
+    readonly unsetBody: string;
+    readonly pickTemplate: string;
+    readonly applyTemplate: string;
+    readonly templatePreviewHeading: string;
+    readonly provisionalBadge: string;
+    readonly provisionalNote: string;
+    readonly requirementsHeading: string;
+    readonly addRequirement: string;
+    readonly kindLabel: string;
+    readonly kindPlaceholder: string;
+    readonly labelLabel: string;
+    readonly labelPlaceholder: string;
+    readonly criticalityLabel: string;
+    readonly save: string;
+    readonly cancel: string;
+    readonly edit: string;
+    readonly remove: string;
+    readonly error: string;
+    /** Shown when removal is blocked because evidence is linked (AC6). */
+    readonly removeBlocked: string;
+    readonly satisfiedByLabel: string;
+    readonly satisfaction: {
+      readonly "link-reachability": string;
+      readonly "human-assertion": string;
+      readonly "structured-field": string;
+      readonly disclosure: string;
+    };
+    readonly deliverableBy: (creator: string, type: string) => string;
+    readonly templateName: Record<DeliverableTypeKey, string>;
+  };
 }
+
+/** The five canonical Deliverable-type template keys (mirrors DELIVERABLE_TYPE in
+ *  src/ruleset; kept as a local type so the catalog is exhaustively checked). */
+export type DeliverableTypeKey =
+  | "twitch-sponsor-segment"
+  | "instagram-story"
+  | "instagram-reel"
+  | "tiktok"
+  | "youtube-integration";
 
 /** The numbers the aria-live audit-complete announcement is built from. */
 export interface AnnouncementCounts {
@@ -427,6 +474,47 @@ const EN: Strings = {
     submitting: "Capturing…",
     success: "Captured. It's in the Inbox.",
     error: "Couldn't capture this. Try again.",
+  },
+  proofBrief: {
+    title: "Proof Brief",
+    lead: "Set the proof bar per Deliverable at kickoff — so audits measure against this configured bar, not a vibe.",
+    unsetHeading: "No proof bar set yet",
+    unsetBody:
+      "Pick a Deliverable-type template to pre-fill its Proof Requirements. Until a bar exists, an audit of this Deliverable is blocked — there's nothing to measure against.",
+    pickTemplate: "Deliverable-type template",
+    applyTemplate: "Apply template",
+    templatePreviewHeading: "Template preview",
+    provisionalBadge: "Provisional — not yet confirmed",
+    provisionalNote:
+      "These defaults are not yet confirmed against real platform disclosure rules. Review and adjust them before relying on this bar.",
+    requirementsHeading: "Proof Requirements",
+    addRequirement: "Add requirement",
+    kindLabel: "Kind",
+    kindPlaceholder: "e.g. proof-of-posting, reach-screenshot",
+    labelLabel: "Requirement",
+    labelPlaceholder: "What must be evidenced…",
+    criticalityLabel: "Criticality",
+    save: "Save",
+    cancel: "Cancel",
+    edit: "Edit",
+    remove: "Remove",
+    error: "Couldn't save that change. Try again.",
+    removeBlocked: "Unassign the evidence linked to this requirement before removing it.",
+    satisfiedByLabel: "Satisfied by",
+    satisfaction: {
+      "link-reachability": "a live link + human confirmation",
+      "human-assertion": "a human assertion",
+      "structured-field": "a structured field",
+      disclosure: "a disclosure check",
+    },
+    deliverableBy: (creator, type) => `${creator} — ${type}`,
+    templateName: {
+      "twitch-sponsor-segment": "Twitch sponsor segment",
+      "instagram-story": "Instagram Story",
+      "instagram-reel": "Instagram Reel",
+      tiktok: "TikTok",
+      "youtube-integration": "YouTube integration",
+    },
   },
 };
 
@@ -623,6 +711,47 @@ const FR: Strings = {
     submitting: "Capture…",
     success: "Capturé. C'est dans la Boîte.",
     error: "Impossible de capturer. Réessayez.",
+  },
+  proofBrief: {
+    title: "Cahier de preuve",
+    lead: "Fixez le seuil de preuve par Livrable au lancement — pour que les audits mesurent selon ce seuil défini, pas une impression.",
+    unsetHeading: "Aucun seuil de preuve défini",
+    unsetBody:
+      "Choisissez un modèle par type de Livrable pour pré-remplir ses Exigences de preuve. Tant qu'aucun seuil n'existe, l'audit de ce Livrable est bloqué — il n'y a rien à mesurer.",
+    pickTemplate: "Modèle par type de Livrable",
+    applyTemplate: "Appliquer le modèle",
+    templatePreviewHeading: "Aperçu du modèle",
+    provisionalBadge: "Provisoire — non confirmé",
+    provisionalNote:
+      "Ces valeurs par défaut ne sont pas encore confirmées au regard des règles réelles de divulgation des plateformes. Vérifiez-les et ajustez-les avant de vous y fier.",
+    requirementsHeading: "Exigences de preuve",
+    addRequirement: "Ajouter une exigence",
+    kindLabel: "Type",
+    kindPlaceholder: "ex. proof-of-posting, reach-screenshot",
+    labelLabel: "Exigence",
+    labelPlaceholder: "Ce qui doit être prouvé…",
+    criticalityLabel: "Criticité",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    edit: "Modifier",
+    remove: "Retirer",
+    error: "Impossible d'enregistrer. Réessayez.",
+    removeBlocked: "Dissociez la preuve liée à cette exigence avant de la retirer.",
+    satisfiedByLabel: "Satisfait par",
+    satisfaction: {
+      "link-reachability": "un lien actif + confirmation humaine",
+      "human-assertion": "une assertion humaine",
+      "structured-field": "un champ structuré",
+      disclosure: "un contrôle de divulgation",
+    },
+    deliverableBy: (creator, type) => `${creator} — ${type}`,
+    templateName: {
+      "twitch-sponsor-segment": "Segment sponsorisé Twitch",
+      "instagram-story": "Story Instagram",
+      "instagram-reel": "Reel Instagram",
+      tiktok: "TikTok",
+      "youtube-integration": "Intégration YouTube",
+    },
   },
 };
 

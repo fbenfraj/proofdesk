@@ -1,0 +1,1 @@
+ALTER TABLE `proof_requirement` ADD `label` text DEFAULT '' NOT NULL;

@@ -22,3 +22,5 @@ export * from "./human-confirmation";
 export * from "./operator-identity";
 // Override & caveat write orchestration (Story 1.9).
 export * from "./override-caveat";
+// Proof Brief template picker + per-Deliverable requirement authoring (Story 3.2).
+export * from "./proof-brief";

@@ -1,0 +1,282 @@
+/* Proof Brief surface (Story 3.2, UX-DR21). Reuses the shared design tokens —
+ * the criticality tag mirrors the Claim Card's `.pd-cc__crit` treatment
+ * (status-red for critical, muted for supporting), text label always present so
+ * it reads without colour alone (UX-DR14/NFR-D7). Provenance colours are never
+ * borrowed here; criticality is the only status-scale colour on this surface. */
+
+.pd-pbrief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.pd-pbrief__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pd-pbrief__board-empty {
+  padding: var(--space-6) var(--space-4);
+  color: var(--muted);
+  font: var(--type-serif-body);
+}
+
+.pd-pbrief__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.pd-pbrief__deliverable {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+}
+
+.pd-pbrief__deliverable-title {
+  margin: 0;
+  font: var(--type-claim-title);
+  color: var(--ink);
+}
+
+.pd-pbrief__reqs-heading {
+  margin: 0;
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.pd-pbrief__reqs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* --- One requirement row -------------------------------------------------- */
+
+.pd-pbrief__req {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-pbrief__req--editing {
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.pd-pbrief__req-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pd-pbrief__req-label {
+  font: var(--type-body);
+  color: var(--ink);
+}
+
+.pd-pbrief__req-sat {
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+.pd-pbrief__req-actions {
+  flex: none;
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* --- Criticality tag (mirrors .pd-cc__crit) ------------------------------- */
+
+.pd-pbrief__crit {
+  flex: none;
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.pd-pbrief__crit--critical {
+  color: var(--status-red);
+  background: var(--status-red-fill);
+}
+
+.pd-pbrief__crit--supporting {
+  color: var(--muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+}
+
+/* --- Unset / template picker ---------------------------------------------- */
+
+.pd-pbrief__unset {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-pbrief__unset-glyph {
+  font-family: var(--font-ledger), "Segoe UI Symbol", monospace;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.pd-pbrief__unset-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+}
+
+.pd-pbrief__unset-heading {
+  margin: 0;
+  font: var(--type-claim-title);
+  color: var(--ink);
+}
+
+.pd-pbrief__unset-lead {
+  margin: 0;
+  font: var(--type-serif-body);
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+/* --- Fields --------------------------------------------------------------- */
+
+.pd-pbrief__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font: var(--type-body-sm);
+  color: var(--muted);
+}
+
+.pd-pbrief__input,
+.pd-pbrief__select {
+  font: var(--type-body);
+  color: var(--ink);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  min-width: 220px;
+}
+
+.pd-pbrief__input:focus-visible,
+.pd-pbrief__select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Template preview + provisional honesty ------------------------------- */
+
+.pd-pbrief__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-pbrief__preview-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.pd-pbrief__preview-title {
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.pd-pbrief__provisional {
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--status-amber);
+  background: var(--status-amber-fill);
+  border: 1px solid var(--status-amber-border);
+  white-space: nowrap;
+}
+
+.pd-pbrief__provisional-note {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+.pd-pbrief__preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-pbrief__preview-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pd-pbrief__preview-label {
+  font: var(--type-body);
+  color: var(--ink);
+}
+
+/* --- Add form + errors ---------------------------------------------------- */
+
+.pd-pbrief__add-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-pbrief__add {
+  align-self: flex-start;
+}
+
+.pd-pbrief__error {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--status-red);
+}

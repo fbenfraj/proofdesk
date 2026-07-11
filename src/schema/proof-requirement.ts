@@ -14,4 +14,10 @@ export const proofRequirement = sqliteTable("proof_requirement", {
   /** e.g. proof-of-posting, disclosure-visible, segment-proof. */
   kind: text("kind").notNull(),
   criticality: text("criticality", { enum: CRITICALITY }).notNull(),
+  /** Human-readable requirement text shown in the Proof Brief (Story 3.2). It is
+   *  DISPLAY-ONLY — it is NOT part of the AuditSnapshot, so a label edit is
+   *  verdict-neutral and never invalidates an AuditResult cache. The `''` default
+   *  keeps the additive migration safe on rows written before this column
+   *  existed (mirrors match_suggestion.rule's default). */
+  label: text("label").notNull().default(""),
 });
