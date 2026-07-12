@@ -10,6 +10,7 @@
 //   Caveat + attribution → 409 otherwise (RedInclusionWithoutCaveatError).
 
 import { z } from "zod";
+import { withReportBranding } from "@/app/_lib/report-branding";
 import { getDb } from "@/src/repositories";
 import {
   RedInclusionWithoutCaveatError,
@@ -53,7 +54,9 @@ export async function PATCH(
     if (!view) {
       return Response.json({ error: "Report item not found in this report" }, { status: 404 });
     }
-    return Response.json(view);
+    // Return the SAME branded shape as report POST/GET + byline PATCH, so a client
+    // rebuilding its report state from this response keeps the agency/byline (P2).
+    return Response.json(withReportBranding(request, view));
   } catch (err) {
     if (err instanceof RedInclusionWithoutCaveatError) {
       return Response.json({ error: err.message }, { status: 409 });

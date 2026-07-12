@@ -28,8 +28,10 @@ import {
   createReportItem as insertReportItem,
   listCampaignBoardRows,
   listCaveatsForClaim,
+  listClaimEvidenceDetail,
   listReportItems,
   maxReportVersion,
+  setReportByline as setReportBylineRow,
   setReportItemInclusion as setReportItemInclusionRow,
 } from "@/src/repositories";
 import {
@@ -38,6 +40,8 @@ import {
   resolveCampaignRulesetOverrides,
 } from "@/src/ruleset";
 import {
+  type LivenessLabel,
+  type MachineOrHuman,
   type ProofStatus,
   type ReportInclusion,
   type ReportInclusionOverride,
@@ -126,6 +130,36 @@ export interface ReportItemView {
   requiresCaveat: boolean;
 }
 
+/** One receipt in the Proof Appendix (Story 4.2, FR-13). A receipt is an operator
+ *  EvidenceLink's EvidenceItem, carrying its FIRST-CLASS provenance verbatim — the
+ *  appendix never re-derives machine-vs-human at render time (AD-3). A metric /
+ *  screenshot figure is therefore ALWAYS a Human assertion (AD-19). */
+export interface AppendixReceipt {
+  proofRequirementId: string;
+  /** The EvidenceItem's operator-entered type label (user data, not localized). */
+  evidenceType: string;
+  /** Machine-checked fact vs Human assertion — read faithfully from the column. */
+  provenance: MachineOrHuman;
+  /** Present for link receipts that were liveness-checked (AD-5); null otherwise. */
+  livenessLabel: LivenessLabel | null;
+  /** Server-authoritative UTC ISO-8601 `uploaded_at` (AD-11) — a mono timestamp. */
+  timestamp: string;
+}
+
+/** The Proof Appendix entry for ONE included Claim (Story 4.2, FR-13). */
+export interface AppendixEntry {
+  claimId: string;
+  creatorName: string;
+  deliverableType: string;
+  /** The Claim's receipts, each labelled machine/human (order matches the drawer's
+   *  stable link-id order). */
+  receipts: AppendixReceipt[];
+  /** FR-13: every included Claim must carry ≥1 linked receipt. When zero, this is
+   *  SURFACED (never hidden, never a fabricated receipt) so the operator resolves
+   *  it — the honest analogue of Story 4.1's `requiresCaveat`. */
+  missingReceipt: boolean;
+}
+
 export interface ReportBuilderView {
   reportId: string;
   campaignId: string;
@@ -133,6 +167,11 @@ export interface ReportBuilderView {
   createdAt: string;
   /** Frozen at creation (AD-20). */
   evidenceSnapshotHash: string;
+  /** Operator removed the ProofDesk audit byline for this version (FR-12). The
+   *  shell composes the localized byline from this flag; the appendix is assembled
+   *  independently of it (AC4 — provenance travels with the receipts, not the
+   *  byline). */
+  bylineRemoved: boolean;
   /** live campaign hash !== frozen hash → evidence changed since the freeze; the
    *  operator must regenerate. The view never presents a stale verdict as current
    *  (AC5 / retro AI-3). */
@@ -142,6 +181,33 @@ export interface ReportBuilderView {
   /** The internal-only follow-up section — every excluded-from-client (Red) item.
    *  Visible to the operator, never dropped, never shipped to the client (AD-21). */
   internalOnly: ReportItemView[];
+  /** The Proof Appendix — per client-visible Claim, its receipts labelled
+   *  machine/human (FR-13). ALWAYS present regardless of `bylineRemoved`; empty
+   *  when the report is stale (the split is withheld — AC5/AI-3). */
+  appendix: AppendixEntry[];
+}
+
+/** Assemble one Claim's Proof Appendix entry (Story 4.2, FR-13). Receipts are the
+ *  operator EvidenceLinks joined to their EvidenceItem provenance/liveness/
+ *  timestamp (`listClaimEvidenceDetail` — `source = operator` only, AD-17). It
+ *  reads NOTHING about the byline: provenance travels with the receipts, not the
+ *  byline (AC4). Provenance is reproduced verbatim from `machine_or_human` — no
+ *  render-time relabelling (AD-3/AD-19). */
+function buildAppendixEntry(db: Db, item: ReportItemView): AppendixEntry {
+  const receipts: AppendixReceipt[] = listClaimEvidenceDetail(db, item.claimId).map((e) => ({
+    proofRequirementId: e.proofRequirementId,
+    evidenceType: e.evidenceType,
+    provenance: e.machineOrHuman,
+    livenessLabel: e.livenessLabel,
+    timestamp: e.uploadedAt,
+  }));
+  return {
+    claimId: item.claimId,
+    creatorName: item.creatorName,
+    deliverableType: item.deliverableType,
+    receipts,
+    missingReceipt: receipts.length === 0,
+  };
 }
 
 /** Resolve one ReportItem into its view: LIVE status → pure inclusion → derived
@@ -203,15 +269,21 @@ export function getReportBuilderView(db: Db, reportId: string): ReportBuilderVie
   // version freezes the current evidence). The split is only ever exposed for a
   // report that still matches live evidence.
   const views = stale ? [] : listReportItems(db, reportId).map((item) => toItemView(db, item));
+  const clientVisible = views.filter((v) => v.audience === "client_visible");
   return {
     reportId: rep.id,
     campaignId: rep.campaignId,
     version: rep.version,
     createdAt: rep.createdAt,
     evidenceSnapshotHash: rep.evidenceSnapshotHash,
+    bylineRemoved: rep.bylineRemoved,
     stale,
-    clientVisible: views.filter((v) => v.audience === "client_visible"),
+    clientVisible,
     internalOnly: views.filter((v) => v.audience === "internal_only"),
+    // The Proof Appendix lists per client-visible Claim its receipts (FR-13). It
+    // is derived from `clientVisible` (so it is empty when stale, exactly like the
+    // split) and NEVER reads `bylineRemoved` — the appendix always travels (AC4).
+    appendix: clientVisible.map((v) => buildAppendixEntry(db, v)),
   };
 }
 
@@ -330,4 +402,24 @@ export function setReportItemInclusion(
     input.override === null ? null : input.overriddenBy,
   );
   return getReportBuilderView(db, item.reportId);
+}
+
+// --- Operator branding: remove/restore the ProofDesk audit byline (FR-12) ---
+
+/**
+ * Set (or clear) a Report's ProofDesk-byline removal flag, then return the
+ * refreshed builder view (Story 4.2, FR-12). Presentation-only intent — it never
+ * touches status or the appendix. The byline is present by default and
+ * operator-removable; the Proof Appendix travels regardless (AC4).
+ *
+ * Returns null when the Report does not exist (→ the route returns 404).
+ */
+export function setReportByline(
+  db: Db,
+  reportId: string,
+  bylineRemoved: boolean,
+): ReportBuilderView | null {
+  if (!getReport(db, reportId)) return null;
+  setReportBylineRow(db, reportId, bylineRemoved);
+  return getReportBuilderView(db, reportId);
 }

@@ -22,6 +22,7 @@ import {
   POST as reportPOST,
 } from "@/app/api/campaigns/[campaignId]/report/route";
 import { PATCH as itemPATCH } from "@/app/api/reports/[reportId]/items/[itemId]/route";
+import { PATCH as reportPATCH } from "@/app/api/reports/[reportId]/route";
 import { SEED_DEMO_CAMPAIGN_ID, seedDemoCampaign } from "@/seed/demo-campaign";
 import { getDb, runMigrations } from "@/src/repositories";
 
@@ -30,6 +31,9 @@ function campaignCtx(campaignId: string) {
 }
 function itemCtx(reportId: string, itemId: string) {
   return { params: Promise.resolve({ reportId, itemId }) };
+}
+function reportCtx(reportId: string) {
+  return { params: Promise.resolve({ reportId }) };
 }
 function patchRequest(body: unknown): Request {
   return new Request("http://test.local", {
@@ -86,6 +90,68 @@ describe("GET /api/campaigns/[campaignId]/report — latest builder view", () =>
   });
 });
 
+describe("Client-Safe Report branding (Story 4.2, FR-12)", () => {
+  test("GET wraps the view with white-label branding; the byline is present by default", async () => {
+    const res = await reportGET(
+      new Request("http://test.local"),
+      campaignCtx(SEED_DEMO_CAMPAIGN_ID),
+    );
+    const view = await res.json();
+    // Agency identity resolved at the shell; the ONLY ProofDesk mention is the byline.
+    expect(view.branding.agencyName).toBeTruthy();
+    expect(view.branding.byline).toContain("Proof audit by ProofDesk");
+    expect(view.bylineRemoved).toBe(false);
+    // The appendix is present in the response (per client-visible Claim).
+    expect(Array.isArray(view.appendix)).toBe(true);
+    expect(view.appendix.length).toBeGreaterThan(0);
+  });
+
+  test("PATCH removes the byline but the appendix still travels", async () => {
+    const created = await reportPOST(
+      new Request("http://test.local", { method: "POST" }),
+      campaignCtx(SEED_DEMO_CAMPAIGN_ID),
+    );
+    const view = await created.json();
+    const before = JSON.stringify(view.appendix);
+
+    const res = await reportPATCH(patchRequest({ bylineRemoved: true }), reportCtx(view.reportId));
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.bylineRemoved).toBe(true);
+    // Byline gone, appendix unchanged — provenance travels with the receipts.
+    expect(updated.branding.byline).toBeNull();
+    expect(updated.branding.agencyName).toBeTruthy();
+    expect(JSON.stringify(updated.appendix)).toBe(before);
+  });
+
+  test("PATCH on an unknown report is a clean 404", async () => {
+    const res = await reportPATCH(
+      patchRequest({ bylineRemoved: true }),
+      reportCtx("does-not-exist"),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  test("an invalid byline body is rejected at the boundary (400)", async () => {
+    const res = await reportPATCH(patchRequest({ bylineRemoved: "yes" }), reportCtx("r"));
+    expect(res.status).toBe(400);
+  });
+
+  test("a malformed locale cookie falls back to the default locale — never a 500", async () => {
+    // A user-controlled cookie with bad percent-encoding must not crash the branding
+    // path; it renders in the default locale (EN byline) instead. POST mints a fresh
+    // report (byline present by default), so the assertion is order-independent.
+    const req = new Request("http://test.local", {
+      method: "POST",
+      headers: { cookie: "proofdesk_locale=%E0%A4%A" },
+    });
+    const res = await reportPOST(req, campaignCtx(SEED_DEMO_CAMPAIGN_ID));
+    expect(res.status).toBe(201);
+    const view = await res.json();
+    expect(view.branding.byline).toContain("Proof audit by ProofDesk");
+  });
+});
+
 describe("PATCH /api/reports/[reportId]/items/[itemId] — inclusion override", () => {
   test("including a Red claim with no caveat is a 409", async () => {
     // Freeze a fresh report and find its internal-only (Red) item.
@@ -125,5 +191,9 @@ describe("PATCH /api/reports/[reportId]/items/[itemId] — inclusion override", 
       (i: { reportItemId: string }) => i.reportItemId === greenItem.reportItemId,
     );
     expect(moved.overriddenBy).toBe("ShellOperator");
+    // Uniform response shape (P2): the inclusion PATCH carries `branding` too, so a
+    // client rebuilding report state from it never loses the agency/byline.
+    expect(updated.branding.agencyName).toBeTruthy();
+    expect(updated.branding.byline).toContain("Proof audit by ProofDesk");
   });
 });

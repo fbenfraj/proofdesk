@@ -301,6 +301,12 @@ interface Strings {
       readonly caveat: string;
     };
   };
+  /** Client-Safe Report branding copy (Story 4.2, FR-12). The audit byline is the
+   *  ONLY ProofDesk mention on the white-label client report and is operator-
+   *  removable; the agency name is interpolated at the shell (never baked in). */
+  readonly report: {
+    readonly byline: (agency: string) => string;
+  };
 }
 
 /** The three France/EU disclosure checklist keys (mirrors FRANCE_EU_DISCLOSURE in
@@ -579,6 +585,9 @@ const EN: Strings = {
       caveat: "Reflects evidence on file, not a compliance determination",
     },
   },
+  report: {
+    byline: (agency) => `Prepared by ${agency} · Proof audit by ProofDesk`,
+  },
 };
 
 const FR: Strings = {
@@ -842,6 +851,9 @@ const FR: Strings = {
       },
       caveat: "Reflète les preuves au dossier, et non une décision de conformité",
     },
+  },
+  report: {
+    byline: (agency) => `Préparé par ${agency} · Audit de preuve par ProofDesk`,
   },
 };
 

@@ -1,0 +1,1 @@
+ALTER TABLE `report` ADD `byline_removed` integer DEFAULT false NOT NULL;

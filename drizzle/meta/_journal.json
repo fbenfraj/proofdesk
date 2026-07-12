@@ -64,6 +64,13 @@
       "when": 1783804000000,
       "tag": "0008_frozen_report",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1783890400000,
+      "tag": "0009_agency_byline",
+      "breakpoints": true
     }
   ]
 }

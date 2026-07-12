@@ -1038,6 +1038,13 @@ export function setReportItemInclusion(
     .run();
 }
 
+/** Set the per-report ProofDesk-byline removal flag in place by id (Story 4.2,
+ *  FR-12). Presentation-only intent — it writes ONLY `byline_removed` and touches
+ *  nothing status-shaped (the appendix is assembled independently of it). */
+export function setReportByline(db: Db, reportId: string, bylineRemoved: boolean): void {
+  db.update(report).set({ bylineRemoved }).where(eq(report.id, reportId)).run();
+}
+
 /** A Claim's HumanConfirmations, reached only through operator EvidenceLinks
  *  (AD-17, AD-18), keyed to the ProofRequirement. */
 export function listHumanConfirmationsForClaim(db: Db, claimId: string) {

@@ -7,15 +7,19 @@
 //
 // POST → create a NEW report version frozen against the current evidence snapshot.
 // GET  → the latest report's builder view (client-visible + internal-only Red).
+// Both responses are wrapped with the shell-composed white-label `branding`
+// (agency name/logo + the removable ProofDesk byline, FR-12) — a presentation
+// concern the service layer never touches (AD-2).
 
 import { z } from "zod";
+import { withReportBranding } from "@/app/_lib/report-branding";
 import { getCampaign, getDb } from "@/src/repositories";
 import { createReport, getLatestReportBuilderView } from "@/src/services";
 
 const CampaignIdParam = z.object({ campaignId: z.string().min(1) });
 
 export async function POST(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ campaignId: string }> },
 ): Promise<Response> {
   const param = CampaignIdParam.safeParse(await ctx.params);
@@ -31,11 +35,11 @@ export async function POST(
   // The only clock the freeze ever sees, generated at the shell boundary (AD-11).
   const now = new Date().toISOString();
   const view = createReport(db, param.data.campaignId, now);
-  return Response.json(view, { status: 201 });
+  return Response.json(withReportBranding(request, view), { status: 201 });
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ campaignId: string }> },
 ): Promise<Response> {
   const param = CampaignIdParam.safeParse(await ctx.params);
@@ -47,5 +51,5 @@ export async function GET(
   if (!view) {
     return Response.json({ error: "No report for this campaign" }, { status: 404 });
   }
-  return Response.json(view);
+  return Response.json(withReportBranding(request, view));
 }

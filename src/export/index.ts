@@ -4,4 +4,10 @@
 //
 // Story 4.1 lands the PURE inclusion resolver — the one place inclusion + the
 // derived audience are decided (AD-21).
+//
+// Story 4.2 lands the Proof Appendix DATA + white-label branding on the builder
+// view (`src/services/report.ts` + `app/_lib/report-branding.ts`), NOT the render.
+// The self-contained HTML render, 3-channel status glyphs, and trust footer are
+// still Story 4.3; the ZIP + CSV/JSON manifests are Story 4.4 — both consume this
+// appendix data. `app/(ui)/client-safe-report/page.tsx` stays a placeholder until 4.3.
 export * from "./inclusion";

@@ -9,7 +9,14 @@ import { dataOriginCol, pk } from "./shared-columns";
  *  report. The hash is the frozen instant everything assembles against; nothing
  *  status-shaped is stored — verdicts are recomputed through the ONE resolver at
  *  read time (AD-6), and staleness is `live campaign hash !== this frozen hash`
- *  (Epic-3 retro AI-3: a frozen Green is a shape that cannot exist here). */
+ *  (Epic-3 retro AI-3: a frozen Green is a shape that cannot exist here).
+ *
+ *  `byline_removed` (Story 4.2, FR-12) is the ONE stored branding decision: pure
+ *  PRESENTATION config (does the ProofDesk audit byline show?), NOT status. It is
+ *  per-version operator intent, frozen with the version like everything else. It
+ *  is deliberately NOT status/verdict/inclusion/audience-shaped, so the AI-3
+ *  no-verdict-field structural gate still holds. The Proof Appendix is assembled
+ *  independently of it — removing the byline never removes the receipts. */
 export const report = sqliteTable(
   "report",
   {
@@ -24,6 +31,10 @@ export const report = sqliteTable(
     evidenceSnapshotHash: text("evidence_snapshot_hash").notNull(),
     /** Server-UTC ISO-8601 (AD-11) — deterministic version ordering. */
     createdAt: text("created_at").notNull(),
+    /** Operator removed the ProofDesk audit byline for this report version (FR-12).
+     *  Default false = byline present. Presentation-only; the appendix always
+     *  travels regardless (provenance travels with the receipts, not the byline). */
+    bylineRemoved: integer("byline_removed", { mode: "boolean" }).notNull().default(false),
     dataOrigin: dataOriginCol(),
   },
   (t) => [
