@@ -21,9 +21,13 @@ interface ClientSafeReportProps {
   html: string | null;
   locale: Locale;
   campaignId: string;
+  /** `is_demo` — a demo's export is walled (AD-9, Story 4.4): the on-screen SAMPLE
+   *  view is allowed, but Download is disabled and the document itself carries the
+   *  SAMPLE marker. A real campaign enables Download. */
+  isDemo: boolean;
 }
 
-export function ClientSafeReport({ html, locale, campaignId }: ClientSafeReportProps) {
+export function ClientSafeReport({ html, locale, campaignId, isDemo }: ClientSafeReportProps) {
   const t = localeStrings(locale).report;
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -53,11 +57,17 @@ export function ClientSafeReport({ html, locale, campaignId }: ClientSafeReportP
   }, []);
 
   const documentUrl = `/api/campaigns/${encodeURIComponent(campaignId)}/report/document`;
+  const downloadUrl = `/api/campaigns/${encodeURIComponent(campaignId)}/report/download`;
 
   return (
     <section className="csr">
       <div className="csr-bar">
         <span className="csr-label">{t.previewLabel}</span>
+        {isDemo && (
+          <span className="csr-sample" title={t.demoNotExportable}>
+            {t.sampleBadge}
+          </span>
+        )}
         <div className="csr-actions">
           <button
             type="button"
@@ -75,10 +85,24 @@ export function ClientSafeReport({ html, locale, campaignId }: ClientSafeReportP
               <a className="csr-btn" href={documentUrl} target="_blank" rel="noreferrer">
                 {t.openTab}
               </a>
+              {/* Export hard-wall (AD-9): a demo shows a disabled Download; only a
+                  real campaign links to the ZIP. The document itself also carries
+                  the SAMPLE marker, so even a Print of the demo is unmistakable. */}
+              {isDemo ? (
+                <span className="csr-btn csr-btn--disabled" aria-disabled="true">
+                  {t.downloadAction}
+                </span>
+              ) : (
+                <a className="csr-btn" href={downloadUrl}>
+                  {t.downloadAction}
+                </a>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {isDemo && <p className="csr-demo-note">{t.demoNotExportable}</p>}
 
       {error && (
         <p className="csr-error" role="alert">

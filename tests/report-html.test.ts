@@ -68,6 +68,7 @@ function baseModel(overrides: Partial<ReportDocumentModel> = {}): ReportDocument
     htmlLang: "en",
     title: "Lumen × Twitch Creator Sprint, Q3",
     kicker: "Proof of Performance",
+    sampleBadge: null,
     agencyName: "Studio Kairos",
     agencyLogoDataUri: null,
     byline: "Prepared by Studio Kairos · Proof audit by ProofDesk",

@@ -67,6 +67,33 @@
   cursor: default;
 }
 
+/* The demo SAMPLE marker in the operator toolbar (AD-9, Story 4.4). Bold
+   uppercase on the seal accent — the export-walled state made visible. */
+.csr-sample {
+  font: var(--type-body-sm);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--seal);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+}
+
+/* Download is disabled for a demo — the wall, shown not hidden. */
+.csr-btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.csr-demo-note {
+  font: var(--type-body-sm);
+  color: var(--muted);
+  margin: 0;
+  max-width: 64ch;
+}
+
 .csr-error {
   font: var(--type-body-sm);
   color: var(--status-red);

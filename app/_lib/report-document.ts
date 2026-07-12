@@ -28,6 +28,7 @@ import {
 } from "@/src/export";
 import { type Db, getCampaign } from "@/src/repositories";
 import {
+  type AppendixEntry,
   type AppendixReceipt,
   getLatestReportBuilderView,
   type ReportBuilderView,
@@ -119,35 +120,52 @@ function reportRef(campaignName: string, version: number): string {
   return `${slug}-v${version}`;
 }
 
+/** A client-includable claim paired with its Proof Appendix entry (same index). */
+export interface IncludableClaim {
+  item: ReportItemView;
+  entry: AppendixEntry;
+}
+
+/**
+ * The ONE definition of "what ships to the client" — reused by the document
+ * renderer (Story 4.3) AND the export manifest (Story 4.4) so the HTML and the
+ * manifest describe exactly the same claims (never one without the other).
+ *
+ * A claim ships only when FULLY client-includable — it must NOT still require a
+ * Caveat (an effective-Yellow with no operator Caveat is not yet includable, AD-6)
+ * AND it must carry ≥1 receipt (FR-13 — a client report never overstates "backed
+ * by receipts" for a claim with none). Either gap withholds the claim from the
+ * CLIENT artifact while the operator still sees it in the builder (requiresCaveat /
+ * missingReceipt) — surfaced, never silently shipped, and never rendered as backed
+ * when it is not (retro AI-3: make the dishonest state unrepresentable).
+ * `clientVisible` and `appendix` are index-aligned (the service maps the appendix
+ * from the same list), so pair-then-filter keeps the appendix in lockstep.
+ */
+export function selectIncludableClaims(view: ReportBuilderView): IncludableClaim[] {
+  return view.clientVisible
+    .map((item, i) => ({ item, entry: view.appendix[i] }))
+    .filter(({ item, entry }) => !item.requiresCaveat && !entry.missingReceipt);
+}
+
 /**
  * Build the fully-resolved document model from a builder view (Story 4.3).
  * `storage` is injected so tests can supply a fake and the route/page pass the
  * real disk adapter. Async only because screenshot receipts are base64-inlined.
+ * `isDemo` (Story 4.4) drives the on-screen `SAMPLE` marker (AD-9) — a real
+ * campaign passes `false` and no marker renders.
  */
 export async function buildReportDocumentModel(
   storage: Storage,
   view: ReportBuilderView,
   campaignName: string,
   locale: Locale,
+  isDemo: boolean,
 ): Promise<ReportDocumentModel> {
   const strings = localeStrings(locale);
   const branding = composeReportBranding(locale, view.bylineRemoved);
   const ref = reportRef(campaignName, view.version);
 
-  // The client document ships a claim only when it is FULLY client-includable —
-  // it must NOT still require a Caveat (an effective-Yellow with no operator Caveat
-  // is not yet includable, AD-6) AND it must carry ≥1 receipt (FR-13 — a client
-  // report never overstates "backed by receipts" for a claim with none). Either gap
-  // withholds the claim from the CLIENT artifact while the operator still sees it in
-  // the builder (requiresCaveat / missingReceipt) — surfaced, never silently
-  // shipped, and never rendered as backed when it is not. This makes the summary /
-  // appendix "each backed by receipts" copy true by construction (retro AI-3:
-  // make the dishonest state unrepresentable). `clientVisible` and `appendix` are
-  // index-aligned (the service maps the appendix from the same list), so
-  // pair-then-filter keeps the appendix in lockstep with the claims.
-  const includable = view.clientVisible
-    .map((item, i) => ({ item, entry: view.appendix[i] }))
-    .filter(({ item, entry }) => !item.requiresCaveat && !entry.missingReceipt);
+  const includable = selectIncludableClaims(view);
 
   // Refs A1, A2, … over the includable list; the appendix follows the same order.
   const claims: ReportDocumentClaim[] = includable.map(({ item }, i) => ({
@@ -202,6 +220,9 @@ export async function buildReportDocumentModel(
     htmlLang: locale,
     title: campaignName,
     kicker: strings.report.kicker,
+    // The demo SAMPLE marker (AD-9, Story 4.4) — additive honesty marker, never a
+    // relaxation of the withhold/absent invariants above. Null for a real campaign.
+    sampleBadge: isDemo ? strings.report.sampleBadge : null,
     agencyName: branding.agencyName,
     agencyLogoDataUri: branding.agencyLogo,
     byline: branding.byline,
@@ -232,8 +253,10 @@ export async function buildReportDocumentModel(
  * empty state). Shared by the `report/document` route and the builder page so the
  * on-screen preview and the served artifact are byte-identical.
  *
- * The demo `SAMPLE` badge + `is_demo` export hard-wall + download are Story 4.4;
- * this returns the on-screen document only (AD-9 permits the demo on-screen view).
+ * The demo `SAMPLE` marker now renders in the document itself for `is_demo`
+ * campaigns (Story 4.4, AD-9) so any Print carries it; the `is_demo` export
+ * hard-wall + ZIP download live in `report-export.ts` + the download route. This
+ * on-screen document is permitted for a demo (AD-9) — only export is walled.
  */
 export async function assembleReportDocumentHtml(
   db: Db,
@@ -245,6 +268,12 @@ export async function assembleReportDocumentHtml(
   if (!view) return null;
   const campaign = getCampaign(db, campaignId);
   const campaignName = campaign?.name ?? "";
-  const model = await buildReportDocumentModel(storage, view, campaignName, locale);
+  const model = await buildReportDocumentModel(
+    storage,
+    view,
+    campaignName,
+    locale,
+    campaign?.isDemo ?? false,
+  );
   return renderReportDocument(model);
 }

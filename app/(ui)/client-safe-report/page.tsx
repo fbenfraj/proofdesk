@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { SEED_DEMO_CAMPAIGN_ID } from "@/seed/demo-campaign";
-import { getDb } from "@/src/repositories";
+import { getCampaign, getDb } from "@/src/repositories";
 import { getStorage } from "@/src/storage";
 import { ClientSafeReport } from "../../_components/client-safe-report";
 import { LOCALE_COOKIE, parseLocale } from "../../_lib/i18n";
@@ -18,14 +18,27 @@ export default async function ClientSafeReportPage() {
   const locale = parseLocale(store.get(LOCALE_COOKIE)?.value);
 
   let html: string | null = null;
+  // The seeded demo is `is_demo = true` (AD-9), so the shipped surface correctly
+  // shows the SAMPLE marker + a disabled Download — the export hard-wall made
+  // visible. Default to demo when the campaign can't be read (empty DB) so the UI
+  // never offers an export it can't honestly fulfil.
+  let isDemo = true;
   try {
     const { db } = getDb();
     html = await assembleReportDocumentHtml(db, getStorage(), SEED_DEMO_CAMPAIGN_ID, locale);
+    isDemo = getCampaign(db, SEED_DEMO_CAMPAIGN_ID)?.isDemo ?? true;
   } catch {
     // Unprovisioned/empty database (e.g. before `npm run seed`): show the empty
     // state rather than 500 the surface.
     html = null;
   }
 
-  return <ClientSafeReport html={html} locale={locale} campaignId={SEED_DEMO_CAMPAIGN_ID} />;
+  return (
+    <ClientSafeReport
+      html={html}
+      locale={locale}
+      campaignId={SEED_DEMO_CAMPAIGN_ID}
+      isDemo={isDemo}
+    />
+  );
 }

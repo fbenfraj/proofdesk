@@ -93,6 +93,13 @@ export interface ReportDocumentModel {
   /** Document `<title>` + the report `<h1>` (campaign name). */
   title: string;
   kicker: string;
+  /** The demo `SAMPLE` honesty marker, localized ("SAMPLE" / "EXEMPLE"), or null
+   *  for a real campaign. When present the document renders a prominent,
+   *  print-surviving, grayscale-legible banner so any Print/Save-as-PDF a demo
+   *  produces is unmistakably a sample and never passed off as a clean client
+   *  report (AD-9, Story 4.4). Additive — it never relaxes the other honesty
+   *  invariants (Red still absent, stale still withheld, provenance verbatim). */
+  sampleBadge: string | null;
   agencyName: string;
   /** Optional agency logo as a base64 `data:` URI; null → name-only header. */
   agencyLogoDataUri: string | null;
@@ -257,6 +264,7 @@ const STYLE = `
 html,body{margin:0;padding:0}
 body{background:#DED6C3;color:#1E1B14;font-family:Georgia,'Times New Roman',serif;line-height:1.5;padding:28px 16px}
 .page{max-width:860px;margin:0 auto;background:#FCFBF7;border:1px solid #D8CEB6;border-radius:4px;box-shadow:0 10px 34px rgba(30,27,20,.16);padding:48px 56px 36px}
+.sample{margin:-8px 0 22px;background:#7A3E2E;color:#FCFBF7;border:2px solid #5c2c20;border-radius:4px;padding:9px 14px;text-align:center;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;print-color-adjust:exact;-webkit-print-color-adjust:exact}
 .rpt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:2px solid #7A3E2E;margin-bottom:6px}
 .lockup{display:flex;align-items:center;gap:12px}
 .lockup img{width:40px;height:40px;object-fit:contain;flex-shrink:0}
@@ -332,6 +340,12 @@ export function renderReportDocument(model: ReportDocumentModel): string {
     ? `<img src="${escapeHtml(model.agencyLogoDataUri)}" alt="${escapeHtml(model.agencyName)}" />`
     : "";
   const byline = model.byline ? `<div class="byline">${escapeHtml(model.byline)}</div>` : "";
+  // The demo SAMPLE honesty marker (AD-9): a prominent, print-surviving,
+  // grayscale-legible banner. Bold uppercase + heavy border carry the meaning
+  // with colour removed, so a printed/saved demo is unmistakably a sample.
+  const sample = model.sampleBadge
+    ? `<div class="sample" role="note">${escapeHtml(model.sampleBadge)}</div>`
+    : "";
 
   // Body: either the claims + appendix, or the calm empty/withheld state (AC6).
   let body: string;
@@ -361,6 +375,7 @@ export function renderReportDocument(model: ReportDocumentModel): string {
     `<title>${title}</title>` +
     `<style>${STYLE}</style></head><body>` +
     `<main class="page">` +
+    sample +
     `<div class="rpt-head">` +
     `<div class="lockup">${logo}<span class="agency">${escapeHtml(model.agencyName)}</span></div>` +
     `<div class="rpt-meta">` +

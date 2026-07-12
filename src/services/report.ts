@@ -40,6 +40,7 @@ import {
   resolveCampaignRulesetOverrides,
 } from "@/src/ruleset";
 import {
+  type DataOrigin,
   type LivenessLabel,
   type MachineOrHuman,
   type ProofStatus,
@@ -158,6 +159,10 @@ export interface AppendixReceipt {
   storageKey: string | null;
   contentType: string | null;
   originalFilename: string | null;
+  /** The evidence row's `data_origin` (`seeded | real`), inherited at the single
+   *  derivation site (AD-9). A faithful per-row column for the export manifest
+   *  (Story 4.4) — read verbatim, never back-computed in the export layer. */
+  dataOrigin: DataOrigin;
 }
 
 /** The Proof Appendix entry for ONE included Claim (Story 4.2, FR-13). */
@@ -219,6 +224,7 @@ function buildAppendixEntry(db: Db, item: ReportItemView): AppendixEntry {
     storageKey: e.storageKey,
     contentType: e.contentType,
     originalFilename: e.originalFilename,
+    dataOrigin: e.dataOrigin,
   }));
   return {
     claimId: item.claimId,

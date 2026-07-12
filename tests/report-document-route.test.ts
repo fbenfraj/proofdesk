@@ -78,4 +78,12 @@ describe("GET /api/campaigns/[campaignId]/report/document", () => {
     const html = await res.text();
     expect(html).toContain("Claims"); // default EN heading
   });
+
+  // Story 4.4 (AC4): the seeded campaign is `is_demo = true`, so its on-screen
+  // document carries the SAMPLE marker — any Print/Save-as-PDF is unmistakable.
+  test("a demo campaign's document carries the SAMPLE marker (AD-9)", async () => {
+    const res = await documentGET(req(), ctx(SEED_DEMO_CAMPAIGN_ID));
+    const html = await res.text();
+    expect(html).toContain("Sample — not for client use");
+  });
 });

@@ -158,7 +158,13 @@ describe("the assembler inlines screenshots as base64 and injects single-source 
     const bytes = new Uint8Array([137, 80, 78, 71]); // PNG magic
     const storage = fakeStorage({ "c/shot.png": { bytes, contentType: "image/png" } });
 
-    const model = await buildReportDocumentModel(storage, view, "Lumen × Twitch Sprint", "en");
+    const model = await buildReportDocumentModel(
+      storage,
+      view,
+      "Lumen × Twitch Sprint",
+      "en",
+      false,
+    );
     const receipt = model.appendix.flatMap((a) => a.receipts).find((r) => r.value.kind === "image");
     expect(receipt).toBeDefined();
     if (receipt?.value.kind === "image") {
@@ -181,7 +187,7 @@ describe("the assembler inlines screenshots as base64 and injects single-source 
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
     // Storage has NO file for the key → get() returns null.
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
     const kinds = model.appendix.flatMap((a) => a.receipts).map((r) => r.value.kind);
     expect(kinds).not.toContain("image"); // fell back, never crashed
   });
@@ -191,7 +197,7 @@ describe("the assembler inlines screenshots as base64 and injects single-source 
     addGreenClaim(campaignId, creatorId);
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
 
     const green = model.claims[0];
     expect(green.status.ink).toBe(PROOF_STATUS_TOKENS.defensible.ink);
@@ -219,7 +225,7 @@ describe("metric receipts are reproduced as Human assertions, never machine", ()
     });
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
 
     const metric = model.appendix
       .flatMap((a) => a.receipts)
@@ -243,7 +249,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     const red = addRedClaim(campaignId, creatorId);
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
 
     expect(model.claims.some((c) => c.creatorName === "")).toBe(false);
     expect(model.claims).toHaveLength(1); // only the Green claim
@@ -270,7 +276,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     const redEntry = included.appendix.find((e) => e.claimId === red.claimId);
     expect(redEntry?.missingReceipt).toBe(true); // builder still surfaces the gap
 
-    const model = await buildReportDocumentModel(fakeStorage(), included, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), included, "Camp", "en", false);
     // The CLIENT document withholds the unbacked claim — only the Green (backed) one
     // ships, so the "each backed by receipts" summary copy is true by construction.
     expect(model.claims).toHaveLength(1);
@@ -295,7 +301,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     });
     if (!included) throw new Error("included");
 
-    const model = await buildReportDocumentModel(fakeStorage(), included, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), included, "Camp", "en", false);
     // Body: both the Green and the override-included Red claim ship.
     expect(model.claims).toHaveLength(2);
     // Summary: the Red claim IS counted (cant-claim), matching the body total — the
@@ -321,7 +327,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     if (!view) throw new Error("view");
     expect(view.stale).toBe(true);
 
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
     expect(model.emptyStateNote).not.toBeNull();
     expect(model.claims).toHaveLength(0);
     expect(model.appendix).toHaveLength(0);
@@ -337,7 +343,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     // The builder still surfaces it to the operator, flagged.
     expect(view.clientVisible[0].requiresCaveat).toBe(true);
 
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
     // Never shipped bare — absent from the client claims AND appendix.
     expect(model.claims).toHaveLength(0);
     expect(model.appendix).toHaveLength(0);
@@ -351,7 +357,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     });
     const view2 = getReportBuilderView(db, createReport(db, campaignId, LATER).reportId);
     if (!view2) throw new Error("view2");
-    const model2 = await buildReportDocumentModel(fakeStorage(), view2, "Camp", "en");
+    const model2 = await buildReportDocumentModel(fakeStorage(), view2, "Camp", "en", false);
     expect(model2.claims).toHaveLength(1);
     expect(model2.claims[0].caveats).toContain("Client accepted the gap.");
   });
@@ -368,7 +374,7 @@ describe("the client document withholds Red, withholds stale, and shows caveats"
     });
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
 
     const claim = model.claims[0];
     expect(claim.status.label).toBe(PROOF_STATUS_TOKENS.caveated.labelEn);
@@ -384,7 +390,7 @@ describe("FR locale resolves localized copy and status labels", () => {
     addGreenClaim(campaignId, creatorId);
     const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
     if (!view) throw new Error("view");
-    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "fr");
+    const model = await buildReportDocumentModel(fakeStorage(), view, "Camp", "fr", false);
 
     expect(model.claimsHeading).toBe("Revendications");
     expect(model.appendixHeading).toBe("Annexe de preuves");
@@ -409,5 +415,52 @@ describe("assembleReportDocumentHtml returns null when there is no report yet", 
     expect(html).not.toBeNull();
     expect(html?.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain("Proof Appendix");
+  });
+});
+
+// --- Story 4.4: the demo SAMPLE marker (AD-9) -------------------------------
+
+describe("the demo SAMPLE marker travels with the document, not just the toolbar", () => {
+  test("isDemo=true injects the localized SAMPLE marker; a real campaign does not", async () => {
+    const { campaignId, creatorId } = makeCampaign();
+    addGreenClaim(campaignId, creatorId);
+    const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
+    if (!view) throw new Error("view");
+
+    const demo = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", true);
+    expect(demo.sampleBadge).toBe("Sample — not for client use");
+
+    const real = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
+    expect(real.sampleBadge).toBeNull();
+  });
+
+  test("the SAMPLE marker is additive — Red still absent, honesty invariants intact", async () => {
+    const { campaignId, creatorId } = makeCampaign();
+    addGreenClaim(campaignId, creatorId);
+    addRedClaim(campaignId, creatorId);
+    const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
+    if (!view) throw new Error("view");
+    const demo = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", true);
+    // SAMPLE is set, AND the Red claim is still absent from the client claims.
+    expect(demo.sampleBadge).not.toBeNull();
+    expect(
+      demo.claims.every((c) => c.status.label !== PROOF_STATUS_TOKENS["cant-claim"].labelEn),
+    ).toBe(true);
+  });
+
+  test("the rendered demo document contains the SAMPLE marker; FR renders EXEMPLE", async () => {
+    const { campaignId, creatorId } = makeCampaign();
+    addGreenClaim(campaignId, creatorId);
+    const view = getReportBuilderView(db, createReport(db, campaignId, NOW).reportId);
+    if (!view) throw new Error("view");
+    const { renderReportDocument } = await import("@/src/export");
+    const en = renderReportDocument(
+      await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", true),
+    );
+    expect(en).toContain("Sample — not for client use");
+    const fr = renderReportDocument(
+      await buildReportDocumentModel(fakeStorage(), view, "Camp", "fr", true),
+    );
+    expect(fr).toContain("Exemple — usage client interdit");
   });
 });

@@ -1201,6 +1201,10 @@ export function listClaimEvidenceDetail(db: Db, claimId: string) {
       storageKey: evidenceItem.storageKey,
       contentType: evidenceItem.contentType,
       originalFilename: evidenceItem.originalFilename,
+      // The evidence row's own `data_origin`, inherited at the single derivation
+      // site (AD-9) — a faithful per-row column for the export manifest (Story
+      // 4.4). Read verbatim; never back-computed from the campaign at emit time.
+      dataOrigin: evidenceItem.dataOrigin,
     })
     .from(evidenceLink)
     .innerJoin(evidenceItem, eq(evidenceLink.evidenceItemId, evidenceItem.id))

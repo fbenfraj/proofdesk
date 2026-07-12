@@ -15,8 +15,13 @@
 // (`app/_lib/report-document.ts`) resolves the model (storage→base64, i18n, tokens,
 // branding) and calls this renderer.
 //
-// Story 4.4 lands the ZIP + CSV/JSON manifests (provenance + data_origin columns),
-// the `is_demo` export hard-wall + `SAMPLE` badge, and the download filename — none
-// of that is here; 4.3 renders/previews the on-screen document only.
+// Story 4.4 lands the PURE export builders — `manifest.ts` (CSV + JSON proof
+// manifests carrying `machine_or_human` + `data_origin`) and `bundle.ts` (the
+// deterministic `fflate` ZIP). The `is_demo` export hard-wall + `SAMPLE` marker +
+// download filename are the SHELL's job (`app/_lib/report-export.ts` + the
+// `report/download` route), which composes these pure builders over a resolved
+// model — same pure-core / imperative-shell split as `report-html.ts` (AD-2).
+export * from "./bundle";
 export * from "./inclusion";
+export * from "./manifest";
 export * from "./report-html";

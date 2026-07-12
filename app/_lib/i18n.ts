@@ -318,6 +318,9 @@ export interface Strings {
     readonly appendixHeading: string;
     readonly appendixNote: string;
     readonly caveatLabel: string;
+    /** The demo `SAMPLE` honesty marker rendered in the document itself (Story
+     *  4.4, AD-9) so a printed/saved demo is unmistakably a sample. */
+    readonly sampleBadge: string;
     readonly receiptRef: (ref: string) => string;
     readonly livenessStamp: (label: string) => string;
     readonly trustEu: string;
@@ -334,6 +337,11 @@ export interface Strings {
     readonly generateAction: string;
     readonly generating: string;
     readonly generateError: string;
+    /** Download the portable ZIP bundle (Story 4.4). */
+    readonly downloadAction: string;
+    /** Shown when the previewed campaign is a demo — export is walled (AD-9); the
+     *  on-screen SAMPLE view is all a demo may produce. */
+    readonly demoNotExportable: string;
   };
 }
 
@@ -625,6 +633,7 @@ const EN: Strings = {
     appendixNote:
       "Every claim above is backed by the evidence below. Each receipt is labelled by how it was verified — a machine-checked fact (a link that resolves, a field present) or a human assertion (attested by a person). Viewer figures are always human-entered.",
     caveatLabel: "Caveat",
+    sampleBadge: "Sample — not for client use",
     receiptRef: (ref) => `Receipts in Proof Appendix — ${ref}`,
     livenessStamp: (label) => `LIVENESS: ${label.toUpperCase()}`,
     trustEu: "EU-hosted · RGPD-compliant",
@@ -641,6 +650,9 @@ const EN: Strings = {
     generateAction: "Generate report",
     generating: "Generating…",
     generateError: "Couldn't generate the report. Try again.",
+    downloadAction: "Download bundle (ZIP)",
+    demoNotExportable:
+      "Sample campaign — the export is disabled. A demo renders on-screen only; clone into a real campaign to export a client bundle.",
   },
 };
 
@@ -919,6 +931,7 @@ const FR: Strings = {
     appendixNote:
       "Chaque revendication ci-dessus est étayée par les preuves ci-dessous. Chaque preuve est étiquetée selon son mode de vérification — un fait vérifié par la machine (un lien qui résout, un champ présent) ou une déclaration humaine (attestée par une personne). Les chiffres d'audience sont toujours saisis par une personne.",
     caveatLabel: "Réserve",
+    sampleBadge: "Exemple — usage client interdit",
     receiptRef: (ref) => `Preuves en annexe — ${ref}`,
     livenessStamp: (label) => `ÉTAT DU LIEN : ${label.toUpperCase()}`,
     trustEu: "Hébergé dans l'UE · conforme RGPD",
@@ -935,6 +948,9 @@ const FR: Strings = {
     generateAction: "Générer le rapport",
     generating: "Génération…",
     generateError: "Échec de la génération du rapport. Réessayez.",
+    downloadAction: "Télécharger l'archive (ZIP)",
+    demoNotExportable:
+      "Campagne de démonstration — l'export est désactivé. Une démo s'affiche à l'écran uniquement ; clonez-la dans une campagne réelle pour exporter une archive client.",
   },
 };
 
