@@ -57,6 +57,13 @@
       "when": 1783801744455,
       "tag": "0007_cool_ben_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1783804000000,
+      "tag": "0008_frozen_report",
+      "breakpoints": true
     }
   ]
 }

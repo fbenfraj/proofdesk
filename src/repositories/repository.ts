@@ -8,7 +8,7 @@
 // update/delete path for `human_confirmation` — it is append-only by
 // construction (AD-18).
 
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import {
   auditResult,
   type Criticality,
@@ -30,6 +30,9 @@ import {
   matchSuggestion,
   type ProofStatus,
   proofRequirement,
+  type ReportInclusionOverride,
+  report,
+  reportItem,
   type TraceEntry,
 } from "@/src/schema";
 import { client } from "@/src/schema/client";
@@ -920,6 +923,119 @@ export function listOperatorEvidenceForClaim(db: Db, claimId: string) {
     .innerJoin(claim, eq(claim.deliverableId, deliverable.id))
     .where(and(eq(claim.id, claimId), eq(evidenceLink.source, "operator")))
     .all();
+}
+
+// --- Report + ReportItem writes/reads (Story 4.1, AD-20/AD-21) -------------
+//     A Report pins ONE campaign-wide `evidence_snapshot_hash` at creation; new
+//     evidence → a NEW version, never a mutation. ReportItem stores ONLY the
+//     operator's inclusion INTENT (`inclusion_override`/`overridden_by`) — no
+//     status, no materialized inclusion, no audience (all DERIVED at read time,
+//     AD-21 + Epic-3 retro AI-3). `data_origin` is inherited at the single site.
+
+/** The highest existing Report version for a Campaign, or 0 when none exist —
+ *  the next version is `maxReportVersion + 1` (AC1: new evidence never mutates an
+ *  in-flight report, it mints the next version). */
+export function maxReportVersion(db: Db, campaignId: string): number {
+  const row = db
+    .select({ version: report.version })
+    .from(report)
+    .where(eq(report.campaignId, campaignId))
+    .orderBy(desc(report.version))
+    .get();
+  return row?.version ?? 0;
+}
+
+export interface NewReport {
+  campaignId: string;
+  version: number;
+  /** Frozen campaign-wide hash pinned at creation (AD-20). */
+  evidenceSnapshotHash: string;
+  /** Server-UTC ISO-8601 (AD-11). */
+  createdAt: string;
+}
+
+/** Insert a Report, inheriting `data_origin` from its Campaign at the single
+ *  site (AD-9) — the immutable root the Epic-4 export hard-wall reads (Story 4.4). */
+export function createReport(db: Db, values: NewReport) {
+  const dataOrigin = inheritDataOrigin(db, values.campaignId);
+  return db
+    .insert(report)
+    .values({
+      campaignId: values.campaignId,
+      version: values.version,
+      evidenceSnapshotHash: values.evidenceSnapshotHash,
+      createdAt: values.createdAt,
+      dataOrigin,
+    })
+    .returning()
+    .get();
+}
+
+/** Insert a ReportItem for a Claim (override null = follow the status default).
+ *  `data_origin` is inherited from the Claim's Campaign (AD-9). */
+export function createReportItem(db: Db, values: { reportId: string; claimId: string }) {
+  const campaignId = campaignIdOfClaim(db, values.claimId);
+  const dataOrigin = inheritDataOrigin(db, campaignId);
+  return db
+    .insert(reportItem)
+    .values({
+      reportId: values.reportId,
+      claimId: values.claimId,
+      inclusionOverride: null,
+      overriddenBy: null,
+      dataOrigin,
+    })
+    .returning()
+    .get();
+}
+
+export function getReport(db: Db, reportId: string) {
+  return db.select().from(report).where(eq(report.id, reportId)).get();
+}
+
+/** The latest (highest-version) Report for a Campaign, or undefined when none. */
+export function getLatestReport(db: Db, campaignId: string) {
+  return db
+    .select()
+    .from(report)
+    .where(eq(report.campaignId, campaignId))
+    .orderBy(desc(report.version))
+    .get();
+}
+
+export function getReportItem(db: Db, reportItemId: string) {
+  return db.select().from(reportItem).where(eq(reportItem.id, reportItemId)).get();
+}
+
+/** A Report's items, ordered by id for a deterministic render. */
+export function listReportItems(db: Db, reportId: string) {
+  return db
+    .select()
+    .from(reportItem)
+    .where(eq(reportItem.reportId, reportId))
+    .orderBy(asc(reportItem.id))
+    .all();
+}
+
+/** Set (or clear) a ReportItem's operator inclusion override in place by id — the
+ *  row stays stable. `null` clears BOTH the override and its attribution (back to
+ *  the status default). Only the two declared columns are ever written; the raw
+ *  patch is never forwarded (cf. `updateCampaign`). The status/inclusion the item
+ *  resolves to is never stored — it is re-derived on read (AD-21). */
+export function setReportItemInclusion(
+  db: Db,
+  reportItemId: string,
+  override: ReportInclusionOverride | null,
+  overriddenBy: string | null,
+): void {
+  db.update(reportItem)
+    .set({
+      inclusionOverride: override,
+      // Attribution only lives alongside an override; clearing the override clears it.
+      overriddenBy: override === null ? null : overriddenBy,
+    })
+    .where(eq(reportItem.id, reportItemId))
+    .run();
 }
 
 /** A Claim's HumanConfirmations, reached only through operator EvidenceLinks

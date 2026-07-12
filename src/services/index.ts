@@ -24,3 +24,5 @@ export * from "./operator-identity";
 export * from "./override-caveat";
 // Proof Brief template picker + per-Deliverable requirement authoring (Story 3.2).
 export * from "./proof-brief";
+// The report assembler + frozen-snapshot builder view + inclusion resolver (Story 4.1).
+export * from "./report";

@@ -53,9 +53,29 @@ export type EvidenceLinkSource = (typeof EVIDENCE_LINK_SOURCE)[number];
 export const INTAKE_KIND = ["url", "image", "text", "metric"] as const;
 export type IntakeKind = (typeof INTAKE_KIND)[number];
 
-/** ReportItem audience split — Red is internal_only (AD-21). */
+/** ReportItem audience split — Red is internal_only (AD-21). DERIVED, never a
+ *  stored column: audience is computed from the resolved inclusion at read time
+ *  (`audienceOf`, src/export/inclusion.ts). A stored status-derivative is exactly
+ *  the stale-verdict shape the Epic-3 retro AI-3 gate forbids. */
 export const REPORT_ITEM_AUDIENCE = ["client_visible", "internal_only"] as const;
 export type ReportItemAudience = (typeof REPORT_ITEM_AUDIENCE)[number];
+
+/** ReportItem inclusion OVERRIDE — the operator's STORED intent (nullable in the
+ *  DB: null = follow `default_from_status`). This is legitimate persisted human
+ *  intent (the AD-6 override pattern), NOT a materialized status. `effective_inclusion
+ *  = inclusion_override ?? default_from_status(effectiveStatus)` (AD-21). */
+export const REPORT_INCLUSION_OVERRIDE = ["included", "excluded"] as const;
+export type ReportInclusionOverride = (typeof REPORT_INCLUSION_OVERRIDE)[number];
+
+/** ReportItem effective inclusion — DERIVED, never stored (AD-21, retro AI-3).
+ *  Green → included · Yellow → included-with-caveat · Red → excluded-from-client.
+ *  Resolved in exactly one pure place (`resolveReportInclusion`). */
+export const REPORT_INCLUSION = [
+  "included",
+  "included-with-caveat",
+  "excluded-from-client",
+] as const;
+export type ReportInclusion = (typeof REPORT_INCLUSION)[number];
 
 // Zod schemas derived from the same const arrays (parse-don't-validate at Route
 // Handler boundaries in later stories, AD-8). Never re-list the members.
@@ -67,4 +87,6 @@ export const disclosureStateSchema = z.enum(DISCLOSURE_STATE);
 export const dataOriginSchema = z.enum(DATA_ORIGIN);
 export const evidenceLinkSourceSchema = z.enum(EVIDENCE_LINK_SOURCE);
 export const reportItemAudienceSchema = z.enum(REPORT_ITEM_AUDIENCE);
+export const reportInclusionOverrideSchema = z.enum(REPORT_INCLUSION_OVERRIDE);
+export const reportInclusionSchema = z.enum(REPORT_INCLUSION);
 export const intakeKindSchema = z.enum(INTAKE_KIND);
