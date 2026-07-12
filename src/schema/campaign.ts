@@ -14,6 +14,9 @@ export const campaign = sqliteTable("campaign", {
   name: text("name").notNull(),
   /** `seeded | real` — immutable (AD-9). The hard-wall root. */
   dataOrigin: text("data_origin", { enum: DATA_ORIGIN }).notNull(),
-  /** Immutable (AD-9). `true` disables the Client-Safe Report export path. */
+  /** Immutable (AD-9). `true` is INTENDED to disable the Client-Safe Report
+   *  export path — that enforcement lands in the export layer in Epic 4
+   *  (AD-9/AD-20/21, Story 4-4). Nothing disables it today; this column is the
+   *  immutable root the hard-wall will read, not a live gate. */
   isDemo: integer("is_demo", { mode: "boolean" }).notNull(),
 });

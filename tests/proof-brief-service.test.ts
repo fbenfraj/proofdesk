@@ -67,16 +67,23 @@ describe("getProofBrief — the read (Story 3.2, FR-3)", () => {
     expect(d?.requirements).toEqual([]);
   });
 
-  test("templates cover all five Deliverable types and are confirmed (GATE b/3)", () => {
+  test("templates cover all five Deliverable types with honest per-requirement confirmation", () => {
     const templates = listTemplates();
     expect(templates.map((t) => t.deliverableType).sort()).toEqual([...DELIVERABLE_TYPE].sort());
     for (const t of templates) {
+      // Set-level adopted (GATE b/3 retired) — NOT a claim that every member is grounded.
       expect(t.provisional).toBe(false);
-      expect(t.requirements.every((r) => r.confirmed === true)).toBe(true);
-      // Every template carries the required France/EU disclosure as a critical bar.
+      // The legally-sourced disclosure critical is confirmed in every template.
       const disclosure = t.requirements.find((r) => r.kind === "disclosure-visible");
       expect(disclosure?.criticality).toBe("critical");
+      expect(disclosure?.confirmed).toBe(true);
     }
+    // Confirmation is per-requirement: the two AI-2 demotions surface as
+    // confirmed=false through the template view (the UI renders them provisional).
+    const reel = templates.find((t) => t.deliverableType === "instagram-reel");
+    expect(reel?.requirements.find((r) => r.kind === "reach-screenshot")?.confirmed).toBe(false);
+    const twitch = templates.find((t) => t.deliverableType === "twitch-sponsor-segment");
+    expect(twitch?.requirements.find((r) => r.kind === "channel-match")?.confirmed).toBe(false);
   });
 });
 

@@ -27,6 +27,19 @@
 // client data. Where a real rule was not confirmable it was left out, never
 // fabricated (the epic placeholder "influenceur" disclosure was replaced with the
 // real "images virtuelles" mention — see france-eu-disclosures.ts).
+//
+// ─── DEMOTIONS (Epic 3 retro, 2026-07-12 — AI-2) ───
+// Confirmation is per-requirement, not blanket. Two supporting placeholders wore
+// `confirmed: true` without grounding and were demoted to `confirmed: false` with
+// a `note` (see `provisionalSupporting`):
+//   • instagram-reel `reach-screenshot` — the "within 48h" window was unsourced
+//     (asymmetric with every other set's window-free reach-screenshot); number
+//     stripped, demoted provisional.
+//   • twitch `channel-match` — Twitch-only scoping was stated nowhere; demoted
+//     provisional, flagged rationale-or-removal.
+// The disclosure critical (loi Influenceurs art. 5) and the proof-of-delivery
+// structure stay confirmed. The full typed-`source` mechanism that makes an
+// unsourced `confirmed` impossible to construct is AI-1b (an Epic 4 story AC).
 
 import type { Criticality } from "@/src/schema/enums";
 import { DELIVERABLE_TYPE, type DeliverableType } from "./deliverable-types";
@@ -42,8 +55,15 @@ export interface DefaultProofRequirement {
   /** GATE b/3: `true` once reviewed and adopted as a confirmed default. The
    *  disclosure requirement is additionally grounded in the loi Influenceurs
    *  (see the file header); the proof-bar requirements are confirmed product
-   *  defaults for proof-of-delivery, never a legal determination. */
+   *  defaults for proof-of-delivery, never a legal determination. A `false`
+   *  here MUST carry a `note` saying what is missing (Epic 3 retro AI-2) —
+   *  an unconfirmed default with no stated reason is populated-and-guessed. */
   confirmed: boolean;
+  /** Required when `confirmed` is false: what grounding is missing and what
+   *  would restore it. Descriptive provenance only — deliberately NOT part of
+   *  the campaign-override identity hash (see `canonicalizeRequirement`). The
+   *  full typed-`source` mechanism is AI-1b (Epic 4). */
+  note?: string;
 }
 
 /** The default Proof Requirement set for one Deliverable type. `provisional`
@@ -61,6 +81,14 @@ function critical(kind: string, label: string): DefaultProofRequirement {
 }
 function supporting(kind: string, label: string): DefaultProofRequirement {
   return { kind, criticality: "supporting", label, confirmed: true };
+}
+
+/** A supporting default that is deliberately NOT confirmed — it carries a
+ *  provenance gap the owner has not closed. Demoted per Epic 3 retro AI-2:
+ *  an unsourced placeholder must not wear `confirmed`. The `note` states what
+ *  is missing and what would restore confirmation. */
+function provisionalSupporting(kind: string, label: string, note: string): DefaultProofRequirement {
+  return { kind, criticality: "supporting", label, confirmed: false, note };
 }
 
 // The France/EU disclosure critical is a required member of every set. Its
@@ -91,7 +119,11 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
         critical("segment-timestamp-field", "Sponsor segment timestamp recorded"),
         DISCLOSURE(),
         supporting("viewer-figure", "Viewer/CCV figure (Human assertion)"),
-        supporting("channel-match", "Channel matches the creator"),
+        provisionalSupporting(
+          "channel-match",
+          "Channel matches the creator",
+          "Twitch-only scoping stated nowhere — why here but not IG/TikTok/YouTube? Rationale-or-removal (AI-2): reconfirm only with a stated Twitch-identity basis that either generalizes to the other platforms or earns a Twitch-specific judgment source; no stated reason → drop.",
+        ),
         supporting("reach-screenshot", "Reach screenshot"),
       ],
     },
@@ -119,7 +151,11 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
           "Reel link resolves (live) and operator confirms the page shows the Reel",
         ),
         DISCLOSURE(),
-        supporting("reach-screenshot", "Reach screenshot within 48h"),
+        provisionalSupporting(
+          "reach-screenshot",
+          "Reach screenshot",
+          'Window unspecified — the earlier "within 48h" carried no sourced basis for why a window exists or why Reel-only (every other set\'s reach-screenshot is window-free). Number stripped; provisional pending a sourced basis (AI-2).',
+        ),
       ],
     },
     tiktok: {
