@@ -1,0 +1,89 @@
+/* Story 4.3 — Client-Safe Report builder page chrome. The preview frame carries
+   its OWN self-contained document styles (inline in the srcDoc); this stylesheet
+   only styles the operator toolbar + the frame shell, in the app's document
+   register (cream paper, sans chrome). */
+
+.csr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.csr-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.csr-label {
+  font: var(--type-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.csr-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.csr-btn {
+  font: var(--type-body-sm);
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.csr-btn:hover {
+  background: var(--surface-card);
+}
+
+.csr-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.csr-btn--primary {
+  color: #fff;
+  background: var(--seal);
+  border-color: var(--seal);
+}
+
+.csr-btn--primary:hover {
+  background: #6a3527;
+}
+
+.csr-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.csr-error {
+  font: var(--type-body-sm);
+  color: var(--status-red);
+  margin: 0;
+}
+
+.csr-frame {
+  width: 100%;
+  height: 78vh;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+}
+
+.csr-empty {
+  font: var(--type-body);
+  color: var(--muted);
+  padding: var(--space-8) 0;
+  text-align: center;
+}

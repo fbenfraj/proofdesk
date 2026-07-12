@@ -33,7 +33,7 @@ export const RAIL_SURFACES = [
 
 export type RailSurfaceKey = (typeof RAIL_SURFACES)[number]["key"];
 
-interface Strings {
+export interface Strings {
   readonly langName: string;
   readonly wordmark: { readonly a: string; readonly b: string };
   readonly campaignLabel: string;
@@ -306,6 +306,34 @@ interface Strings {
    *  removable; the agency name is interpolated at the shell (never baked in). */
   readonly report: {
     readonly byline: (agency: string) => string;
+    /** Client-Safe Report document render copy (Story 4.3, FR-14). Status labels
+     *  come from PROOF_STATUS_TOKENS; the legal disclaimer + provenance + liveness
+     *  are reused from the locked cross-cutting strings, never re-authored here. */
+    readonly kicker: string;
+    readonly refLabel: string;
+    readonly issuedLabel: string;
+    readonly summaryCaption: string;
+    readonly summaryTotal: (n: number) => string;
+    readonly claimsHeading: string;
+    readonly appendixHeading: string;
+    readonly appendixNote: string;
+    readonly caveatLabel: string;
+    readonly receiptRef: (ref: string) => string;
+    readonly livenessStamp: (label: string) => string;
+    readonly trustEu: string;
+    readonly trustExport: string;
+    readonly attribution: (agency: string, ref: string) => string;
+    readonly emptyNoReport: string;
+    readonly emptyNoClaims: string;
+    readonly emptyStale: string;
+    /** Builder-page chrome (Story 4.3) — the operator's preview + export
+     *  affordances around the self-contained document. NOT part of the document. */
+    readonly previewLabel: string;
+    readonly printAction: string;
+    readonly openTab: string;
+    readonly generateAction: string;
+    readonly generating: string;
+    readonly generateError: string;
   };
 }
 
@@ -587,6 +615,32 @@ const EN: Strings = {
   },
   report: {
     byline: (agency) => `Prepared by ${agency} · Proof audit by ProofDesk`,
+    kicker: "Proof of Performance",
+    refLabel: "Report ref",
+    issuedLabel: "Issued",
+    summaryCaption: "Summary",
+    summaryTotal: (n) => `${n} ${n === 1 ? "claim" : "claims"} · each backed by receipts`,
+    claimsHeading: "Claims",
+    appendixHeading: "Proof Appendix",
+    appendixNote:
+      "Every claim above is backed by the evidence below. Each receipt is labelled by how it was verified — a machine-checked fact (a link that resolves, a field present) or a human assertion (attested by a person). Viewer figures are always human-entered.",
+    caveatLabel: "Caveat",
+    receiptRef: (ref) => `Receipts in Proof Appendix — ${ref}`,
+    livenessStamp: (label) => `LIVENESS: ${label.toUpperCase()}`,
+    trustEu: "EU-hosted · RGPD-compliant",
+    trustExport: "Full export · no lock-in",
+    attribution: (agency, ref) => `${agency} · Proof audit by ProofDesk · ${ref}`,
+    emptyNoReport: "No report has been generated for this campaign yet.",
+    emptyNoClaims:
+      "No claims are cleared for the client report — every claim is currently excluded or flagged for internal follow-up.",
+    emptyStale:
+      "The evidence changed after this report was frozen — regenerate the report to present current verdicts. Nothing is shown against out-of-date evidence.",
+    previewLabel: "Client-Safe Report preview",
+    printAction: "Print / Save as PDF",
+    openTab: "Open in new tab",
+    generateAction: "Generate report",
+    generating: "Generating…",
+    generateError: "Couldn't generate the report. Try again.",
   },
 };
 
@@ -854,6 +908,33 @@ const FR: Strings = {
   },
   report: {
     byline: (agency) => `Préparé par ${agency} · Audit de preuve par ProofDesk`,
+    kicker: "Preuve de performance",
+    refLabel: "Réf. du rapport",
+    issuedLabel: "Émis le",
+    summaryCaption: "Synthèse",
+    summaryTotal: (n) =>
+      `${n} ${n === 1 ? "revendication" : "revendications"} · chacune étayée par des preuves`,
+    claimsHeading: "Revendications",
+    appendixHeading: "Annexe de preuves",
+    appendixNote:
+      "Chaque revendication ci-dessus est étayée par les preuves ci-dessous. Chaque preuve est étiquetée selon son mode de vérification — un fait vérifié par la machine (un lien qui résout, un champ présent) ou une déclaration humaine (attestée par une personne). Les chiffres d'audience sont toujours saisis par une personne.",
+    caveatLabel: "Réserve",
+    receiptRef: (ref) => `Preuves en annexe — ${ref}`,
+    livenessStamp: (label) => `ÉTAT DU LIEN : ${label.toUpperCase()}`,
+    trustEu: "Hébergé dans l'UE · conforme RGPD",
+    trustExport: "Export complet · sans verrouillage",
+    attribution: (agency, ref) => `${agency} · Audit de preuve par ProofDesk · ${ref}`,
+    emptyNoReport: "Aucun rapport n'a encore été généré pour cette campagne.",
+    emptyNoClaims:
+      "Aucune revendication n'est validée pour le rapport client — chaque revendication est actuellement exclue ou signalée pour suivi interne.",
+    emptyStale:
+      "Les preuves ont changé après le gel de ce rapport — régénérez-le pour présenter les verdicts actuels. Rien n'est affiché face à des preuves périmées.",
+    previewLabel: "Aperçu du rapport prêt-client",
+    printAction: "Imprimer / Enregistrer en PDF",
+    openTab: "Ouvrir dans un nouvel onglet",
+    generateAction: "Générer le rapport",
+    generating: "Génération…",
+    generateError: "Échec de la génération du rapport. Réessayez.",
   },
 };
 

@@ -1193,6 +1193,14 @@ export function listClaimEvidenceDetail(db: Db, claimId: string) {
       machineOrHuman: evidenceItem.machineOrHuman,
       uploadedAt: evidenceItem.uploadedAt,
       livenessLabel: evidenceItem.livenessLabel,
+      // Renderable evidence content for the Client-Safe Report appendix (Story
+      // 4.3). Faithful passthrough — the document reproduces these verbatim and
+      // never re-derives provenance from them (AD-3/AD-19).
+      url: evidenceItem.url,
+      note: evidenceItem.note,
+      storageKey: evidenceItem.storageKey,
+      contentType: evidenceItem.contentType,
+      originalFilename: evidenceItem.originalFilename,
     })
     .from(evidenceLink)
     .innerJoin(evidenceItem, eq(evidenceLink.evidenceItemId, evidenceItem.id))

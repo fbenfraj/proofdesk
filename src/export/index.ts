@@ -7,7 +7,16 @@
 //
 // Story 4.2 lands the Proof Appendix DATA + white-label branding on the builder
 // view (`src/services/report.ts` + `app/_lib/report-branding.ts`), NOT the render.
-// The self-contained HTML render, 3-channel status glyphs, and trust footer are
-// still Story 4.3; the ZIP + CSV/JSON manifests are Story 4.4 — both consume this
-// appendix data. `app/(ui)/client-safe-report/page.tsx` stays a placeholder until 4.3.
+//
+// Story 4.3 lands the self-contained HTML render (`report-html.ts`): the PURE,
+// presentation-injected document renderer — inline `<style>`, base64 screenshots,
+// 3-channel R/Y/G status (colour + label + glyph), trust footer, print CSS
+// (`print-color-adjust: exact`), and accessible semantic HTML. The shell assembler
+// (`app/_lib/report-document.ts`) resolves the model (storage→base64, i18n, tokens,
+// branding) and calls this renderer.
+//
+// Story 4.4 lands the ZIP + CSV/JSON manifests (provenance + data_origin columns),
+// the `is_demo` export hard-wall + `SAMPLE` badge, and the download filename — none
+// of that is here; 4.3 renders/previews the on-screen document only.
 export * from "./inclusion";
+export * from "./report-html";

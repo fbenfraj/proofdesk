@@ -128,6 +128,10 @@ export interface ReportItemView {
   /** A client-visible non-Green item with no operator Caveat is NOT yet
    *  client-includable (AD-6). Surfaced so the builder can block it. */
   requiresCaveat: boolean;
+  /** The Claim's operator-authored Caveat text(s), verbatim (Story 4.3). A
+   *  client-visible Caveated (effective-Yellow) Claim always carries ≥1 — the
+   *  document renders the caveat with the claim, never a Caveated claim bare. */
+  caveats: string[];
 }
 
 /** One receipt in the Proof Appendix (Story 4.2, FR-13). A receipt is an operator
@@ -144,6 +148,16 @@ export interface AppendixReceipt {
   livenessLabel: LivenessLabel | null;
   /** Server-authoritative UTC ISO-8601 `uploaded_at` (AD-11) — a mono timestamp. */
   timestamp: string;
+  /** Renderable evidence content, reproduced verbatim for the document (Story
+   *  4.3). A receipt is a link (`url`), a screenshot/file (`storageKey` +
+   *  `contentType`, base64-inlined by the shell), or a text note (`note`) — the
+   *  shell picks the render shape; the service never re-derives provenance from
+   *  these (AD-3/AD-19). */
+  url: string | null;
+  note: string | null;
+  storageKey: string | null;
+  contentType: string | null;
+  originalFilename: string | null;
 }
 
 /** The Proof Appendix entry for ONE included Claim (Story 4.2, FR-13). */
@@ -200,6 +214,11 @@ function buildAppendixEntry(db: Db, item: ReportItemView): AppendixEntry {
     provenance: e.machineOrHuman,
     livenessLabel: e.livenessLabel,
     timestamp: e.uploadedAt,
+    url: e.url,
+    note: e.note,
+    storageKey: e.storageKey,
+    contentType: e.contentType,
+    originalFilename: e.originalFilename,
   }));
   return {
     claimId: item.claimId,
@@ -234,10 +253,11 @@ function toItemView(
     effective.effectiveStatus,
     item.inclusionOverride,
   );
+  // Read the Claim's Caveats once — both the includability gate and the document
+  // render need them (a Caveated client-visible Claim always shows its caveat).
+  const caveats = listCaveatsForClaim(db, item.claimId).map((c) => c.text);
   const requiresCaveat =
-    audience === "client_visible" &&
-    effective.effectiveStatus !== "green" &&
-    listCaveatsForClaim(db, item.claimId).length === 0;
+    audience === "client_visible" && effective.effectiveStatus !== "green" && caveats.length === 0;
   return {
     reportItemId: item.id,
     claimId: item.claimId,
@@ -249,6 +269,7 @@ function toItemView(
     inclusionOverride: item.inclusionOverride,
     overriddenBy: item.overriddenBy,
     requiresCaveat,
+    caveats,
   };
 }
 
