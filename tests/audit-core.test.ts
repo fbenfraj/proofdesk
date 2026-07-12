@@ -137,6 +137,19 @@ describe("audit() R/Y/G contract (AC-2)", () => {
       "yellow",
     ],
     [
+      "green: explicit evidenced disclosure tier is Green-eligible",
+      snap([
+        greenPosting(),
+        req({
+          proofRequirementId: "disclosure",
+          kind: "disclosure-visible",
+          criticality: "critical",
+          disclosureState: "evidenced",
+        }),
+      ]),
+      "green",
+    ],
+    [
       "yellow: disclosure ambiguous",
       snap([
         greenPosting(),
@@ -148,6 +161,32 @@ describe("audit() R/Y/G contract (AC-2)", () => {
         }),
       ]),
       "yellow",
+    ],
+    [
+      "yellow: disclosure partial caps at Yellow",
+      snap([
+        greenPosting(),
+        req({
+          proofRequirementId: "disclosure",
+          kind: "disclosure-visible",
+          criticality: "critical",
+          disclosureState: "partial",
+        }),
+      ]),
+      "yellow",
+    ],
+    [
+      "red: explicit missing disclosure tier caps at Red",
+      snap([
+        greenPosting(),
+        req({
+          proofRequirementId: "disclosure",
+          kind: "disclosure-visible",
+          criticality: "critical",
+          disclosureState: "missing",
+        }),
+      ]),
+      "red",
     ],
     [
       "red: critical posting unmet (no confirmed link)",
@@ -187,6 +226,53 @@ describe("audit() R/Y/G contract (AC-2)", () => {
     expect(result.trace).toHaveLength(1);
     expect(result.trace[0].satisfied).toBe(false);
     expect(result.trace[0].reason).toMatch(/no proof requirements/i);
+  });
+});
+
+// --- supporting disclosure never silently goes Green (Story 3.3) -----------
+
+describe("a SUPPORTING disclosure is consistent with the taxonomy (never a false Green)", () => {
+  test("supporting disclosure `missing` caps at Yellow, not Green", () => {
+    const snapshot = snap([
+      greenPosting(),
+      greenDisclosure(), // a satisfied critical disclosure keeps the bar meaningful
+      req({
+        proofRequirementId: "extra-disclosure",
+        kind: "disclosure-visible",
+        criticality: "supporting",
+        disclosureState: "missing",
+      }),
+    ]);
+    // A missing supporting requirement must cap at Yellow — never be ignored.
+    expect(audit(snapshot).verdict).toBe("yellow");
+  });
+
+  test("supporting disclosure `evidenced` is Green-eligible", () => {
+    const snapshot = snap([
+      greenPosting(),
+      greenDisclosure(),
+      req({
+        proofRequirementId: "extra-disclosure",
+        kind: "disclosure-visible",
+        criticality: "supporting",
+        disclosureState: "evidenced",
+      }),
+    ]);
+    expect(audit(snapshot).verdict).toBe("green");
+  });
+
+  test("supporting disclosure fallback (no tier, no confirmation) caps at Yellow", () => {
+    const snapshot = snap([
+      greenPosting(),
+      greenDisclosure(),
+      req({
+        proofRequirementId: "extra-disclosure",
+        kind: "disclosure-visible",
+        criticality: "supporting",
+        operatorEvidence: [],
+      }),
+    ]);
+    expect(audit(snapshot).verdict).toBe("yellow");
   });
 });
 

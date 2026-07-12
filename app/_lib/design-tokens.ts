@@ -44,6 +44,59 @@ export const PALETTE = {
 
 export type PaletteToken = keyof typeof PALETTE;
 
+// The NON-colour tokens (UX-DR4/UX-DR5/UX-DR7). Like PALETTE, these are the
+// canonical single source of truth mirrored into `app/globals.css`; the drift
+// guard (tests/design-tokens.test.ts) asserts globals.css never diverges from
+// these AND that globals.css declares no orphan `--token` missing from here.
+// Values are byte-identical to the globals.css declarations (whitespace-
+// normalised in the test).
+
+/** UX-DR5 — 4px spacing scale, keyed by CSS custom-property name. */
+export const SPACING = {
+  "space-1": "4px",
+  "space-2": "8px",
+  "space-3": "12px",
+  "space-4": "16px",
+  "space-5": "20px",
+  "space-6": "24px",
+  "space-8": "32px",
+  "space-10": "40px",
+} as const;
+
+/** UX-DR5 — document-register radius scale. */
+export const RADIUS = {
+  "radius-stamp": "2px",
+  "radius-sm": "3px",
+  "radius-md": "6px",
+  "radius-lg": "7px",
+} as const;
+
+/** UX-DR5/UX-DR7 — fixed shell dimensions. */
+export const SHELL_DIMS = {
+  "rail-width": "214px",
+  "drawer-width": "498px",
+  "report-measure": "62ch",
+} as const;
+
+/** UX-DR4 — semantic type scale (font shorthand). */
+export const TYPE_SCALE = {
+  "type-report-title": "600 29px / 1.2 var(--font-record)",
+  "type-page-title": "600 23px / 1.25 var(--font-record)",
+  "type-drawer-title": "600 19px / 1.3 var(--font-record)",
+  "type-claim-title": "600 17px / 1.35 var(--font-record)",
+  "type-serif-body": "400 14px / 1.55 var(--font-record)",
+  "type-body": "400 13px / 1.45 var(--font-chrome)",
+  "type-body-sm": "400 11.5px / 1.5 var(--font-chrome)",
+  "type-stamp": "700 10.5px / 1 var(--font-chrome)",
+  "type-mono": "400 11px / 1.4 var(--font-ledger)",
+  "type-mono-value": "400 14px / 1.4 var(--font-ledger)",
+} as const;
+
+/** The type-voice family vars are injected on <html> by next/font (app/fonts.ts),
+ *  not declared in globals.css `:root` — documented exceptions the orphan-var
+ *  guard must allow if they ever appear. */
+export const FONT_FAMILY_VARS = ["font-record", "font-chrome", "font-ledger"] as const;
+
 /** Proof Status keys in the fixed green → amber → red order. */
 export const STATUS_ORDER = ["defensible", "caveated", "cant-claim"] as const;
 export type ProofStatusKey = (typeof STATUS_ORDER)[number];

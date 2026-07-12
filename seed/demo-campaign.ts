@@ -274,10 +274,14 @@ function seedDeliverable(
 
   // Critical #2 — disclosure visible. Present for every shape EXCEPT the Red
   // one (expired Story, nothing captured — the requirement exists, unmet).
+  // Keyed as the baseline `collaboration-commerciale` France/EU disclosure
+  // (Story 3.3) so the checklist recognizes it (no duplicate) and renders its
+  // localized name; the key is verdict-neutral (not in the AuditSnapshot).
   const disclosure = createProofRequirement(db, {
     deliverableId: deliverable.id,
     kind: DISCLOSURE_VISIBLE,
     criticality: "critical",
+    disclosureKey: "collaboration-commerciale",
   });
   requirements.push(
     spec.shape === "red-absent"

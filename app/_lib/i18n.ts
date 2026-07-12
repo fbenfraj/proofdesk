@@ -271,8 +271,44 @@ interface Strings {
     };
     readonly deliverableBy: (creator: string, type: string) => string;
     readonly templateName: Record<DeliverableTypeKey, string>;
+    /** France/EU Disclosure Checklist with three-tier severity (Story 3.3, FR-4).
+     *  Framed as evidence assistance, never a compliance determination (AD-22). */
+    readonly disclosure: {
+      readonly checklistHeading: string;
+      /** "evidence assistance — not legal advice" (NFR-D3). LOCKED copy. */
+      readonly framing: string;
+      readonly addLabel: string;
+      /** Prefix on a checklist button whose item is already attached (disabled). */
+      readonly attached: string;
+      readonly name: Record<FranceEuDisclosureKey, string>;
+      readonly severityLabel: string;
+      readonly tier: {
+        readonly unassessed: string;
+        readonly evidenced: string;
+        readonly ambiguous: string;
+        readonly partial: string;
+        readonly missing: string;
+      };
+      readonly capLabel: string;
+      readonly cap: {
+        readonly "green-eligible": string;
+        readonly "caps-yellow": string;
+        readonly "caps-red": string;
+        readonly unassessed: string;
+      };
+      /** "Reflects evidence on file, not a compliance determination" — the standing
+       *  verbatim caveat on any disclosure-driven Yellow/Red (AC3). LOCKED copy. */
+      readonly caveat: string;
+    };
   };
 }
+
+/** The three France/EU disclosure checklist keys (mirrors FRANCE_EU_DISCLOSURE in
+ *  src/ruleset; local type so the catalog is exhaustively checked). */
+export type FranceEuDisclosureKey =
+  | "collaboration-commerciale"
+  | "images-retouchees"
+  | "images-virtuelles";
 
 /** The five canonical Deliverable-type template keys (mirrors DELIVERABLE_TYPE in
  *  src/ruleset; kept as a local type so the catalog is exhaustively checked). */
@@ -515,6 +551,33 @@ const EN: Strings = {
       tiktok: "TikTok",
       "youtube-integration": "YouTube integration",
     },
+    disclosure: {
+      checklistHeading: "France/EU Disclosure Checklist",
+      framing: "evidence assistance — not legal advice",
+      addLabel: "Add a France/EU disclosure",
+      attached: "Already attached",
+      name: {
+        "collaboration-commerciale": "collaboration commerciale",
+        "images-retouchees": "images retouchées",
+        "images-virtuelles": "images virtuelles",
+      },
+      severityLabel: "Evidence on file",
+      tier: {
+        unassessed: "Not yet assessed",
+        evidenced: "Visibly evidenced",
+        ambiguous: "Ambiguous",
+        partial: "Partially visible",
+        missing: "No evidence",
+      },
+      capLabel: "Result",
+      cap: {
+        "green-eligible": "Green-eligible",
+        "caps-yellow": "Caps at Caveated",
+        "caps-red": "Caps at Can't-claim",
+        unassessed: "Falls back to a confirmed screenshot",
+      },
+      caveat: "Reflects evidence on file, not a compliance determination",
+    },
   },
 };
 
@@ -751,6 +814,33 @@ const FR: Strings = {
       "instagram-reel": "Reel Instagram",
       tiktok: "TikTok",
       "youtube-integration": "Intégration YouTube",
+    },
+    disclosure: {
+      checklistHeading: "Liste de divulgation France/UE",
+      framing: "assistance à la preuve — pas un conseil juridique",
+      addLabel: "Ajouter une divulgation France/UE",
+      attached: "Déjà ajoutée",
+      name: {
+        "collaboration-commerciale": "collaboration commerciale",
+        "images-retouchees": "images retouchées",
+        "images-virtuelles": "images virtuelles",
+      },
+      severityLabel: "Preuves au dossier",
+      tier: {
+        unassessed: "Pas encore évalué",
+        evidenced: "Visiblement prouvée",
+        ambiguous: "Ambiguë",
+        partial: "Partiellement visible",
+        missing: "Aucune preuve",
+      },
+      capLabel: "Résultat",
+      cap: {
+        "green-eligible": "Éligible au Défendable",
+        "caps-yellow": "Plafonne au Sous réserve",
+        "caps-red": "Plafonne au Non défendable",
+        unassessed: "Repli sur une capture confirmée",
+      },
+      caveat: "Reflète les preuves au dossier, et non une décision de conformité",
     },
   },
 };

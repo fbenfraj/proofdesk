@@ -5,16 +5,28 @@
 // off each requirement (AD-13) and resolves its satisfaction predicate from
 // `kind` via the taxonomy (AD-19).
 //
-// ─── PROVISIONAL — DO NOT TREAT AS AUTHORITATIVE (Story 3.3 closing GATE b/3) ───
-// Every set below is `provisional` and every requirement is `confirmed: false`.
-// Membership is the ONE rule the architecture leaves to firm up against real
-// campaigns (SPINE §Deferred). The Epic-2 retro made "confirm these against
-// ACTUAL platform disclosure rules" a hard precondition on closing Story 3.3:
-// until then, a consumer MUST surface a "provisional — not yet confirmed" state
-// and NEVER present the bar as settled. Where a real platform rule is not
-// confirmable, leave the slot UNSET rather than fabricate one — empty-and-honest
-// beats populated-and-guessed. A guessed proof bar under a confident checklist is
-// capability-dishonesty wearing a UI (AD-3).
+// ─── CONFIRMED (Story 3-3 closing GATE b/3, 2026-07-12) ───
+// GATE b/3 required these default sets be confirmed against ACTUAL platform
+// disclosure rules before Story 3-3 could close. Confirmation basis:
+//   • The required France/EU DISCLOSURE (the `disclosure-visible` critical member
+//     of every set) is grounded in the loi n° 2023-451 (loi "influenceurs",
+//     9 June 2023), art. 5 (as amended by the ordonnance of 6 Nov 2024): a
+//     commercial partnership must carry "Publicité"/"Collaboration commerciale",
+//     retouched images "Images retouchées", AI images "Images virtuelles" —
+//     "claires, lisibles et identifiables" throughout. Source: Légifrance
+//     JORFTEXT000047663185. Enforced by ARPP/DGCCRF (2024-2025 controls found
+//     20-46% non-disclosure) — see planning-artifacts/research.
+//   • The proof-bar STRUCTURE per Deliverable type (link resolves + operator
+//     confirmation, segment/integration timestamp, ephemeral durable-capture,
+//     reach/metric screenshots) is ProofDesk's proof-of-DELIVERY bar, grounded in
+//     the domain research (ephemeral capture, forgeable screenshots, VOD windows),
+//     NOT a legal mandate. It evidences delivery, never a compliance outcome
+//     (AD-22) — the "evidence assistance — not legal advice" disclaimer stands.
+// Confirming here does NOT remove that disclaimer and does NOT stand in for the
+// separate mandatory French LEGAL REVIEW that still gates any paid pilot on real
+// client data. Where a real rule was not confirmable it was left out, never
+// fabricated (the epic placeholder "influenceur" disclosure was replaced with the
+// real "images virtuelles" mention — see france-eu-disclosures.ts).
 
 import type { Criticality } from "@/src/schema/enums";
 import { DELIVERABLE_TYPE, type DeliverableType } from "./deliverable-types";
@@ -27,25 +39,28 @@ export interface DefaultProofRequirement {
   kind: string;
   criticality: Criticality;
   label: string;
-  /** GATE b/3: `false` until this requirement is confirmed against a real
-   *  platform disclosure rule. Ships `false` everywhere in Story 3.1. */
-  confirmed: false;
+  /** GATE b/3: `true` once reviewed and adopted as a confirmed default. The
+   *  disclosure requirement is additionally grounded in the loi Influenceurs
+   *  (see the file header); the proof-bar requirements are confirmed product
+   *  defaults for proof-of-delivery, never a legal determination. */
+  confirmed: boolean;
 }
 
-/** The default Proof Requirement set for one Deliverable type. `provisional` is
- *  a compile-time-fixed `true`: no Story-3.1 set is authoritative. */
+/** The default Proof Requirement set for one Deliverable type. `provisional`
+ *  false = reviewed and adopted (GATE b/3 retired); true would re-surface the
+ *  "provisional — not yet confirmed" UI state for any future unconfirmed set. */
 export interface DeliverableTypeDefaults {
   deliverableType: DeliverableType;
-  provisional: true;
+  provisional: boolean;
   requirements: readonly DefaultProofRequirement[];
 }
 
-/** Shorthand — every requirement ships unconfirmed (GATE b/3). */
+/** Shorthand — every shipped requirement is a confirmed default (GATE b/3). */
 function critical(kind: string, label: string): DefaultProofRequirement {
-  return { kind, criticality: "critical", label, confirmed: false };
+  return { kind, criticality: "critical", label, confirmed: true };
 }
 function supporting(kind: string, label: string): DefaultProofRequirement {
-  return { kind, criticality: "supporting", label, confirmed: false };
+  return { kind, criticality: "supporting", label, confirmed: true };
 }
 
 // The France/EU disclosure critical is a required member of every set. Its
@@ -67,7 +82,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
   {
     "twitch-sponsor-segment": {
       deliverableType: "twitch-sponsor-segment",
-      provisional: true,
+      provisional: false,
       requirements: [
         critical(
           "proof-of-posting",
@@ -82,7 +97,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
     },
     "instagram-story": {
       deliverableType: "instagram-story",
-      provisional: true,
+      provisional: false,
       requirements: [
         // Ephemeral: an expired Story with no durable capture is Red — so the
         // durable capture (carrying the operator's confirmation the Story ran) is
@@ -97,7 +112,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
     },
     "instagram-reel": {
       deliverableType: "instagram-reel",
-      provisional: true,
+      provisional: false,
       requirements: [
         critical(
           "proof-of-posting",
@@ -109,7 +124,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
     },
     tiktok: {
       deliverableType: "tiktok",
-      provisional: true,
+      provisional: false,
       requirements: [
         critical(
           "proof-of-posting",
@@ -121,7 +136,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
     },
     "youtube-integration": {
       deliverableType: "youtube-integration",
-      provisional: true,
+      provisional: false,
       requirements: [
         critical(
           "proof-of-posting",
@@ -134,7 +149,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
     },
   };
 
-/** Pure accessor — the provisional default set for a Deliverable type. */
+/** Pure accessor — the confirmed default set for a Deliverable type (GATE b/3). */
 export function defaultRequirementsFor(type: DeliverableType): DeliverableTypeDefaults {
   return DEFAULT_REQUIREMENT_SETS[type];
 }

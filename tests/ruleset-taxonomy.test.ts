@@ -64,7 +64,7 @@ describe("taxonomy changes are version-locked to RULESET_VERSION (AD-13, AD-4)",
     ] as const;
     const snapshot = Object.fromEntries(KNOWN_KINDS.map((k) => [k, satisfactionTypeOf(k)]));
     expect({ RULESET_VERSION, taxonomy: snapshot }).toEqual({
-      RULESET_VERSION: "2",
+      RULESET_VERSION: "3",
       taxonomy: {
         "proof-of-posting": "link-reachability",
         "disclosure-visible": "disclosure",

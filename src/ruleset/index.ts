@@ -12,17 +12,21 @@
 import type { Criticality } from "@/src/schema/enums";
 import type { DefaultProofRequirement } from "./default-requirement-sets";
 
-/** Bumped when the ruleset's IP (taxonomy / defaults) changes; recorded in the
- *  AuditResult identity tuple so a ruleset change invalidates caches (AD-4).
- *  The kind → satisfaction-type mapping is applied INSIDE the core and is NOT
- *  part of the evidence-snapshot hash, so this version is the ONLY guard for a
- *  taxonomy change — any change to `SATISFACTION_TYPE_BY_KIND` must bump it
- *  (AD-13: a verdict's identity is `(ruleset_version, campaign_override_hash)`).
+/** Bumped when the ruleset's IP (taxonomy / defaults) OR the pure core's
+ *  verdict-determining decision logic changes; recorded in the AuditResult
+ *  identity tuple so a change invalidates caches (AD-4). This IP is applied
+ *  INSIDE the core and is NOT part of the evidence-snapshot hash, so this version
+ *  is the ONLY cache guard — any change to `SATISFACTION_TYPE_BY_KIND` OR to a
+ *  `src/core` decision rule must bump it (AD-13: a verdict's identity is
+ *  `(ruleset_version, campaign_override_hash)`).
  *  v2 (Story 3.1): added the default-set kinds, incl. `segment-timestamp-field`
- *  → `structured-field` (differs from the old `human-assertion` fallback). Every
- *  existing claim recomputes to an IDENTICAL verdict (none use the new kinds);
- *  the bump only forces the correct recompute-on-stale for any that later do. */
-export const RULESET_VERSION = "2" as const;
+ *  → `structured-field`.
+ *  v3 (Story 3.3): `evalDisclosure` now caps a SUPPORTING unmet disclosure at
+ *  Yellow instead of silently ignoring it into a Green (consistency with the
+ *  other predicates). Existing claims recompute; only a supporting-disclosure-
+ *  unmet scenario changes verdict (an incorrect Green → the correct Yellow). The
+ *  seed's disclosures are all `critical` → seeded verdicts are unchanged. */
+export const RULESET_VERSION = "3" as const;
 
 /** The three-way satisfaction taxonomy (AD-19) plus `disclosure`, which the
  *  R/Y/G contract treats as its own three-tier dimension (AC-2, AD-13). The
@@ -175,3 +179,11 @@ export {
   DELIVERABLE_TYPE,
   type DeliverableType,
 } from "./deliverable-types";
+export {
+  FRANCE_EU_DISCLOSURE,
+  FRANCE_EU_DISCLOSURES,
+  type FranceEuDisclosure,
+  type FranceEuDisclosureSpec,
+  franceEuDisclosure,
+  isFranceEuDisclosure,
+} from "./france-eu-disclosures";

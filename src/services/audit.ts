@@ -29,6 +29,7 @@ import {
   canonicalizeCampaignOverride,
   RULESET_VERSION,
   resolveCampaignRulesetOverrides,
+  satisfactionTypeOf,
 } from "@/src/ruleset";
 import {
   type AuditSnapshot,
@@ -85,9 +86,13 @@ export function assembleSnapshot(db: Db, claimId: string, now: string): AuditSna
         proofRequirementId: req.id,
         kind: req.kind,
         criticality: req.criticality,
-        // Disclosure tiers are firmed in Epic 3 (AD-13); null for now — the core
-        // falls back to operator-confirmed evidence.
-        disclosureState: null,
+        // Three-tier disclosure severity (Story 3.3, AD-13). Surfaced ONLY for
+        // `disclosure` requirements — a stray tier on any other kind would be
+        // ignored by the core but would still perturb evidence_snapshot_hash, so
+        // it is forced to null. A disclosure requirement with no tier assessed
+        // yet (null) keeps the Epic-1 confirmation fallback in `evalDisclosure`.
+        disclosureState:
+          satisfactionTypeOf(req.kind) === "disclosure" ? (req.disclosureState ?? null) : null,
         operatorEvidence,
       };
     })

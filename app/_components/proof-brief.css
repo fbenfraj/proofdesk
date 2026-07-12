@@ -68,15 +68,23 @@
 
 .pd-pbrief__req {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   background: var(--surface-raised);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-md);
 }
 
+/* The horizontal row: criticality tag · label/satisfaction · edit/remove. */
+.pd-pbrief__req-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
 .pd-pbrief__req--editing {
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
 }
@@ -279,4 +287,97 @@
   margin: 0;
   font: var(--type-body-sm);
   color: var(--status-red);
+}
+
+/* --- France/EU disclosure: three-tier severity + standing caveat (Story 3.3) - */
+
+/* The per-requirement disclosure control, nested under a disclosure req row. */
+.pd-pbrief__disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.pd-pbrief__disclosure-framing {
+  margin: 0;
+  font: var(--type-body-sm);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.pd-pbrief__disclosure-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* The derived audit cap chip. Green-eligible reads calm; Yellow/Red caps borrow
+ * the status-scale ink+fill (never colour alone — the text label is always
+ * present, AD-12). Unassessed stays muted, off the R/Y/G scale. */
+.pd-pbrief__cap {
+  font: var(--type-body-sm);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.pd-pbrief__cap--green-eligible {
+  color: var(--status-green);
+  background: var(--status-green-fill);
+}
+
+.pd-pbrief__cap--caps-yellow {
+  color: var(--status-amber);
+  background: var(--status-amber-fill);
+}
+
+.pd-pbrief__cap--caps-red {
+  color: var(--status-red);
+  background: var(--status-red-fill);
+}
+
+.pd-pbrief__cap--unassessed {
+  color: var(--muted);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+}
+
+/* The standing verbatim caveat on a disclosure-driven Yellow/Red (AC3), sitting
+ * in the reserved caveat well — visually distinct from an operator caveat. */
+.pd-pbrief__disclosure-caveat {
+  margin: 0;
+  font: var(--type-body-sm);
+  color: var(--ink);
+  padding: var(--space-2) var(--space-3);
+  background: var(--caveat-fill);
+  border: 1px solid var(--caveat-border);
+  border-radius: var(--radius-sm);
+}
+
+/* --- France/EU disclosure checklist (attach control) ---------------------- */
+
+.pd-pbrief__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.pd-pbrief__checklist-heading {
+  font: var(--type-stamp);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.pd-pbrief__checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

@@ -17,6 +17,7 @@ import {
   claim,
   creator,
   type DataOrigin,
+  type DisclosureState,
   deliverable,
   type EvidenceLinkSource,
   evidenceItem,
@@ -232,11 +233,23 @@ export function createProofRequirement(
      *  existing callers (the seed) keep compiling; display-only, never in the
      *  AuditSnapshot. */
     label?: string;
+    /** Three-tier disclosure severity (Story 3.3). Optional — defaults to null
+     *  (unassessed / not a disclosure requirement). Verdict-affecting for
+     *  `disclosure` kinds via the AuditSnapshot. */
+    disclosureState?: DisclosureState | null;
+    /** Stable France/EU checklist identity (Story 3.3). Optional — defaults to
+     *  null; set only for a checklist-attached disclosure. Verdict-neutral. */
+    disclosureKey?: string | null;
   },
 ) {
   return db
     .insert(proofRequirement)
-    .values({ ...values, label: values.label ?? "" })
+    .values({
+      ...values,
+      label: values.label ?? "",
+      disclosureState: values.disclosureState ?? null,
+      disclosureKey: values.disclosureKey ?? null,
+    })
     .returning()
     .get();
 }
@@ -722,6 +735,12 @@ export interface BriefRequirementRow {
   kind: string;
   criticality: Criticality;
   label: string;
+  /** Three-tier disclosure severity (Story 3.3); null for non-disclosure
+   *  requirements and until an operator assesses a tier. */
+  disclosureState: DisclosureState | null;
+  /** Stable France/EU checklist identity (Story 3.3); null for non-checklist
+   *  requirements. Drives dedup + the localized row name. */
+  disclosureKey: string | null;
 }
 
 /** A Deliverable's authored ProofRequirements, deterministically ordered by id.
@@ -737,6 +756,8 @@ export function listProofRequirementsForDeliverable(
       kind: proofRequirement.kind,
       criticality: proofRequirement.criticality,
       label: proofRequirement.label,
+      disclosureState: proofRequirement.disclosureState,
+      disclosureKey: proofRequirement.disclosureKey,
     })
     .from(proofRequirement)
     .where(eq(proofRequirement.deliverableId, deliverableId))
@@ -779,10 +800,28 @@ export function getProofRequirementRow(
       kind: proofRequirement.kind,
       criticality: proofRequirement.criticality,
       label: proofRequirement.label,
+      disclosureState: proofRequirement.disclosureState,
+      disclosureKey: proofRequirement.disclosureKey,
     })
     .from(proofRequirement)
     .where(eq(proofRequirement.id, requirementId))
     .get();
+}
+
+/** Set (or clear) a ProofRequirement's three-tier disclosure severity in place
+ *  by id (Story 3.3). An in-place UPDATE keeps the row id stable, so any linked
+ *  evidence survives. This IS verdict-affecting (unlike a label edit): the tier
+ *  flows into the AuditSnapshot, so the AuditResult cache invalidates through
+ *  evidence_snapshot_hash on the next run (AD-4). Pass null to clear. */
+export function setDisclosureState(
+  db: Db,
+  requirementId: string,
+  state: DisclosureState | null,
+): void {
+  db.update(proofRequirement)
+    .set({ disclosureState: state })
+    .where(eq(proofRequirement.id, requirementId))
+    .run();
 }
 
 /** Edit a ProofRequirement in place (criticality and/or label). Editing by id
@@ -846,13 +885,16 @@ export function proofRequirementHasDependents(db: Db, requirementId: string): bo
 //     exactly a Claim's requirements, its operator-only evidence (AD-17), and
 //     its human confirmations (AD-18) — no more.
 
-/** The ProofRequirements of a Claim (via its Deliverable). */
+/** The ProofRequirements of a Claim (via its Deliverable). `disclosureState` is
+ *  the pre-resolved three-tier severity for `disclosure` requirements (Story
+ *  3.3); null for every other kind and until an operator assesses a tier. */
 export function listProofRequirementsForClaim(db: Db, claimId: string) {
   return db
     .select({
       id: proofRequirement.id,
       kind: proofRequirement.kind,
       criticality: proofRequirement.criticality,
+      disclosureState: proofRequirement.disclosureState,
     })
     .from(proofRequirement)
     .innerJoin(deliverable, eq(proofRequirement.deliverableId, deliverable.id))

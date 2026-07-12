@@ -3,10 +3,21 @@
 import "./proof-brief.css";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CRITICALITY, type Criticality } from "@/src/schema/enums";
+import {
+  FRANCE_EU_DISCLOSURE,
+  FRANCE_EU_DISCLOSURES,
+  type FranceEuDisclosure,
+} from "@/src/ruleset";
+import {
+  CRITICALITY,
+  type Criticality,
+  DISCLOSURE_STATE,
+  type DisclosureState,
+} from "@/src/schema/enums";
 import type {
   BriefRequirementView,
   DeliverableBriefView,
+  DisclosureCap,
   ProofBriefView,
   TemplateOptionView,
 } from "@/src/services";
@@ -142,6 +153,13 @@ function DeliverableSection({
                   onEdit={(patch) =>
                     run(mutateBrief(`${reqPath}/${encodeURIComponent(req.id)}`, "PATCH", patch))
                   }
+                  onSetSeverity={(disclosureState) =>
+                    run(
+                      mutateBrief(`${reqPath}/${encodeURIComponent(req.id)}`, "PATCH", {
+                        disclosureState,
+                      }),
+                    )
+                  }
                   onRemove={() =>
                     run(mutateBrief(`${reqPath}/${encodeURIComponent(req.id)}`, "DELETE"))
                   }
@@ -149,6 +167,14 @@ function DeliverableSection({
               </li>
             ))}
           </ul>
+
+          <DisclosureChecklist
+            locale={locale}
+            attachedKeys={attachedDisclosureKeys(deliverable)}
+            onAdd={(disclosure) =>
+              run(mutateBrief(reqPath, "POST", { intent: "add-disclosure", disclosure }))
+            }
+          />
 
           {adding ? (
             <AddRequirementForm
@@ -256,11 +282,13 @@ function RequirementRow({
   locale,
   req,
   onEdit,
+  onSetSeverity,
   onRemove,
 }: {
   locale: Locale;
   req: BriefRequirementView;
   onEdit: (patch: { criticality?: Criticality; label?: string }) => Promise<boolean>;
+  onSetSeverity: (state: DisclosureState | null) => Promise<boolean>;
   onRemove: () => void;
 }) {
   const s = localeStrings(locale);
@@ -324,20 +352,142 @@ function RequirementRow({
 
   return (
     <div className="pd-pbrief__req">
-      <CriticalityTag locale={locale} criticality={req.criticality} />
-      <div className="pd-pbrief__req-body">
-        <span className="pd-pbrief__req-label">{req.label || req.kind}</span>
-        <span className="pd-pbrief__req-sat">
-          {p.satisfiedByLabel}: {p.satisfaction[req.satisfactionType]}
+      <div className="pd-pbrief__req-main">
+        <CriticalityTag locale={locale} criticality={req.criticality} />
+        <div className="pd-pbrief__req-body">
+          <span className="pd-pbrief__req-label">
+            <RequirementLabel locale={locale} req={req} />
+          </span>
+          <span className="pd-pbrief__req-sat">
+            {p.satisfiedByLabel}: {p.satisfaction[req.satisfactionType]}
+          </span>
+        </div>
+        <div className="pd-pbrief__req-actions">
+          <button type="button" className="pd-btn-outline" onClick={() => setEditing(true)}>
+            {p.edit}
+          </button>
+          <button type="button" className="pd-btn-outline" onClick={onRemove}>
+            {p.remove}
+          </button>
+        </div>
+      </div>
+      {req.isDisclosure ? (
+        <DisclosureControl locale={locale} req={req} onSetSeverity={onSetSeverity} />
+      ) : null}
+    </div>
+  );
+}
+
+/** Render a requirement's display name. A France/EU checklist disclosure renders
+ *  its LOCALIZED name (keyed off the stable `disclosureKey`, not the mutable
+ *  persisted label), wrapping a locked verbatim-French term (e.g. "collaboration
+ *  commerciale") in <span lang="fr"> for screen readers (AC1.2). Any other
+ *  requirement renders its authored label. */
+function RequirementLabel({ locale, req }: { locale: Locale; req: BriefRequirementView }) {
+  if (req.disclosureKey) {
+    const name = localeStrings(locale).proofBrief.disclosure.name[req.disclosureKey];
+    if (FRANCE_EU_DISCLOSURES[req.disclosureKey].verbatimFrench) {
+      return <span lang="fr">{name}</span>;
+    }
+    return <>{name}</>;
+  }
+  return <>{req.label || req.kind}</>;
+}
+
+/** The France/EU disclosure three-tier severity control + the standing caveat
+ *  (Story 3.3, FR-4/NFR-D3/AD-22). The tier is a Human assertion reviewing the
+ *  evidence on file — framed "evidence assistance — not legal advice", never a
+ *  compliance determination. */
+function DisclosureControl({
+  locale,
+  req,
+  onSetSeverity,
+}: {
+  locale: Locale;
+  req: BriefRequirementView;
+  onSetSeverity: (state: DisclosureState | null) => Promise<boolean>;
+}) {
+  const d = localeStrings(locale).proofBrief.disclosure;
+  const cap: DisclosureCap = req.disclosureCap ?? "unassessed";
+  const showsCaveat = cap === "caps-yellow" || cap === "caps-red";
+
+  return (
+    <div className="pd-pbrief__disclosure">
+      <p className="pd-pbrief__disclosure-framing">{d.framing}</p>
+      <div className="pd-pbrief__disclosure-controls">
+        <label className="pd-pbrief__field">
+          <span>{d.severityLabel}</span>
+          <select
+            className="pd-pbrief__select"
+            value={req.disclosureState ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              onSetSeverity(v === "" ? null : (v as DisclosureState));
+            }}
+          >
+            <option value="">{d.tier.unassessed}</option>
+            {DISCLOSURE_STATE.map((tier) => (
+              <option key={tier} value={tier}>
+                {d.tier[tier]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className={`pd-pbrief__cap pd-pbrief__cap--${cap}`}>
+          {d.capLabel}: {d.cap[cap]}
         </span>
       </div>
-      <div className="pd-pbrief__req-actions">
-        <button type="button" className="pd-btn-outline" onClick={() => setEditing(true)}>
-          {p.edit}
-        </button>
-        <button type="button" className="pd-btn-outline" onClick={onRemove}>
-          {p.remove}
-        </button>
+      {showsCaveat ? <p className="pd-pbrief__disclosure-caveat">{d.caveat}</p> : null}
+    </div>
+  );
+}
+
+/** The disclosure checklist keys already attached to a Deliverable — from the
+ *  stable `disclosureKey`, so the checklist disables them (the service also
+ *  rejects duplicates). */
+function attachedDisclosureKeys(deliverable: DeliverableBriefView): Set<FranceEuDisclosure> {
+  const keys = new Set<FranceEuDisclosure>();
+  for (const req of deliverable.requirements) {
+    if (req.disclosureKey) keys.add(req.disclosureKey);
+  }
+  return keys;
+}
+
+/** The France/EU Disclosure Checklist — attach collaboration commerciale /
+ *  images retouchées / images virtuelles to this Deliverable (Story 3.3, AC1). An item
+ *  already attached is disabled (each checklist item is attached at most once). */
+function DisclosureChecklist({
+  locale,
+  attachedKeys,
+  onAdd,
+}: {
+  locale: Locale;
+  attachedKeys: Set<FranceEuDisclosure>;
+  onAdd: (disclosure: FranceEuDisclosure) => Promise<boolean>;
+}) {
+  const d = localeStrings(locale).proofBrief.disclosure;
+  return (
+    <div className="pd-pbrief__checklist">
+      <span className="pd-pbrief__checklist-heading">{d.checklistHeading}</span>
+      <span className="pd-pbrief__disclosure-framing">{d.framing}</span>
+      <div className="pd-pbrief__checklist-actions">
+        {FRANCE_EU_DISCLOSURE.map((key) => {
+          const verbatim = FRANCE_EU_DISCLOSURES[key].verbatimFrench;
+          const attached = attachedKeys.has(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              className="pd-btn-outline pd-pbrief__checklist-add"
+              disabled={attached}
+              aria-disabled={attached}
+              onClick={() => onAdd(key)}
+            >
+              {attached ? d.attached : d.addLabel}:{" "}
+              {verbatim ? <span lang="fr">{d.name[key]}</span> : d.name[key]}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

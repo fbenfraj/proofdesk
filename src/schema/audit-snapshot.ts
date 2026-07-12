@@ -12,7 +12,7 @@
 // MatchSuggestion or a `suggested`-source link — the core never sees suggestions
 // (AD-17).
 
-import type { Criticality, LivenessLabel, MachineOrHuman } from "./enums";
+import type { Criticality, DisclosureState, LivenessLabel, MachineOrHuman } from "./enums";
 
 /** Bump when the snapshot SHAPE changes; persisted on AuditResult (AD-4).
  *  v2 (Story 1.5): each requirement row carries its `kind` (the core resolves the
@@ -22,9 +22,6 @@ import type { Criticality, LivenessLabel, MachineOrHuman } from "./enums";
  *  requires a single link that is BOTH `live` AND confirmed (AD-5) — they can
  *  never be combined across different links. */
 export const SNAPSHOT_VERSION = 2 as const;
-
-/** Disclosure tiers are firmed in Epic 3 (AD-13); nullable placeholder now. */
-export type DisclosureState = string | null;
 
 /** An append-only confirmation the page shows the Deliverable (AD-18). */
 export interface SnapshotHumanConfirmation {
@@ -56,7 +53,11 @@ export interface SnapshotProofRequirement {
    *  classification the core re-derives. */
   kind: string;
   criticality: Criticality;
-  disclosureState: DisclosureState;
+  /** Three-tier France/EU disclosure severity (FR-4, Story 3.3), pre-resolved by
+   *  the shell from the operator's assessment. Meaningful only for `disclosure`
+   *  requirements; null everywhere else and until the operator assesses a tier
+   *  (the core then uses the operator-confirmed-evidence fallback). */
+  disclosureState: DisclosureState | null;
   /** One entry per `source = operator` EvidenceLink affirming this requirement
    *  (AD-17). Empty means no operator-affirmed evidence — the requirement is
    *  unmet by absence, distinct from present-but-unconfirmed. */

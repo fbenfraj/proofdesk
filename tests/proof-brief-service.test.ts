@@ -67,12 +67,12 @@ describe("getProofBrief — the read (Story 3.2, FR-3)", () => {
     expect(d?.requirements).toEqual([]);
   });
 
-  test("templates cover all five Deliverable types and stay provisional/unconfirmed", () => {
+  test("templates cover all five Deliverable types and are confirmed (GATE b/3)", () => {
     const templates = listTemplates();
     expect(templates.map((t) => t.deliverableType).sort()).toEqual([...DELIVERABLE_TYPE].sort());
     for (const t of templates) {
-      expect(t.provisional).toBe(true);
-      expect(t.requirements.every((r) => r.confirmed === false)).toBe(true);
+      expect(t.provisional).toBe(false);
+      expect(t.requirements.every((r) => r.confirmed === true)).toBe(true);
       // Every template carries the required France/EU disclosure as a critical bar.
       const disclosure = t.requirements.find((r) => r.kind === "disclosure-visible");
       expect(disclosure?.criticality).toBe("critical");

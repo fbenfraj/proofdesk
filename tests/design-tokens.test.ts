@@ -2,11 +2,16 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
+  FONT_FAMILY_VARS,
   PALETTE,
   PENDING_TOKEN,
   PROOF_STATUS_TOKENS,
   PROVENANCE_TOKENS,
+  RADIUS,
+  SHELL_DIMS,
+  SPACING,
   STATUS_ORDER,
+  TYPE_SCALE,
 } from "@/app/_lib/design-tokens";
 
 describe("Proof Status vocabulary (UX-DR2, three-channel AD-12)", () => {
@@ -85,5 +90,59 @@ describe("Palette single-source-of-truth matches globals.css (drift guard)", () 
 
   test("focus-ring token equals the seal hue (UX-DR6 sanctioned use)", () => {
     expect(PALETTE["focus-ring"].toUpperCase()).toBe(PALETTE.seal.toUpperCase());
+  });
+});
+
+// GATE c/3 (Story 3.3): the drift guard extends beyond colour to the spacing,
+// radius, shell-dimension and type-scale tokens, AND flags orphan CSS vars — a
+// `--token` declared in globals.css `:root` with no canonical JS mirror. This is
+// what stops design decisions from silently diverging across the two files.
+describe("Non-colour token single-source-of-truth matches globals.css (GATE c/3)", () => {
+  const css = readFileSync(join(import.meta.dirname, "..", "app", "globals.css"), "utf8");
+
+  // Parse the FIRST `:root { ... }` block into a name → value map.
+  const rootBlock = css.slice(css.indexOf(":root"), css.indexOf("}", css.indexOf(":root")));
+  const declaredVars = new Map<string, string>();
+  for (const m of rootBlock.matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)) {
+    declaredVars.set(m[1], normalize(m[2]));
+  }
+
+  function normalize(value: string): string {
+    return value.trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  const nonColourGroups: [string, Record<string, string>][] = [
+    ["spacing", SPACING],
+    ["radius", RADIUS],
+    ["shell-dimension", SHELL_DIMS],
+    ["type-scale", TYPE_SCALE],
+  ];
+
+  for (const [group, tokens] of nonColourGroups) {
+    test.each(Object.entries(tokens))(`${group} --%s is declared as "%s"`, (name, value) => {
+      expect(declaredVars.has(name), `--${name} must be declared in globals.css :root`).toBe(true);
+      expect(declaredVars.get(name)).toBe(normalize(value));
+    });
+  }
+
+  test("no orphan CSS var — every :root token has a canonical JS mirror", () => {
+    const canonical = new Set<string>([
+      ...Object.keys(PALETTE),
+      ...Object.keys(SPACING),
+      ...Object.keys(RADIUS),
+      ...Object.keys(SHELL_DIMS),
+      ...Object.keys(TYPE_SCALE),
+      ...FONT_FAMILY_VARS,
+    ]);
+    const orphans = [...declaredVars.keys()].filter((name) => !canonical.has(name));
+    expect(orphans, `orphan CSS vars in globals.css :root: ${orphans.join(", ")}`).toEqual([]);
+  });
+
+  test("the :root parser actually found the token block (guards a silent no-op)", () => {
+    // A regression tripwire: if the parse breaks, the drift/orphan tests would
+    // vacuously pass. Assert we parsed a plausible number of vars.
+    expect(declaredVars.size).toBeGreaterThanOrEqual(
+      Object.keys(PALETTE).length + Object.keys(SPACING).length,
+    );
   });
 });

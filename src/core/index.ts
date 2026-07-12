@@ -145,9 +145,17 @@ function evalLinkReachability(req: SnapshotProofRequirement): RequirementEvaluat
 /** disclosure (AD-13, AC-2): a three-tier state. When a tier is pre-resolved use
  *  it (evidenced → Green-eligible / ambiguous → Yellow-cap / missing → unmet);
  *  otherwise fall back to operator-confirmed evidence. Disclosure evidence is a
- *  human screenshot review, so its sub-fact is always Human (AD-19). */
+ *  human screenshot review, so its sub-fact is always Human (AD-19).
+ *
+ *  An UNMET disclosure (`missing`, or the fallback with no confirmation) that is
+ *  CRITICAL drives the Claim Red via the decision table (satisfied=false); a
+ *  SUPPORTING one must still cap at Yellow — a missing requirement can never be
+ *  silently ignored into a false Green, matching evalHumanAssertion /
+ *  evalStructuredField. (Disclosure requirements ship `critical`; this keeps the
+ *  taxonomy consistent if one is reclassified `supporting`.) */
 function evalDisclosure(req: SnapshotProofRequirement): RequirementEvaluation {
   const hasConfirmation = req.operatorEvidence.some((l) => l.humanConfirmations.length > 0);
+  const isSupporting = req.criticality === "supporting";
   let satisfied: boolean;
   let capsAtYellow: boolean;
   let reason: string;
@@ -166,14 +174,15 @@ function evalDisclosure(req: SnapshotProofRequirement): RequirementEvaluation {
       break;
     case "missing":
       satisfied = false;
-      capsAtYellow = false;
+      // Critical → Red via the table; supporting → Yellow (never a silent Green).
+      capsAtYellow = isSupporting;
       reason = "Required disclosure missing.";
       break;
     default:
       // No pre-resolved tier yet (Epic 1): an operator-confirmed screenshot is
       // the evidence that the disclosure is visibly present.
       satisfied = hasConfirmation;
-      capsAtYellow = false;
+      capsAtYellow = !satisfied && isSupporting;
       reason = hasConfirmation
         ? "Disclosure evidenced by an operator-confirmed screenshot."
         : "No evidence the required disclosure is visible.";

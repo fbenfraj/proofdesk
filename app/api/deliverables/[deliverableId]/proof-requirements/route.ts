@@ -7,12 +7,14 @@
 // POST { applyTemplate: <DeliverableType> }            → prefill from the Story-3.1
 //                                                        default set (unset only)
 // POST { kind, criticality, label }                    → add one requirement
+// POST { disclosure: <FranceEuDisclosure> }            → attach a France/EU
+//                                                        disclosure requirement (3.3)
 
 import { z } from "zod";
 import { getDb } from "@/src/repositories";
-import { DELIVERABLE_TYPE } from "@/src/ruleset";
+import { DELIVERABLE_TYPE, FRANCE_EU_DISCLOSURE } from "@/src/ruleset";
 import { criticalitySchema } from "@/src/schema";
-import { addRequirement, applyTemplate } from "@/src/services";
+import { addDisclosureRequirement, addRequirement, applyTemplate } from "@/src/services";
 
 const DeliverableIdParam = z.object({ deliverableId: z.string().min(1) });
 
@@ -26,6 +28,10 @@ const RequirementBody = z.discriminatedUnion("intent", [
     kind: z.string().trim().min(1).max(120),
     criticality: criticalitySchema,
     label: z.string().trim().max(200).default(""),
+  }),
+  z.object({
+    intent: z.literal("add-disclosure"),
+    disclosure: z.enum(FRANCE_EU_DISCLOSURE),
   }),
 ]);
 
@@ -51,18 +57,28 @@ export async function POST(
 
   const { db } = getDb();
   const deliverableId = param.data.deliverableId;
-  const result =
-    body.data.intent === "apply-template"
-      ? applyTemplate(db, deliverableId, body.data.applyTemplate)
-      : addRequirement(db, deliverableId, {
-          kind: body.data.kind,
-          criticality: body.data.criticality,
-          label: body.data.label,
-        });
+  let result: ReturnType<typeof addRequirement>;
+  if (body.data.intent === "apply-template") {
+    result = applyTemplate(db, deliverableId, body.data.applyTemplate);
+  } else if (body.data.intent === "add-disclosure") {
+    result = addDisclosureRequirement(db, deliverableId, body.data.disclosure);
+  } else {
+    result = addRequirement(db, deliverableId, {
+      kind: body.data.kind,
+      criticality: body.data.criticality,
+      label: body.data.label,
+    });
+  }
 
   if (result.ok) return Response.json(result.view, { status: 201 });
   if (result.reason === "deliverable-not-found") {
     return Response.json({ error: "Deliverable not found" }, { status: 404 });
+  }
+  if (result.reason === "disclosure-already-attached") {
+    return Response.json(
+      { error: "This France/EU disclosure is already attached to the Deliverable." },
+      { status: 409 },
+    );
   }
   if (result.reason === "already-set") {
     return Response.json(

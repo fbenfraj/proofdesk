@@ -26,6 +26,16 @@ export type MachineOrHuman = (typeof MACHINE_OR_HUMAN)[number];
 export const CRITICALITY = ["critical", "supporting"] as const;
 export type Criticality = (typeof CRITICALITY)[number];
 
+/** France/EU disclosure severity — the three-tier rule (FR-4, addendum §A). An
+ *  operator's Human assertion reviewing the evidence on file (no automated image
+ *  recognition exists — AD-3): `evidenced` → Green-eligible; `ambiguous`/`partial` → caps at Yellow;
+ *  `missing` → the critical disclosure is unmet → Red. A disclosure requirement
+ *  with NO tier set yet (null) keeps the Epic-1 fallback (an operator-confirmed
+ *  screenshot reads as evidenced). This is verdict-affecting config the core
+ *  consumes from the AuditSnapshot — never a compliance/legal determination. */
+export const DISCLOSURE_STATE = ["evidenced", "ambiguous", "partial", "missing"] as const;
+export type DisclosureState = (typeof DISCLOSURE_STATE)[number];
+
 /** Seeded/real hard wall — immutable on Campaign, inherited on children (AD-9). */
 export const DATA_ORIGIN = ["seeded", "real"] as const;
 export type DataOrigin = (typeof DATA_ORIGIN)[number];
@@ -53,6 +63,7 @@ export const proofStatusSchema = z.enum(PROOF_STATUS);
 export const livenessLabelSchema = z.enum(LIVENESS_LABEL);
 export const machineOrHumanSchema = z.enum(MACHINE_OR_HUMAN);
 export const criticalitySchema = z.enum(CRITICALITY);
+export const disclosureStateSchema = z.enum(DISCLOSURE_STATE);
 export const dataOriginSchema = z.enum(DATA_ORIGIN);
 export const evidenceLinkSourceSchema = z.enum(EVIDENCE_LINK_SOURCE);
 export const reportItemAudienceSchema = z.enum(REPORT_ITEM_AUDIENCE);

@@ -304,3 +304,60 @@ describe("Human override & caveat copy (Story 1.9, EN|FR)", () => {
     );
   });
 });
+
+// GATE a/3 (Story 3.3): the France/EU disclosure copy is LOCKED — copy lock only,
+// NOT the legal review (no Epic-3 story touches real client data). A reword of any
+// of these verbatim strings is a regression that fails here.
+describe("France/EU disclosure copy is LOCKED (Story 3.3 GATE a/3)", () => {
+  test('"collaboration commerciale" is kept verbatim in BOTH locales', () => {
+    for (const locale of LOCALES) {
+      const d = localeStrings(locale).proofBrief.disclosure;
+      expect(d.name["collaboration-commerciale"]).toBe("collaboration commerciale");
+    }
+  });
+
+  test("the disclosure framing is the verbatim NFR-D3 evidence-assistance string", () => {
+    expect(localeStrings("en").proofBrief.disclosure.framing).toBe(
+      "evidence assistance — not legal advice",
+    );
+    expect(localeStrings("fr").proofBrief.disclosure.framing).toBe(
+      "assistance à la preuve — pas un conseil juridique",
+    );
+  });
+
+  test("the standing disclosure caveat is the verbatim AD-22 string (EN + FR)", () => {
+    expect(localeStrings("en").proofBrief.disclosure.caveat).toBe(
+      "Reflects evidence on file, not a compliance determination",
+    );
+    expect(localeStrings("fr").proofBrief.disclosure.caveat).toBe(
+      "Reflète les preuves au dossier, et non une décision de conformité",
+    );
+  });
+
+  test("the legal disclaimer (Story 1.10) remains the locked AD-22 string — the copy lock holds", () => {
+    // GATE a/3 pins the SAME legal disclaimer 3.3's disclosure surface leans on.
+    expect(localeStrings("en").legalDisclaimer).toBe(
+      "Evidence management and reporting support — not legal advice or a guarantee of compliance.",
+    );
+  });
+
+  test("every disclosure string resolves non-empty in EN and FR (catalog parity)", () => {
+    for (const locale of LOCALES) {
+      const d = localeStrings(locale).proofBrief.disclosure;
+      const fixed = [
+        d.checklistHeading,
+        d.framing,
+        d.addLabel,
+        d.severityLabel,
+        d.capLabel,
+        d.caveat,
+        ...Object.values(d.name),
+        ...Object.values(d.tier),
+        ...Object.values(d.cap),
+      ];
+      for (const value of fixed) {
+        expect(value.length, `${locale}:disclosure`).toBeGreaterThan(0);
+      }
+    }
+  });
+});

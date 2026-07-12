@@ -32,26 +32,71 @@ import {
   getProofRequirementRow,
   listProofRequirementsForDeliverable,
   proofRequirementHasDependents,
+  setDisclosureState,
   updateProofRequirement,
 } from "@/src/repositories";
 import {
   DELIVERABLE_TYPE,
   type DeliverableType,
   defaultRequirementsFor,
+  type FranceEuDisclosure,
+  franceEuDisclosure,
+  isFranceEuDisclosure,
   type SatisfactionType,
   satisfactionTypeOf,
 } from "@/src/ruleset";
-import type { Criticality } from "@/src/schema";
+import type { Criticality, DisclosureState } from "@/src/schema";
 import { listDeliverableOptions } from "./evidence-matching";
 
+/** The resulting audit cap of a disclosure requirement's three-tier severity —
+ *  derived for display so the Proof Brief shows the operator what a tier means
+ *  (Story 3.3, mirrors the pure core's `evalDisclosure`; the core remains the
+ *  sole verdict authority — this is a UI hint, never the verdict). `unassessed`
+ *  = no tier yet (the core falls back to operator-confirmed evidence). */
+export type DisclosureCap = "green-eligible" | "caps-yellow" | "caps-red" | "unassessed";
+
+/** Mirror the pure core's `evalDisclosure` for display: a `missing` disclosure
+ *  caps at Red only when CRITICAL — a supporting one caps at Yellow (never a
+ *  false Red), matching the audit engine. */
+export function disclosureCapOf(
+  state: DisclosureState | null,
+  criticality: Criticality,
+): DisclosureCap {
+  switch (state) {
+    case "evidenced":
+      return "green-eligible";
+    case "ambiguous":
+    case "partial":
+      return "caps-yellow";
+    case "missing":
+      return criticality === "supporting" ? "caps-yellow" : "caps-red";
+    default:
+      return "unassessed";
+  }
+}
+
 /** One authored requirement as the brief renders it. `satisfactionType` is
- *  derived (never stored) so the UI can be honest about what would satisfy it. */
+ *  derived (never stored) so the UI can be honest about what would satisfy it.
+ *  For `disclosure` requirements, `disclosureState` carries the three-tier
+ *  severity (Story 3.3) and `disclosureCap` its derived audit cap; both are null/
+ *  omitted for non-disclosure kinds. */
 export interface BriefRequirementView {
   id: string;
   kind: string;
   criticality: Criticality;
   label: string;
   satisfactionType: SatisfactionType;
+  /** true when this is a disclosure requirement (satisfaction type `disclosure`)
+   *  — the UI renders the three-tier severity control + the standing caveat. */
+  isDisclosure: boolean;
+  disclosureState: DisclosureState | null;
+  /** The audit cap the current tier produces (display hint; null when not a
+   *  disclosure requirement). */
+  disclosureCap: DisclosureCap | null;
+  /** Stable France/EU checklist key (Story 3.3) when this row is a known
+   *  checklist item — the UI localizes the row name from it and the checklist
+   *  disables an already-attached key. null for a generic/unknown disclosure. */
+  disclosureKey: FranceEuDisclosure | null;
 }
 
 /** A Deliverable's slice of the brief. `isUnset` drives the proof-brief-unset
@@ -93,13 +138,21 @@ function toRequirementView(row: {
   kind: string;
   criticality: Criticality;
   label: string;
+  disclosureState: DisclosureState | null;
+  disclosureKey: string | null;
 }): BriefRequirementView {
+  const satisfactionType = satisfactionTypeOf(row.kind);
+  const isDisclosure = satisfactionType === "disclosure";
   return {
     id: row.id,
     kind: row.kind,
     criticality: row.criticality,
     label: row.label,
-    satisfactionType: satisfactionTypeOf(row.kind),
+    satisfactionType,
+    isDisclosure,
+    disclosureState: isDisclosure ? row.disclosureState : null,
+    disclosureCap: isDisclosure ? disclosureCapOf(row.disclosureState, row.criticality) : null,
+    disclosureKey: isFranceEuDisclosure(row.disclosureKey) ? row.disclosureKey : null,
   };
 }
 
@@ -169,7 +222,9 @@ export type BriefMutationResult =
   | { ok: false; reason: "deliverable-not-found" }
   | { ok: false; reason: "requirement-not-found" }
   | { ok: false; reason: "has-dependents" }
-  | { ok: false; reason: "already-set" };
+  | { ok: false; reason: "already-set" }
+  | { ok: false; reason: "not-disclosure" }
+  | { ok: false; reason: "disclosure-already-attached" };
 
 export interface AddRequirementInput {
   kind: string;
@@ -264,13 +319,76 @@ export function applyTemplate(
     return { ok: false, reason: "already-set" };
   }
   for (const req of defaultRequirementsFor(deliverableType).requirements) {
+    // The template's France/EU disclosure requirement is the baseline
+    // "collaboration commerciale" checklist item — persist it KEYED (not a
+    // keyless generic), so it dedups against a later checklist add and renders
+    // its localized name. Without this a template + a checklist add would leave
+    // two critical disclosures and keep the claim confusingly Red (Codex [P2]).
+    const disclosureKey =
+      satisfactionTypeOf(req.kind) === "disclosure" ? TEMPLATE_DISCLOSURE_KEY : null;
     createProofRequirement(db, {
       deliverableId,
       kind: req.kind,
       criticality: req.criticality,
       label: req.label,
+      disclosureKey,
     });
   }
+  return refreshed(db, deliverableId);
+}
+
+/** The baseline France/EU disclosure a Deliverable-type template pre-fills — the
+ *  universally-required "collaboration commerciale" sponsored-content label. */
+const TEMPLATE_DISCLOSURE_KEY: FranceEuDisclosure = "collaboration-commerciale";
+
+/** Attach one France/EU disclosure requirement (collaboration commerciale /
+ *  images retouchées / images virtuelles) to a Deliverable (Story 3.3, FR-4). Server-
+ *  authoritative kind + label from the ruleset spec — the client only names the
+ *  canonical key, never the kind/label, so a disclosure can never be spoofed into
+ *  a machine-verified requirement. A Deliverable may carry several DIFFERENT
+ *  disclosures, but the SAME checklist item is attached at most once: a duplicate
+ *  is rejected (`disclosure-already-attached`) because a second, unassessed copy
+ *  would silently re-introduce a Red/Yellow after the first was assessed. The
+ *  severity is set separately and starts unassessed (null). */
+export function addDisclosureRequirement(
+  db: Db,
+  deliverableId: string,
+  key: FranceEuDisclosure,
+): BriefMutationResult {
+  if (!getDeliverableRow(db, deliverableId)) return { ok: false, reason: "deliverable-not-found" };
+  const spec = franceEuDisclosure(key);
+  // Dedup on the STABLE key, never the mutable display label — editing a label
+  // must not let the same checklist item be attached twice (Codex [P2]).
+  const alreadyAttached = listProofRequirementsForDeliverable(db, deliverableId).some(
+    (r) => r.disclosureKey === key,
+  );
+  if (alreadyAttached) return { ok: false, reason: "disclosure-already-attached" };
+  createProofRequirement(db, {
+    deliverableId,
+    kind: spec.kind,
+    criticality: spec.criticality,
+    label: spec.label,
+    disclosureState: null,
+    disclosureKey: spec.key,
+  });
+  return refreshed(db, deliverableId);
+}
+
+/** Set (or clear) a disclosure requirement's three-tier severity (Story 3.3). The
+ *  tier is a Human assertion reviewing the evidence on file (AD-3) — it feeds the
+ *  core's `evalDisclosure` and is verdict-affecting (cache invalidates via the
+ *  snapshot hash, AD-4). Scoped to `deliverableId`; refuses a non-disclosure
+ *  requirement (a tier is meaningless there). */
+export function setDisclosureSeverity(
+  db: Db,
+  deliverableId: string,
+  requirementId: string,
+  state: DisclosureState | null,
+): BriefMutationResult {
+  const row = requirementOfDeliverable(db, deliverableId, requirementId);
+  if (!row) return { ok: false, reason: "requirement-not-found" };
+  if (satisfactionTypeOf(row.kind) !== "disclosure") return { ok: false, reason: "not-disclosure" };
+  setDisclosureState(db, requirementId, state);
   return refreshed(db, deliverableId);
 }
 

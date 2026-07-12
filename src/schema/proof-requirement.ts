@@ -1,6 +1,6 @@
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { deliverable } from "./deliverable";
-import { CRITICALITY } from "./enums";
+import { CRITICALITY, DISCLOSURE_STATE } from "./enums";
 import { pk } from "./shared-columns";
 
 /** ProofRequirement — one bar a Deliverable must clear. Its `criticality`
@@ -20,4 +20,22 @@ export const proofRequirement = sqliteTable("proof_requirement", {
    *  keeps the additive migration safe on rows written before this column
    *  existed (mirrors match_suggestion.rule's default). */
   label: text("label").notNull().default(""),
+  /** France/EU disclosure severity tier (Story 3.3, FR-4). Nullable: only
+   *  `disclosure-visible` requirements ever carry a value, and even then it is
+   *  null until the operator assesses the evidence on file (the core falls back
+   *  to operator-confirmed evidence while null). UNLIKE `label`, this IS
+   *  verdict-affecting — it flows into the AuditSnapshot, so setting/clearing it
+   *  invalidates the AuditResult cache through evidence_snapshot_hash (AD-4). It
+   *  is a Human assertion — no automated image recognition exists (AD-3) — never
+   *  a compliance call. */
+  disclosureState: text("disclosure_state", { enum: DISCLOSURE_STATE }),
+  /** Stable France/EU disclosure-checklist identity (Story 3.3) — e.g.
+   *  `collaboration-commerciale`. Set only for a checklist-attached disclosure;
+   *  null otherwise. UNLIKE `label` (mutable display text) this is the immutable
+   *  key the at-most-once guard and the localized row name both key off, so a
+   *  label edit can never break dedup or de-localize the name. Plain text (not a
+   *  DB enum) to avoid a schema→ruleset import cycle; the write path only ever
+   *  stores a validated `FranceEuDisclosure` key. DISPLAY/identity-only — NOT in
+   *  the AuditSnapshot, so it is verdict-neutral (never invalidates a cache). */
+  disclosureKey: text("disclosure_key"),
 });
