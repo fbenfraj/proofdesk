@@ -129,39 +129,33 @@
   font: 600 12px / 1 var(--font-record);
 }
 
-/* ---- Workspace: rail + main + drawer ---------------------------------- */
-.pd-workspace {
-  position: relative;
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.pd-rail {
+/* Workflow strip band (AI-10) - full-width, above the workspace. Replaces the
+   vertical rail. Depth is fill-shade + hairline only (UX-DR7). */
+.pd-strip {
   flex-shrink: 0;
-  width: var(--rail-width);
-  padding: var(--space-4) var(--space-3);
+  padding: var(--space-3) var(--space-6) var(--space-2);
   background: var(--surface-card);
-  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
 }
 
-.pd-rail__cap {
-  margin: 0 0 var(--space-3);
-  padding: 0 var(--space-3);
-}
-
-.pd-rail__list {
+.pd-strip__steps {
+  display: flex;
+  gap: var(--space-2);
   list-style: none;
-  margin: 0;
+  margin: 0 0 var(--space-2);
   padding: 0;
 }
 
-.pd-rail__item {
+.pd-strip__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-strip__link {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: 9px 11px;
-  margin-bottom: var(--space-1);
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   color: var(--ink);
@@ -170,34 +164,49 @@
   white-space: nowrap;
 }
 
-.pd-rail__icon {
+.pd-strip__order {
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1;
 }
 
-.pd-rail__label {
+.pd-strip__label {
   flex: 1;
 }
 
-/* Active surface: canvas fill + hairline + seal icon + weight (aria-current). */
-.pd-rail__item[aria-current="page"] {
+/* Honest workflow-progress signal - MUTED chrome, never the verdict palette. */
+.pd-strip__signal {
+  color: var(--muted);
+}
+
+.pd-strip__link[aria-current="page"] {
   background: var(--canvas);
   border-color: var(--hairline);
   font-weight: 600;
 }
 
-.pd-rail__item[aria-current="page"] .pd-rail__icon {
+.pd-strip__link[aria-current="page"] .pd-strip__order {
   color: var(--seal);
 }
 
-/* Quiet count badge — muted count on surface-raised + hairline, never a dot. */
-.pd-rail__badge {
-  padding: 1px var(--space-2);
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+.pd-strip__subhead {
+  margin: 0;
   color: var(--muted);
+  font: var(--type-body);
+}
+
+.pd-strip__next {
+  display: inline-block;
+  margin-top: var(--space-6);
+  color: var(--seal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ---- Workspace: main + drawer ------------------------------------------ */
+.pd-workspace {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .pd-main {

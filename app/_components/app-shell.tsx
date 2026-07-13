@@ -1,11 +1,12 @@
 import "./shell.css";
 import type { ReactNode } from "react";
+import type { CampaignStageState } from "@/src/services";
 import { resolveOperatorIdentity } from "@/src/services";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { ClaimDrawer } from "./claim-drawer";
 import { ClaimDrawerProvider } from "./claim-drawer-context";
 import { LangToggle } from "./lang-toggle";
-import { Rail } from "./rail";
+import { StageNext, StageStrip } from "./stage-strip";
 
 // The oxblood seal-mark (UX-DR6 sanctioned use). A small wax-seal emblem in the
 // wordmark — currentColor is set to --seal by the wordmark.
@@ -53,18 +54,19 @@ function InfoMark() {
   );
 }
 
-// Desktop operator shell (UX-DR7): full-width top bar + persistent 214px rail +
-// main canvas + right-side drawer slot. Depth is fill-shade + hairline only.
+// Desktop operator shell (UX-DR7): full-width top bar + horizontal workflow
+// strip + main canvas + right-side drawer slot. Depth is fill-shade + hairline
+// only (AI-10: the strip replaces the vertical rail).
 export function AppShell({
   locale,
   children,
-  evidenceCount = 0,
+  stageState,
 }: {
   locale: Locale;
   children: ReactNode;
-  /** Evidence Inbox count for the active campaign — server-resolved in the
-   *  layout, shown on the rail badge (Story 2.1). */
-  evidenceCount?: number;
+  /** Honest per-stage strip state for the active campaign - server-resolved in
+   *  the layout (Story AI-10). */
+  stageState: CampaignStageState;
 }) {
   const strings = localeStrings(locale);
   // The single operator's display agency, resolved server-side (AD-14) — the
@@ -105,12 +107,16 @@ export function AppShell({
         </div>
       </header>
 
-      {/* The drawer context spans the rail, the board (page content) and the
-          drawer so a Board row can open the Claim Card (Story 1.6). */}
+      {/* The drawer context spans the board (page content) and the drawer so a
+          Board row can open the Claim Card (Story 1.6). The strip sits outside
+          this provider - it never opens the drawer. */}
+      <StageStrip locale={locale} stageState={stageState} />
       <ClaimDrawerProvider>
         <div className="pd-workspace">
-          <Rail locale={locale} evidenceCount={evidenceCount} />
-          <main className="pd-main">{children}</main>
+          <main className="pd-main">
+            {children}
+            <StageNext locale={locale} />
+          </main>
           <ClaimDrawer locale={locale} agency={agency} />
         </div>
       </ClaimDrawerProvider>

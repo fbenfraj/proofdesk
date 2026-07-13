@@ -4,18 +4,17 @@ import { type Locale, localeStrings } from "@/app/_lib/i18n";
 const LOCALES: Locale[] = ["en", "fr"];
 
 describe("AI-9 Chrome relabels", () => {
-  test("no rail label mentions 'cockpit' in any locale", () => {
+  test("no stage label mentions 'cockpit' in any locale", () => {
     for (const locale of LOCALES) {
-      const rail = localeStrings(locale).rail;
-      for (const label of Object.values(rail)) {
+      for (const label of Object.values(localeStrings(locale).stage.labels)) {
         expect(label.toLowerCase()).not.toContain("cockpit");
       }
     }
   });
 
-  test("the Campaign Board rail label is set", () => {
-    expect(localeStrings("en").rail["audit-cockpit"]).toBe("Campaign Board");
-    expect(localeStrings("fr").rail["audit-cockpit"]).toBe("Tableau de campagne");
+  test("the run-the-audit stage label is the plain verb form", () => {
+    expect(localeStrings("en").stage.labels["run-the-audit"]).toBe("Run the audit");
+    expect(localeStrings("fr").stage.labels["run-the-audit"]).toBe("Lancer l’audit");
   });
 
   test("the override section heading reads 'Operator override' (EN); FR keeps the locked 'Arbitrage humain'", () => {

@@ -5,7 +5,6 @@ import {
   LOCALES,
   localeStrings,
   parseLocale,
-  RAIL_SURFACES,
   STAGE_STEPS,
 } from "@/app/_lib/i18n";
 
@@ -45,36 +44,6 @@ describe("locale catalog", () => {
   test("each locale exposes its own endonym as langName (toggle accessible label)", () => {
     expect(localeStrings("en").langName).toBe("English");
     expect(localeStrings("fr").langName).toBe("Français");
-  });
-
-  test("every rail surface resolves a non-empty label in EN and FR", () => {
-    for (const locale of LOCALES) {
-      const s = localeStrings(locale);
-      for (const surface of RAIL_SURFACES) {
-        expect(s.rail[surface.key].length, `${locale}:${surface.key}`).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  test("the four rail surfaces are in the fixed spine order (UX-DR7)", () => {
-    expect(RAIL_SURFACES.map((s) => s.key)).toEqual([
-      "audit-cockpit",
-      "proof-brief",
-      "evidence-inbox",
-      "client-safe-report",
-    ]);
-  });
-
-  test("locked FR rail translations are used verbatim (EXPERIENCE glossary)", () => {
-    const fr = localeStrings("fr").rail;
-    expect(fr["proof-brief"]).toBe("Cahier des preuves");
-    expect(fr["evidence-inbox"]).toBe("Boîte à preuves");
-    expect(fr["client-safe-report"]).toBe("Rapport prêt-client");
-  });
-
-  test("Audit Cockpit FR is flagged provisional (no locked glossary term)", () => {
-    // Guard against silently shipping an un-vetted locked term.
-    expect(RAIL_SURFACES.find((s) => s.key === "audit-cockpit")?.frProvisional).toBe(true);
   });
 });
 

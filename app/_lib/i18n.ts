@@ -23,16 +23,6 @@ export function parseLocale(value: string | undefined | null): Locale {
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
-/** The four operator surfaces, in the fixed spine order (UX-DR7). */
-export const RAIL_SURFACES = [
-  { key: "audit-cockpit", href: "/", frProvisional: true },
-  { key: "proof-brief", href: "/proof-brief", frProvisional: false },
-  { key: "evidence-inbox", href: "/evidence-inbox", frProvisional: false, badge: true },
-  { key: "client-safe-report", href: "/client-safe-report", frProvisional: false },
-] as const;
-
-export type RailSurfaceKey = (typeof RAIL_SURFACES)[number]["key"];
-
 /** The four operator surfaces in JOURNEY order (AI-10 workflow-first nav).
  *  `order` is the lifecycle step; `href` reuses the existing route so refresh,
  *  browser back/forward and deep links keep working with zero redirects. */
@@ -51,8 +41,6 @@ export interface Strings {
   readonly campaignLabel: string;
   readonly campaignPlaceholder: string;
   readonly operatorLabel: string;
-  readonly railCap: string;
-  readonly rail: Record<RailSurfaceKey, string>;
   /** Workflow-first stage strip (AI-10). Verb-first journey labels, the "Next:"
    *  handoff prefix, and the honest per-stage progress signals. Signals are
    *  workflow progress ONLY - never a proof verdict (no green/yellow/red). */
@@ -73,9 +61,6 @@ export interface Strings {
   };
   readonly cockpitLead: string;
   readonly surfaceComingSoon: string;
-  readonly railBadgeEmpty: string;
-  /** Rail count badge title when N unassigned items exist (UX rail-badge). */
-  readonly railBadgeCount: (n: number) => string;
   readonly langToggleAria: string;
   /** Reserved standing-disclaimer slot copy — rendered where verdicts appear
    * (AD-3 / AD-22). Present as a token so later stories wire it, not the shell. */
@@ -84,6 +69,7 @@ export interface Strings {
   /** Campaign Board copy (Story 1.6). FR runs longer — stamps use nowrap so
    *  `Statut de preuve` / `Non défendable` never truncate (UX-DR26). */
   readonly board: {
+    readonly title: string;
     readonly indexHeader: string;
     readonly creatorHeader: string;
     readonly deliverableHeader: string;
@@ -418,13 +404,6 @@ const EN: Strings = {
   campaignLabel: "Campaign",
   campaignPlaceholder: "No campaign selected",
   operatorLabel: "Operator",
-  railCap: "Campaign",
-  rail: {
-    "audit-cockpit": "Campaign Board",
-    "proof-brief": "Proof Brief",
-    "evidence-inbox": "Evidence Inbox",
-    "client-safe-report": "Client-Safe Report",
-  },
   stage: {
     labels: {
       "set-the-bar": "Set the bar",
@@ -448,14 +427,13 @@ const EN: Strings = {
   cockpitLead: "The claimed-vs-proven ledger arrives in a later story.",
   surfaceComingSoon:
     "This surface is part of the persistent shell. Its content arrives in a later story.",
-  railBadgeEmpty: "No campaign loaded",
-  railBadgeCount: (n) => `${n} evidence ${n === 1 ? "item" : "items"} in the Inbox`,
   langToggleAria: "Switch language",
   automationDisclaimer:
     "ProofDesk verifies structured proof fields and link status. It does not automatically watch streams or validate viewer metrics.",
   legalDisclaimer:
     "Evidence management and reporting support - not legal advice or a guarantee of compliance.",
   board: {
+    title: "Campaign Board",
     indexHeader: "#",
     creatorHeader: "Creator",
     deliverableHeader: "Deliverable",
@@ -739,16 +717,6 @@ const FR: Strings = {
   campaignLabel: "Campagne",
   campaignPlaceholder: "Aucune campagne sélectionnée",
   operatorLabel: "Opérateur",
-  railCap: "Campagne",
-  rail: {
-    // AI-9: "Audit Cockpit" retired as Chrome jargon; working label per AI-9 spec.
-    // AI-10 confirms the final label.
-    "audit-cockpit": "Tableau de campagne",
-    // Locked FR glossary terms (EXPERIENCE.md#L77) — verbatim.
-    "proof-brief": "Cahier des preuves",
-    "evidence-inbox": "Boîte à preuves",
-    "client-safe-report": "Rapport prêt-client",
-  },
   stage: {
     labels: {
       "set-the-bar": "Définir le seuil",
@@ -772,14 +740,13 @@ const FR: Strings = {
   cockpitLead: "Le registre revendiqué-vs-prouvé arrivera dans une prochaine étape.",
   surfaceComingSoon:
     "Cette surface fait partie de l’interface persistante. Son contenu arrivera dans une prochaine étape.",
-  railBadgeEmpty: "Aucune campagne chargée",
-  railBadgeCount: (n) => `${n} élément${n === 1 ? "" : "s"} de preuve dans la Boîte`,
   langToggleAria: "Changer de langue",
   automationDisclaimer:
     "ProofDesk vérifie les champs de preuve structurés et l’état des liens. Il ne visionne pas automatiquement les diffusions et ne valide pas les métriques d’audience.",
   legalDisclaimer:
     "Support de gestion des preuves et de reporting - ni conseil juridique, ni garantie de conformité.",
   board: {
+    title: "Tableau de campagne",
     indexHeader: "N°",
     creatorHeader: "Créateur",
     deliverableHeader: "Livrable",

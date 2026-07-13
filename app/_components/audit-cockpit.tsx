@@ -216,7 +216,7 @@ export function AuditCockpit({
   return (
     <div className="pd-cockpit">
       <div className="pd-cockpit__head">
-        <h1 className="pd-page-title">{strings.rail["audit-cockpit"]}</h1>
+        <h1 className="pd-page-title">{strings.board.title}</h1>
         <button
           type="button"
           className="pd-run-btn"
