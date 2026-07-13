@@ -7,7 +7,7 @@
 }
 
 .pd-infotip__term {
-  border-bottom: 1px dotted var(--ink-muted, #8a7f66);
+  border-bottom: 1px dotted var(--muted);
   cursor: help;
   background: none;
   border-left: 0;
@@ -26,9 +26,9 @@
   width: max-content;
   max-width: 22rem;
   padding: 8px 10px;
-  background: var(--surface, #fffaf0);
-  color: var(--ink, #2b2519);
-  border: 1px solid var(--hairline, #e4dcc9);
+  background: var(--surface-card);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(43, 37, 25, 0.12);
   font-size: 0.8125rem;
