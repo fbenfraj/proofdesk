@@ -61,6 +61,7 @@ export interface Strings {
     readonly statusHeader: string;
     readonly claimedMarker: string;
     readonly emptyState: string;
+    readonly lead: string;
   };
   /** Run Proof Audit + Proof-Readiness summary copy (Story 1.7). Status labels
    *  here are TITLE-case (readiness/announcement voice); the UPPERCASE stamp
@@ -401,6 +402,7 @@ const EN: Strings = {
     statusHeader: "Proof Status",
     claimedMarker: "Claimed",
     emptyState: "No campaign loaded.",
+    lead: "Every claim your creators made, and whether the evidence backs it up.",
   },
   audit: {
     runButton: "Run Proof Audit",
@@ -491,7 +493,7 @@ const EN: Strings = {
   },
   inbox: {
     title: "Evidence Inbox",
-    lead: "Drop any messy evidence here - nothing lands in a pile nobody sorts later.",
+    lead: "Drop screenshots, links, and files here, then match them to claims at the desk.",
     addHeading: "Add evidence",
     intakeKind: {
       url: "Paste a link",
@@ -555,7 +557,7 @@ const EN: Strings = {
   },
   proofBrief: {
     title: "Proof Brief",
-    lead: "Set the proof bar per Deliverable at kickoff - so audits measure against this configured bar, not a vibe.",
+    lead: "Set the bar: what each deliverable must prove before you can stand behind it.",
     unsetHeading: "No proof bar set yet",
     unsetBody:
       "Pick a Deliverable-type template to pre-fill its Proof Requirements. Until a bar exists, an audit of this Deliverable is blocked - there's nothing to measure against.",
@@ -691,6 +693,7 @@ const FR: Strings = {
     statusHeader: "Statut de preuve",
     claimedMarker: "Revendiqué",
     emptyState: "Aucune campagne chargée.",
+    lead: "Chaque revendication de vos créateurs, et si les preuves la soutiennent.",
   },
   audit: {
     // Locked FR glossary terms (EXPERIENCE.md#Voice and Tone) — verbatim.
@@ -788,7 +791,7 @@ const FR: Strings = {
   inbox: {
     // Locked FR glossary term (EXPERIENCE.md#L77): Evidence Inbox → Boîte à preuves.
     title: "Boîte à preuves",
-    lead: "Déposez ici toute preuve, même en vrac - rien ne finit dans une pile que personne ne trie.",
+    lead: "Déposez ici captures, liens et fichiers, puis rattachez-les aux revendications au bureau.",
     addHeading: "Ajouter une preuve",
     intakeKind: {
       url: "Coller un lien",
@@ -852,7 +855,7 @@ const FR: Strings = {
   },
   proofBrief: {
     title: "Cahier de preuve",
-    lead: "Fixez le seuil de preuve par Livrable au lancement - pour que les audits mesurent selon ce seuil défini, pas une impression.",
+    lead: "Fixez le seuil : ce que chaque livrable doit prouver avant que vous puissiez le défendre.",
     unsetHeading: "Aucun seuil de preuve défini",
     unsetBody:
       "Choisissez un modèle par type de Livrable pour pré-remplir ses Exigences de preuve. Tant qu'aucun seuil n'existe, l'audit de ce Livrable est bloqué - il n'y a rien à mesurer.",

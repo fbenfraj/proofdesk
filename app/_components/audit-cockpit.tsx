@@ -3,6 +3,7 @@
 import "./board.css";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { InfoTip } from "@/app/_components/info-tip";
 import type { BoardRowView } from "@/src/services";
 import { PROOF_STATUS_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
@@ -227,11 +228,13 @@ export function AuditCockpit({
         </button>
       </div>
 
+      <p className="pd-lead">{strings.board.lead}</p>
+
       <section className="pd-readiness" aria-label={t.readinessTitle}>
         <p className="label-caps pd-readiness__label">{t.readinessTitle}</p>
 
         {showCounts ? (
-          <ReadinessCounts counts={counts} labels={t.statusLabel} />
+          <ReadinessCounts counts={counts} labels={t.statusLabel} locale={locale} />
         ) : (
           <p className="pd-readiness__pending">{t.readinessPending}</p>
         )}
@@ -264,9 +267,11 @@ export function AuditCockpit({
 function ReadinessCounts({
   counts,
   labels,
+  locale,
 }: {
   counts: { green: number; yellow: number; red: number };
   labels: { defensible: string; caveated: string; cantClaim: string };
+  locale: Locale;
 }) {
   const items = [
     {
@@ -274,18 +279,21 @@ function ReadinessCounts({
       displayKey: proofStatusToDisplayKey("green"),
       n: counts.green,
       label: labels.defensible,
+      termKey: "defensible",
     },
     {
       key: "yellow",
       displayKey: proofStatusToDisplayKey("yellow"),
       n: counts.yellow,
       label: labels.caveated,
+      termKey: "caveated",
     },
     {
       key: "red",
       displayKey: proofStatusToDisplayKey("red"),
       n: counts.red,
       label: labels.cantClaim,
+      termKey: "cant-claim",
     },
   ] as const;
 
@@ -300,7 +308,11 @@ function ReadinessCounts({
             {PROOF_STATUS_TOKENS[item.displayKey].glyph}
           </span>
           <span className="pd-readiness__n">{item.n}</span>
-          <span className="pd-readiness__count-label">{item.label}</span>
+          <span className="pd-readiness__count-label">
+            <InfoTip termKey={item.termKey} locale={locale}>
+              {item.label}
+            </InfoTip>
+          </span>
           {i < items.length - 1 && (
             <span className="pd-readiness__sep" aria-hidden="true">
               ·

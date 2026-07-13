@@ -23,3 +23,18 @@ describe("AI-9 Chrome relabels", () => {
     expect(localeStrings("fr").drawer.sections.override).toBe("Contournement opérateur");
   });
 });
+
+describe("AI-9 surface leads (subheads)", () => {
+  const LOCALES2: Locale[] = ["en", "fr"];
+  test("board / inbox / proofBrief each have a non-empty lead in both locales", () => {
+    for (const locale of LOCALES2) {
+      const s = localeStrings(locale);
+      expect(s.board.lead.length, `board ${locale}`).toBeGreaterThan(0);
+      expect(s.inbox.lead.length, `inbox ${locale}`).toBeGreaterThan(0);
+      expect(s.proofBrief.lead.length, `proofBrief ${locale}`).toBeGreaterThan(0);
+    }
+  });
+  test("the Board lead teaches what the surface is (mentions claims/evidence)", () => {
+    expect(localeStrings("en").board.lead.toLowerCase()).toContain("claim");
+  });
+});
