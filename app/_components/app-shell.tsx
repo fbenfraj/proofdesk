@@ -5,6 +5,7 @@ import { resolveOperatorIdentity } from "@/src/services";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { ClaimDrawer } from "./claim-drawer";
 import { ClaimDrawerProvider } from "./claim-drawer-context";
+import { HowItWorks } from "./how-it-works";
 import { LangToggle } from "./lang-toggle";
 import { StageNext, StageStrip } from "./stage-strip";
 
@@ -96,6 +97,7 @@ export function AppShell({
         </button>
 
         <div className="pd-topbar__right">
+          <HowItWorks locale={locale} />
           <LangToggle locale={locale} />
           {/* Operator identity — single shared credential (AD-14); no name wired. */}
           <div className="pd-operator">
