@@ -335,3 +335,69 @@
 .pd-cockpit .pd-stamp:not(.pd-stamp--pending) {
   animation: pd-stamp-settle 360ms ease both;
 }
+
+/* Live "add a deliverable" affordance + form (Story AI-12). Sober register,
+   verdict-free chrome. Uses the shared tokens (--hairline, --ink, --muted,
+   --surface-raised, --radius-md). The open button reuses .pd-btn-outline. */
+.pd-add-deliverable__open {
+  margin-top: 1rem;
+}
+
+.pd-add-deliverable {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.pd-add-deliverable__heading {
+  color: var(--muted);
+  margin: 0;
+}
+
+.pd-add-deliverable__creator {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pd-add-deliverable__radio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pd-add-deliverable__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pd-add-deliverable__field input,
+.pd-add-deliverable__creator input[type="text"],
+.pd-add-deliverable__creator select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--ink);
+  font: inherit;
+}
+
+.pd-add-deliverable__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pd-add-deliverable__error {
+  color: var(--muted);
+  margin: 0;
+}

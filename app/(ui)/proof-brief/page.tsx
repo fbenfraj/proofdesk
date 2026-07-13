@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
-import { SEED_DEMO_CAMPAIGN_ID } from "@/seed/demo-campaign";
 import { getDb } from "@/src/repositories";
 import { getProofBrief, type ProofBriefView } from "@/src/services";
 import { ProofBrief } from "../../_components/proof-brief";
+import { CAMPAIGN_COOKIE, resolveActiveCampaignId } from "../../_lib/active-campaign";
 import { LOCALE_COOKIE, parseLocale } from "../../_lib/i18n";
 
 // Proof Brief — the per-Deliverable proof-bar authoring surface (Story 3.2,
@@ -20,7 +20,8 @@ export default async function ProofBriefPage() {
   let brief: ProofBriefView | null = null;
   try {
     const { db } = getDb();
-    brief = getProofBrief(db, SEED_DEMO_CAMPAIGN_ID);
+    const campaignId = resolveActiveCampaignId(db, store.get(CAMPAIGN_COOKIE)?.value);
+    brief = getProofBrief(db, campaignId);
   } catch {
     brief = null;
   }

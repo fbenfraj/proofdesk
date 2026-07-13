@@ -1,0 +1,73 @@
+/* Campaign switcher menu (Story AI-12). The .pd-switcher button itself is styled
+   in shell.css; this adds the dropdown wrap + menu + items. Verdict-free chrome:
+   no status colour appears here by construction (design invariant, AI-10). Uses
+   the shared design tokens (--surface-raised, --hairline, --ink, --muted,
+   --radius-md) so it sits in the sober register. */
+
+.pd-switcher-wrap {
+  position: relative;
+}
+
+.pd-switcher__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 16rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pd-switcher__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font: inherit;
+}
+
+.pd-switcher__item:hover {
+  background: var(--surface-card);
+}
+
+.pd-switcher__item[aria-current="true"] {
+  font-weight: 600;
+}
+
+.pd-switcher__item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd-switcher__item-tag {
+  flex: none;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pd-switcher__item--new {
+  border-top: 1px solid var(--hairline);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  color: var(--muted);
+}
+
+.pd-switcher__item--new:hover {
+  color: var(--ink);
+}

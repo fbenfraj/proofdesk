@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
-import { SEED_DEMO_CAMPAIGN_ID } from "@/seed/demo-campaign";
 import { getCampaign, getDb } from "@/src/repositories";
 import { getStorage } from "@/src/storage";
 import { ClientSafeReport } from "../../_components/client-safe-report";
+import { CAMPAIGN_COOKIE, resolveActiveCampaignId } from "../../_lib/active-campaign";
 import { LOCALE_COOKIE, parseLocale } from "../../_lib/i18n";
 import { assembleReportDocumentHtml } from "../../_lib/report-document";
 
@@ -23,22 +23,17 @@ export default async function ClientSafeReportPage() {
   // visible. Default to demo when the campaign can't be read (empty DB) so the UI
   // never offers an export it can't honestly fulfil.
   let isDemo = true;
+  let campaignId = "";
   try {
     const { db } = getDb();
-    html = await assembleReportDocumentHtml(db, getStorage(), SEED_DEMO_CAMPAIGN_ID, locale);
-    isDemo = getCampaign(db, SEED_DEMO_CAMPAIGN_ID)?.isDemo ?? true;
+    campaignId = resolveActiveCampaignId(db, store.get(CAMPAIGN_COOKIE)?.value);
+    html = await assembleReportDocumentHtml(db, getStorage(), campaignId, locale);
+    isDemo = getCampaign(db, campaignId)?.isDemo ?? true;
   } catch {
     // Unprovisioned/empty database (e.g. before `npm run seed`): show the empty
     // state rather than 500 the surface.
     html = null;
   }
 
-  return (
-    <ClientSafeReport
-      html={html}
-      locale={locale}
-      campaignId={SEED_DEMO_CAMPAIGN_ID}
-      isDemo={isDemo}
-    />
-  );
+  return <ClientSafeReport html={html} locale={locale} campaignId={campaignId} isDemo={isDemo} />;
 }

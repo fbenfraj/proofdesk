@@ -40,6 +40,32 @@ export interface Strings {
   readonly wordmark: { readonly a: string; readonly b: string };
   readonly campaignLabel: string;
   readonly campaignPlaceholder: string;
+  /** Campaign switcher chrome (AI-12). Names scenarios and lets a presenter start
+   *  a new one live. Chrome only: it never carries a proof verdict. */
+  readonly scenario: {
+    readonly label: string;
+    readonly switchAria: string;
+    readonly startNew: string;
+    readonly activeSuffix: string;
+  };
+  /** Board "add a deliverable" live add-flow (AI-12). */
+  readonly addDeliverable: {
+    readonly open: string;
+    readonly heading: string;
+    readonly creatorLegend: string;
+    readonly existingCreator: string;
+    readonly newCreator: string;
+    readonly creatorNameLabel: string;
+    readonly handleLabel: string;
+    readonly typeLabel: string;
+    readonly typePlaceholder: string;
+    readonly urlLabel: string;
+    readonly urlPlaceholder: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly cancel: string;
+    readonly error: string;
+  };
   readonly operatorLabel: string;
   /** Workflow-first stage strip (AI-10). Verb-first journey labels, the "Next:"
    *  handoff prefix, and the honest per-stage progress signals. Signals are
@@ -403,6 +429,29 @@ const EN: Strings = {
   wordmark: { a: "Proof", b: "Desk" },
   campaignLabel: "Campaign",
   campaignPlaceholder: "No campaign selected",
+  scenario: {
+    label: "Scenario",
+    switchAria: "Switch scenario",
+    startNew: "Start a new scenario",
+    activeSuffix: "active",
+  },
+  addDeliverable: {
+    open: "Add a deliverable",
+    heading: "Add a deliverable",
+    creatorLegend: "Creator",
+    existingCreator: "Existing",
+    newCreator: "New",
+    creatorNameLabel: "Creator name",
+    handleLabel: "Handle (optional)",
+    typeLabel: "Deliverable type",
+    typePlaceholder: "e.g. Twitch sponsor segment",
+    urlLabel: "Platform URL (optional)",
+    urlPlaceholder: "https://...",
+    submit: "Add",
+    submitting: "Adding...",
+    cancel: "Cancel",
+    error: "Could not add the deliverable. Try again.",
+  },
   operatorLabel: "Operator",
   stage: {
     labels: {
@@ -716,6 +765,29 @@ const FR: Strings = {
   wordmark: { a: "Proof", b: "Desk" },
   campaignLabel: "Campagne",
   campaignPlaceholder: "Aucune campagne sélectionnée",
+  scenario: {
+    label: "Scénario",
+    switchAria: "Changer de scénario",
+    startNew: "Démarrer un nouveau scénario",
+    activeSuffix: "actif",
+  },
+  addDeliverable: {
+    open: "Ajouter un livrable",
+    heading: "Ajouter un livrable",
+    creatorLegend: "Créateur",
+    existingCreator: "Existant",
+    newCreator: "Nouveau",
+    creatorNameLabel: "Nom du créateur",
+    handleLabel: "Identifiant (optionnel)",
+    typeLabel: "Type de livrable",
+    typePlaceholder: "ex. segment sponsorisé Twitch",
+    urlLabel: "URL de la plateforme (optionnel)",
+    urlPlaceholder: "https://...",
+    submit: "Ajouter",
+    submitting: "Ajout...",
+    cancel: "Annuler",
+    error: "Impossible d’ajouter le livrable. Réessayez.",
+  },
   operatorLabel: "Opérateur",
   stage: {
     labels: {

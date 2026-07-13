@@ -8,7 +8,7 @@
 // update/delete path for `human_confirmation` — it is append-only by
 // construction (AD-18).
 
-import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, sql } from "drizzle-orm";
 import {
   auditResult,
   type Criticality,
@@ -442,6 +442,27 @@ export function appendHumanConfirmation(db: Db, values: NewHumanConfirmation) {
 
 export function getCampaign(db: Db, id: string) {
   return db.select().from(campaign).where(eq(campaign.id, id)).get();
+}
+
+/** A campaign as the switcher chrome needs it: identity only (Story AI-12). It
+ *  carries NO proof roll-up - the single proof signal stays on the Board + report,
+ *  never in the nav. */
+export interface CampaignSummary {
+  id: string;
+  name: string;
+  isDemo: boolean;
+}
+
+/** Every campaign, ordered by SQLite rowid (creation order) so the seeded demo
+ *  (created first) leads and live-created scenarios append in the order they were
+ *  started. `pk()` ids are random UUIDs, so id order is not creation order; rowid
+ *  is the stable insertion sequence. Read-only (Story AI-12). */
+export function listCampaigns(db: Db): CampaignSummary[] {
+  return db
+    .select({ id: campaign.id, name: campaign.name, isDemo: campaign.isDemo })
+    .from(campaign)
+    .orderBy(sql`rowid`)
+    .all();
 }
 
 export function getEvidenceItem(db: Db, id: string) {

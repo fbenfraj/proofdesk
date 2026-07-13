@@ -1,8 +1,9 @@
 import "./shell.css";
 import type { ReactNode } from "react";
-import type { CampaignStageState } from "@/src/services";
+import type { CampaignStageState, CampaignSummary } from "@/src/services";
 import { resolveOperatorIdentity } from "@/src/services";
 import { type Locale, localeStrings } from "../_lib/i18n";
+import { CampaignSwitcher } from "./campaign-switcher";
 import { ClaimDrawer } from "./claim-drawer";
 import { ClaimDrawerProvider } from "./claim-drawer-context";
 import { HowItWorks } from "./how-it-works";
@@ -62,12 +63,20 @@ export function AppShell({
   locale,
   children,
   stageState,
+  activeCampaignId,
+  activeCampaignName,
+  campaigns,
 }: {
   locale: Locale;
   children: ReactNode;
   /** Honest per-stage strip state for the active campaign - server-resolved in
    *  the layout (Story AI-10). */
   stageState: CampaignStageState;
+  /** The active scenario + the switchable list - server-resolved in the layout
+   *  (Story AI-12). */
+  activeCampaignId: string;
+  activeCampaignName: string;
+  campaigns: CampaignSummary[];
 }) {
   const strings = localeStrings(locale);
   // The single operator's display agency, resolved server-side (AD-14) — the
@@ -87,14 +96,14 @@ export function AppShell({
           </span>
         </a>
 
-        {/* Campaign switcher — placeholder chrome; no real campaign wired (AD-9). */}
-        <button type="button" className="pd-switcher">
-          <span className="label-caps pd-switcher__cap">{strings.campaignLabel}</span>
-          <span className="pd-switcher__name">{strings.campaignPlaceholder}</span>
-          <span className="pd-switcher__chevron" aria-hidden="true">
-            ▾
-          </span>
-        </button>
+        {/* Campaign switcher — real scenario switch + start-new (Story AI-12).
+            Verdict-free chrome: it names scenarios, never their proof state. */}
+        <CampaignSwitcher
+          locale={locale}
+          activeCampaignId={activeCampaignId}
+          activeCampaignName={activeCampaignName}
+          campaigns={campaigns}
+        />
 
         <div className="pd-topbar__right">
           <HowItWorks locale={locale} />

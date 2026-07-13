@@ -529,3 +529,40 @@ test("unauthenticated request is rejected with 401", async () => {
   expect(res.status).toBe(401);
   expect(res.headers.get("www-authenticate")).toContain("Basic");
 });
+
+// AI-12 — live demo add-flow smoke: start a new scenario from the switcher, land
+// on an empty Board, add a deliverable, and see the row appear. Its own describe
+// block so it carries its own explainer pre-dismiss (the scrim would otherwise
+// intercept the first click). One short path, per the smoke-only convention.
+test.describe("live demo add-flow (Story AI-12)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("proofdesk_explainer_seen", "1");
+    });
+  });
+
+  test("start a new scenario, then add a deliverable on the Board", async ({ page }) => {
+    await page.goto("/");
+
+    // Open the switcher and start a new (empty) scenario.
+    await page.getByRole("button", { name: /Switch scenario/ }).click();
+    await page.getByRole("menuitem", { name: /Start a new scenario/ }).click();
+
+    // Landed on the Board of the new scenario; it is empty, so the add affordance
+    // is the way forward. Open it (no existing creators -> the New-creator inputs
+    // show directly).
+    const addOpen = page.getByRole("button", { name: /Add a deliverable/ });
+    await expect(addOpen).toBeVisible();
+    await addOpen.click();
+
+    await page.getByPlaceholder("Creator name").fill("PixelForge");
+    await page.getByPlaceholder(/Twitch sponsor segment/).fill("Twitch sponsor segment");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+
+    // The new row appears under its creator group (AI-11), reading pending until
+    // the audit runs. Assert the deliverable type and the creator name are on the
+    // board.
+    await expect(page.getByText("Twitch sponsor segment")).toBeVisible();
+    await expect(page.getByText("PixelForge")).toBeVisible();
+  });
+});

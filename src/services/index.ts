@@ -8,6 +8,8 @@
 export * from "./audit";
 // The Campaign Board view model (Story 1.6).
 export * from "./board";
+// Live-demo add-flow: scenario create, deliverable add, campaign list (Story AI-12).
+export * from "./campaigns";
 // The Claim Card drawer view model (Story 1.8).
 export * from "./claim-card";
 // Evidence Inbox ingest orchestration (Story 2.1).

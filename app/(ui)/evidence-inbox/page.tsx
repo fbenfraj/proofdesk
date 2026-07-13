@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { SEED_DEMO_CAMPAIGN_ID } from "@/seed/demo-campaign";
 import { getDb, listInboxEvidenceItems } from "@/src/repositories";
 import {
   type DeliverableOption,
@@ -9,6 +8,7 @@ import {
   toInboxItemView,
 } from "@/src/services";
 import { EvidenceInbox } from "../../_components/evidence-inbox";
+import { CAMPAIGN_COOKIE, resolveActiveCampaignId } from "../../_lib/active-campaign";
 import { LOCALE_COOKIE, parseLocale } from "../../_lib/i18n";
 
 // Evidence Inbox — the single messy-intake surface (Story 2.1, FR-5) with
@@ -25,9 +25,11 @@ export default async function EvidenceInboxPage() {
 
   let items: InboxItemView[] = [];
   let deliverables: DeliverableOption[] = [];
+  let campaignId = "";
   try {
     const { db } = getDb();
-    items = listInboxEvidenceItems(db, SEED_DEMO_CAMPAIGN_ID)
+    campaignId = resolveActiveCampaignId(db, store.get(CAMPAIGN_COOKIE)?.value);
+    items = listInboxEvidenceItems(db, campaignId)
       .map(toEvidenceItemView)
       .map((v) => toInboxItemView(db, v))
       // Newest first — deterministic by uploaded_at then id.
@@ -36,7 +38,7 @@ export default async function EvidenceInboxPage() {
           ? b.id.localeCompare(a.id)
           : b.uploadedAt.localeCompare(a.uploadedAt),
       );
-    deliverables = listDeliverableOptions(db, SEED_DEMO_CAMPAIGN_ID);
+    deliverables = listDeliverableOptions(db, campaignId);
   } catch {
     items = [];
     deliverables = [];
@@ -45,7 +47,7 @@ export default async function EvidenceInboxPage() {
   return (
     <EvidenceInbox
       locale={locale}
-      campaignId={SEED_DEMO_CAMPAIGN_ID}
+      campaignId={campaignId}
       initialItems={items}
       deliverables={deliverables}
     />

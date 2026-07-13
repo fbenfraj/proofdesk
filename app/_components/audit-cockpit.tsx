@@ -8,6 +8,7 @@ import type { BoardRowView } from "@/src/services";
 import { PROOF_STATUS_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { proofStatusToDisplayKey } from "../_lib/proof-status";
+import { AddDeliverable } from "./add-deliverable";
 import { ProofBoard } from "./proof-board";
 
 // Story 1.7 — the Audit Cockpit: the "Run Proof Audit" button, the staged
@@ -114,6 +115,18 @@ export function AuditCockpit({
   const total = (resolvedRows ?? initialRows).length;
   const showCounts = phase !== "idle" || displayRows.some((r) => r.status.kind === "resolved");
   const complete = phase === "done";
+
+  // The active scenario's existing creators, for the "Add a deliverable" picker
+  // (Story AI-12). Derived from the already-loaded rows (DRY, no extra query);
+  // deduped by creator id, first-seen order (matches the AI-11 grouping order).
+  const creators = useMemo(() => {
+    const seen = new Map<string, { id: string; name: string }>();
+    for (const row of resolvedRows ?? initialRows) {
+      if (!seen.has(row.creatorId))
+        seen.set(row.creatorId, { id: row.creatorId, name: row.creatorName });
+    }
+    return [...seen.values()];
+  }, [resolvedRows, initialRows]);
 
   const finish = useCallback(
     (result: RunAuditResponse) => {
@@ -258,6 +271,13 @@ export function AuditCockpit({
       </section>
 
       <ProofBoard rows={displayRows} locale={locale} />
+
+      {/* Live add-flow (Story AI-12): build the ledger up in front of a client.
+          Hidden when no active campaign is resolvable (empty campaignId). The new
+          row reads pending until the audit runs - no fabricated verdict. */}
+      {campaignId ? (
+        <AddDeliverable locale={locale} campaignId={campaignId} creators={creators} />
+      ) : null}
     </div>
   );
 }
