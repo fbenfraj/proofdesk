@@ -3,22 +3,28 @@
 import "./board.css";
 import { type KeyboardEvent as ReactKeyboardEvent, useEffect } from "react";
 import type { BoardRowStatus, BoardRowView } from "@/src/services";
+import { groupBoardByCreator } from "../_lib/board-grouping";
 import { PENDING_TOKEN, PROOF_STATUS_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { proofStatusToDisplayKey } from "../_lib/proof-status";
 import { useClaimDrawer } from "./claim-drawer-context";
 
-// The claimed-vs-proven ledger (Story 1.6). One row per Deliverable: mono index,
-// serif Creator, muted type, a neutral claimed marker, and the three-channel
-// Proof Status stamp. Rows are keyboard-operable (Enter/Space) and open the
-// Claim Card drawer (its contents arrive in Story 1.8); the selected row carries
-// the surface-raised fill + oxblood inset edge (UX-DR12/DR27).
+// The claimed-vs-proven ledger (Story 1.6), organized per creator (AI-11):
+// Creator is the primary organizing unit, so the flat list is grouped into one
+// section per creator (serif name + muted @handle + a neutral deliverable count),
+// with the creator's deliverables nested beneath. The per-creator header carries
+// identity ONLY, never a proof roll-up; the verdict stays on each row's
+// three-channel Proof Status stamp. Rows are keyboard-operable (Enter/Space) and
+// open the Claim Card drawer; the selected row carries the surface-raised fill +
+// oxblood inset edge (UX-DR12/DR27).
 export function ProofBoard({ rows, locale }: { rows: BoardRowView[]; locale: Locale }) {
   const strings = localeStrings(locale);
   const { selectedClaimId, openClaim, registerOrder } = useClaimDrawer();
 
   // Register the row order so the drawer's step-to-next knows the sequence
-  // (UX-DR24). An effect (not render) so it never sets state during render.
+  // (UX-DR24). The flat `rows` are already in grouped (creator, type, id) order,
+  // so this stays the flat sequence. An effect (not render) so it never sets
+  // state during render.
   useEffect(() => {
     registerOrder(rows.map((r) => r.claimId));
   }, [rows, registerOrder]);
@@ -27,31 +33,53 @@ export function ProofBoard({ rows, locale }: { rows: BoardRowView[]; locale: Loc
     return <div className="pd-board pd-board__empty">{strings.board.emptyState}</div>;
   }
 
+  const groups = groupBoardByCreator(rows);
+  // Global running index (1..N) across all groups, precomputed so the JSX stays
+  // free of mutation-in-map.
+  let offset = 0;
+  const groupsWithOffset = groups.map((group) => {
+    const startIndex = offset;
+    offset += group.rows.length;
+    return { group, startIndex };
+  });
+
   return (
     <div className="pd-board">
       <table className="pd-ledger">
         <thead className="pd-ledger__head">
           <tr>
             <th scope="col">{strings.board.indexHeader}</th>
-            <th scope="col">{strings.board.creatorHeader}</th>
             <th scope="col">{strings.board.deliverableHeader}</th>
             <th scope="col">{strings.board.claimedHeader}</th>
             <th scope="col">{strings.board.statusHeader}</th>
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <BoardRow
-              key={row.claimId}
-              row={row}
-              index={index + 1}
-              locale={locale}
-              claimedLabel={strings.board.claimedMarker}
-              selected={row.claimId === selectedClaimId}
-              onOpen={(el) => openClaim(row.claimId, el)}
-            />
-          ))}
-        </tbody>
+        {groupsWithOffset.map(({ group, startIndex }) => (
+          <tbody key={group.creatorId} className="pd-creator-group">
+            <tr className="pd-creator-head">
+              <th scope="colgroup" colSpan={4}>
+                <span className="pd-creator-head__name">{group.creatorName}</span>
+                {group.creatorHandle ? (
+                  <span className="pd-creator-head__handle">@{group.creatorHandle}</span>
+                ) : null}
+                <span className="pd-creator-head__count">
+                  {strings.board.creatorDeliverableCount(group.rows.length)}
+                </span>
+              </th>
+            </tr>
+            {group.rows.map((row, i) => (
+              <BoardRow
+                key={row.claimId}
+                row={row}
+                index={startIndex + i + 1}
+                locale={locale}
+                claimedLabel={strings.board.claimedMarker}
+                selected={row.claimId === selectedClaimId}
+                onOpen={(el) => openClaim(row.claimId, el)}
+              />
+            ))}
+          </tbody>
+        ))}
       </table>
     </div>
   );
@@ -90,7 +118,6 @@ function BoardRow({
       onKeyDown={onKeyDown}
     >
       <td className="pd-ledger__index">{index}</td>
-      <td className="pd-ledger__creator">{row.creatorName}</td>
       <td className="pd-ledger__type">{row.deliverableType}</td>
       <td>
         <span className="pd-claimed">{claimedLabel}</span>

@@ -71,11 +71,11 @@ export interface Strings {
   readonly board: {
     readonly title: string;
     readonly indexHeader: string;
-    readonly creatorHeader: string;
     readonly deliverableHeader: string;
     readonly claimedHeader: string;
     readonly statusHeader: string;
     readonly claimedMarker: string;
+    readonly creatorDeliverableCount: (n: number) => string;
     readonly emptyState: string;
     readonly lead: string;
   };
@@ -435,11 +435,11 @@ const EN: Strings = {
   board: {
     title: "Campaign Board",
     indexHeader: "#",
-    creatorHeader: "Creator",
     deliverableHeader: "Deliverable",
     claimedHeader: "Claimed",
     statusHeader: "Proof Status",
     claimedMarker: "Claimed",
+    creatorDeliverableCount: (n: number) => (n === 1 ? "1 deliverable" : `${n} deliverables`),
     emptyState:
       "No claims yet. Add a campaign's deliverables, or load the demo, to see the claimed-vs-proven ledger.",
     lead: "Every claim your creators made, and whether the evidence backs it up.",
@@ -748,12 +748,12 @@ const FR: Strings = {
   board: {
     title: "Tableau de campagne",
     indexHeader: "N°",
-    creatorHeader: "Créateur",
     deliverableHeader: "Livrable",
     claimedHeader: "Revendiqué",
     // Locked FR glossary term (EXPERIENCE.md) — verbatim.
     statusHeader: "Statut de preuve",
     claimedMarker: "Revendiqué",
+    creatorDeliverableCount: (n: number) => (n === 1 ? "1 livrable" : `${n} livrables`),
     emptyState:
       "Aucune revendication pour l'instant. Ajoutez les livrables d'une campagne, ou chargez la démo, pour voir le registre revendiqué-vs-prouvé.",
     lead: "Chaque revendication de vos créateurs, et si les preuves la soutiennent.",

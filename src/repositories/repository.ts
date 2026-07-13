@@ -699,21 +699,27 @@ export function matchTargetRequirementId(db: Db, deliverableId: string): string 
 export interface BoardRow {
   claimId: string;
   deliverableId: string;
+  creatorId: string;
   creatorName: string;
+  creatorHandle: string | null;
   deliverableType: string;
   claimedStatus: string;
 }
 
 /** The ledger rows for a Campaign: Claim ⋈ Deliverable ⋈ Creator. Ordered
- *  deterministically (creator, then type, then id) so the board render is stable
- *  — determinism is a project value, never insertion order (AD-2/AD-10: this is
- *  the only Drizzle-touching layer). */
+ *  deterministically (creator name, creator id, then type, then id) so each
+ *  creator's rows are contiguous and the board render is stable — determinism is
+ *  a project value, never insertion order (AD-2/AD-10: this is the only
+ *  Drizzle-touching layer). Contiguity is what lets the per-creator grouping
+ *  (AI-11) run in a single linear pass. */
 export function listCampaignBoardRows(db: Db, campaignId: string): BoardRow[] {
   return db
     .select({
       claimId: claim.id,
       deliverableId: deliverable.id,
+      creatorId: creator.id,
       creatorName: creator.name,
+      creatorHandle: creator.handle,
       deliverableType: deliverable.type,
       claimedStatus: deliverable.claimedStatus,
     })
@@ -721,7 +727,7 @@ export function listCampaignBoardRows(db: Db, campaignId: string): BoardRow[] {
     .innerJoin(deliverable, eq(claim.deliverableId, deliverable.id))
     .innerJoin(creator, eq(deliverable.creatorId, creator.id))
     .where(eq(deliverable.campaignId, campaignId))
-    .orderBy(asc(creator.name), asc(deliverable.type), asc(deliverable.id))
+    .orderBy(asc(creator.name), asc(creator.id), asc(deliverable.type), asc(deliverable.id))
     .all();
 }
 

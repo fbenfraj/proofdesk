@@ -58,12 +58,6 @@
   white-space: nowrap;
 }
 
-.pd-ledger__creator {
-  color: var(--ink);
-  font: var(--type-serif-body);
-  white-space: nowrap;
-}
-
 .pd-ledger__type {
   color: var(--muted);
 }
@@ -136,6 +130,41 @@
   padding: var(--space-6) var(--space-4);
   color: var(--muted);
   font: var(--type-serif-body);
+}
+
+/* Per-creator section header (AI-11): Creator is the primary organizing unit,
+   so each creator's deliverables sit under a labelled header row. Identity +
+   a neutral count only - NEVER a proof-verdict roll-up (the verdict stays on the
+   per-deliverable stamp). */
+.pd-creator-head th {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-raised);
+  text-align: left;
+  font-weight: 400;
+}
+
+.pd-creator-group:not(:first-of-type) .pd-creator-head th {
+  border-top: 1px solid var(--hairline);
+}
+
+.pd-creator-head__name {
+  font: var(--type-serif-body);
+  color: var(--ink);
+}
+
+.pd-creator-head__handle {
+  margin-left: var(--space-2);
+  font: var(--type-mono);
+  color: var(--muted);
+}
+
+.pd-creator-head__count {
+  margin-left: var(--space-3);
+  font: 600 10px / 1.4 var(--font-chrome);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 /* -------------------------------------------------------------------------

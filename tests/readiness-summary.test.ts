@@ -39,7 +39,9 @@ describe("summarizeReadiness — the FR-15 roll-up (Story 1.7)", () => {
       {
         claimId: "a",
         deliverableId: "",
+        creatorId: "",
         creatorName: "",
+        creatorHandle: null,
         deliverableType: "",
         claimedStatus: "",
         status: { kind: "resolved", status: "green" },
@@ -47,7 +49,9 @@ describe("summarizeReadiness — the FR-15 roll-up (Story 1.7)", () => {
       {
         claimId: "b",
         deliverableId: "",
+        creatorId: "",
         creatorName: "",
+        creatorHandle: null,
         deliverableType: "",
         claimedStatus: "",
         status: { kind: "resolved", status: "yellow" },
@@ -55,7 +59,9 @@ describe("summarizeReadiness — the FR-15 roll-up (Story 1.7)", () => {
       {
         claimId: "c",
         deliverableId: "",
+        creatorId: "",
         creatorName: "",
+        creatorHandle: null,
         deliverableType: "",
         claimedStatus: "",
         status: { kind: "pending" },

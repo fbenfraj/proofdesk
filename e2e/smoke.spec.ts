@@ -487,9 +487,13 @@ test.describe("workflow surfaces (explainer pre-dismissed)", () => {
         await run.click();
         await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
       }).toPass({ timeout: 15000 });
+      // The board groups by creator (AI-11): the creator name is the section
+      // header, so scope to PixelForge's group, then pin D1 by its type.
       const row = page
+        .locator(".pd-creator-group", {
+          has: page.locator(".pd-creator-head__name", { hasText: "PixelForge" }),
+        })
         .locator(".pd-ledger__row")
-        .filter({ has: page.locator(".pd-ledger__creator", { hasText: "PixelForge" }) })
         .filter({ has: page.locator(".pd-ledger__type", { hasText: "Twitch sponsor segment" }) });
       await expect(async () => {
         await row.click();

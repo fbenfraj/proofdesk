@@ -32,6 +32,29 @@ describe("listCampaignBoardRows — the claimed-vs-proven ledger read (Story 1.6
     }
   });
 
+  test("each row carries the creator id and (nullable) handle", () => {
+    for (const row of listCampaignBoardRows(db, SEED_DEMO_CAMPAIGN_ID)) {
+      expect(typeof row.creatorId).toBe("string");
+      expect(row.creatorId.length).toBeGreaterThan(0);
+      // handle is nullable in the schema; seeded creators all have one.
+      expect(row.creatorHandle === null || typeof row.creatorHandle === "string").toBe(true);
+    }
+  });
+
+  test("all rows for a given creator are contiguous (groupable in one linear pass)", () => {
+    const rows = listCampaignBoardRows(db, SEED_DEMO_CAMPAIGN_ID);
+    const runsSeen = new Set<string>();
+    let prev: string | null = null;
+    for (const row of rows) {
+      if (row.creatorId !== prev) {
+        // Entering a new run for this creator: it must not have appeared earlier.
+        expect(runsSeen.has(row.creatorId)).toBe(false);
+        runsSeen.add(row.creatorId);
+        prev = row.creatorId;
+      }
+    }
+  });
+
   test("the seeded creators and types are present", () => {
     const rows = listCampaignBoardRows(db, SEED_DEMO_CAMPAIGN_ID);
     const creators = new Set(rows.map((r) => r.creatorName));
