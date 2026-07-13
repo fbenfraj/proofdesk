@@ -65,7 +65,7 @@ export const TERM_GLOSSARY: Record<TermKey, TermEntry> = {
     },
   },
   "human-assertion": {
-    label: { en: "Human assertion", fr: "Affirmation humaine" },
+    label: { en: "Human assertion", fr: "Déclaration humaine" },
     definition: {
       en: "A person stated this. ProofDesk records who and when but can't verify it, and shows that plainly.",
       fr: "Une personne l'a affirmé. ProofDesk note qui et quand mais ne peut pas le vérifier, et l'indique clairement.",
