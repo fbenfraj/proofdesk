@@ -7,453 +7,503 @@ import { expect, test } from "@playwright/test";
 // deploy concern). The toggle's client cookie-write is simple app/_components
 // logic; the harder SSR-consumption half is what these smoke tests pin.
 
-test("operator shell renders behind basic auth", async ({ page }) => {
-  // httpCredentials are supplied by playwright.config.ts.
-  await page.goto("/");
-
-  // Wordmark (oxblood seal-mark + Proof·Desk).
-  await expect(page.getByRole("link", { name: /Proof.?Desk/ })).toBeVisible();
-
-  // Active surface title.
-  await expect(page.getByRole("heading", { level: 1, name: "Audit Cockpit" })).toBeVisible();
-
-  // The four surfaces in the rail; Audit Cockpit is the active one.
-  const rail = page.getByRole("navigation", { name: "Campaign" });
-  await expect(rail.getByRole("link", { name: /Audit Cockpit/ })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
-  await expect(rail.getByRole("link", { name: /Proof Brief/ })).toBeVisible();
-  await expect(rail.getByRole("link", { name: /Evidence Inbox/ })).toBeVisible();
-  await expect(rail.getByRole("link", { name: /Client-Safe Report/ })).toBeVisible();
-});
-
-test("audit cockpit renders the claimed-vs-proven board region", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "Audit Cockpit" })).toBeVisible();
-  // The board mounts server-side (ledger table when seeded, else the empty
-  // state) — either way the cockpit renders without a server error (Story 1.6).
-  await expect(page.locator(".pd-board")).toBeVisible();
-});
-
-test("the standing disclaimers are present wherever verdicts appear (Story 1.10)", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const footer = page.locator(".pd-disclaimer");
-  // Both the FR-16 automation disclaimer AND the distinct AD-22 legal disclaimer
-  // render together in the persistent shell footer (UX-DR23).
-  await expect(footer).toContainText(
-    "It does not automatically watch streams or validate viewer metrics",
-  );
-  await expect(footer).toContainText("not legal advice or a guarantee of compliance");
-});
-
-test("EN|FR toggle is present with EN active by default", async ({ page }) => {
-  await page.goto("/");
-  // Buttons are labelled with the full language name for AT; the visible glyph
-  // is the compact EN/FR.
-  await expect(page.getByRole("button", { name: "English" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(page.getByRole("button", { name: "Français" })).toBeVisible();
-});
-
-test("locale cookie drives <html lang> and persists across surfaces", async ({ page, context }) => {
-  await context.addCookies([
-    { name: "proofdesk_locale", value: "fr", url: "http://127.0.0.1:3100" },
-  ]);
-
-  await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  // Locked FR glossary term appears in the rail.
-  await expect(page.getByRole("link", { name: /Boîte à preuves/ })).toBeVisible();
-
-  // The choice persists onto another surface without re-toggling.
-  await page.goto("/client-safe-report");
-  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page.getByRole("heading", { level: 1, name: "Rapport prêt-client" })).toBeVisible();
-});
-
-test("Run Proof Audit resolves the seeded board to 7·1·1 with the readiness summary (Story 1.7)", async ({
-  page,
-}) => {
-  await page.goto("/");
-  // The run button is a native, focusable control (UX-DR18).
-  const run = page.getByRole("button", { name: /Run Proof Audit/ });
-  await expect(run).toBeVisible();
-
-  // Click then wait for the reveal to settle into the magic-moment multiset.
-  // Wrapped in toPass so a click that races client hydration is retried — the
-  // run is idempotent (AD-6), so an extra click is harmless. Board stamps are
-  // three-channel; the display keys carry the R/Y/G buckets.
-  await expect(async () => {
-    await run.click();
-    await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
-  }).toPass({ timeout: 15000 });
-  await expect(page.locator(".pd-stamp--caveated")).toHaveCount(1);
-  await expect(page.locator(".pd-stamp--cant-claim")).toHaveCount(1);
-
-  // The Proof-Readiness summary shows transparent counts + the reading note —
-  // never an opaque score.
-  const readiness = page.getByRole("region", { name: "Proof-Readiness" });
-  await expect(readiness).toContainText("Defensible");
-  await expect(readiness).toContainText("ProofDesk can back 7");
-
-  // The aria-live region announces the outcome verbatim, once (UX-DR25, AC4).
-  await expect(page.locator('[aria-live="polite"]')).toHaveText(
-    "Audit complete. 7 Defensible, 1 Caveated, 1 Can't claim. You marked 9 of 9 done; ProofDesk can back 7.",
-  );
-
-  // After running, the button flips to the re-run label with a mono timestamp.
-  await expect(page.getByRole("button", { name: /Re-run Proof Audit · last run/ })).toBeVisible();
-});
-
-test.describe("reduced motion", () => {
-  test.use({ reducedMotion: "reduce" });
-
-  test("renders the identical final resolved DOM immediately (NFR-D7)", async ({ page }) => {
+// Isolated in its own describe block: this is the ONE test that exercises the
+// real first-run auto-open behavior, so it must NOT inherit the suite-wide
+// "mark explainer seen" beforeEach declared below (that hook is scoped to
+// tests declared outside this block).
+test.describe("first-run explainer", () => {
+  test("operator shell renders behind basic auth", async ({ page }) => {
+    // httpCredentials are supplied by playwright.config.ts.
     await page.goto("/");
-    const run = page.getByRole("button", { name: /Proof Audit/ });
-    // No staging: the final 7·1·1 DOM is present without waiting on animation.
-    // toPass retries a click that races hydration (idempotent run).
-    await expect(async () => {
-      await run.click();
-      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-    await expect(page.locator(".pd-stamp--caveated")).toHaveCount(1);
-    await expect(page.locator(".pd-stamp--cant-claim")).toHaveCount(1);
-  });
-});
 
-test("FR run button renders the locked glossary label without truncation", async ({
-  page,
-  context,
-}) => {
-  await context.addCookies([
-    { name: "proofdesk_locale", value: "fr", url: "http://127.0.0.1:3100" },
-  ]);
-  await page.goto("/");
-  // Locked FR term "Lancer l'audit" (or its re-run form if a prior test ran the
-  // audit against the shared DB); the control renders and is not clipped.
-  const run = page.getByRole("button", { name: /l’audit/ });
-  await expect(run).toBeVisible();
-  const clipped = await run.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
-  expect(clipped).toBe(false);
-});
+    // Wordmark (oxblood seal-mark + Proof·Desk).
+    await expect(page.getByRole("link", { name: /Proof.?Desk/ })).toBeVisible();
 
-test.describe("Claim Card drawer (Story 1.8)", () => {
-  // Ensure the seeded board is audited (idempotent) so the opened card shows the
-  // resolved facts, then return the first row's claim id.
-  async function auditAndFirstClaim(page: import("@playwright/test").Page) {
-    await page.goto("/");
-    // Locale-agnostic: matches EN "Run Proof Audit" and FR "Lancer l’audit".
-    const run = page.getByRole("button", { name: /audit/i });
-    await expect(async () => {
-      await run.click();
-      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
-    }).toPass({ timeout: 15000 });
-    const firstRow = page.locator(".pd-ledger__row").first();
-    const claimId = await firstRow.getAttribute("data-claim-id");
-    return { firstRow, claimId };
-  }
+    // Active surface title.
+    await expect(page.getByRole("heading", { level: 1, name: "Campaign Board" })).toBeVisible();
 
-  test("opens as a dialog with the five sections + provenance, Esc closes and returns focus to the row", async ({
-    page,
-  }) => {
-    const { firstRow, claimId } = await auditAndFirstClaim(page);
+    // This test (uniquely) exercises the first-run explainer, so it does NOT
+    // use the suite-wide dismiss-on-load init script below. Dismiss it here
+    // before interacting with the strip — its scrim intercepts clicks on the
+    // underlying links.
+    await page.getByRole("button", { name: /Got it/ }).click();
 
-    // Open from the row (retry a click that races hydration).
-    await expect(async () => {
-      await firstRow.click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toHaveAttribute("aria-modal", "true");
-    // The dialog is labelled by its sticky <h2> title.
-    await expect(dialog.getByRole("heading", { level: 2 })).toBeVisible();
-
-    // The five hairline-divided sections, in order (UX-DR13).
-    for (const name of [
-      "Proof Requirements",
-      "Evidence trail",
-      "Machine/Human facts",
-      "Caveat",
-      "Human override",
-    ]) {
-      await expect(dialog.getByRole("region", { name })).toBeVisible();
-    }
-
-    // Provenance chips render (cool-slate machine / warm-taupe human), OFF the
-    // R/Y/G scale (UX-DR10).
-    await expect(dialog.locator(".pd-prov").first()).toBeVisible();
-
-    // The background is inert while the dialog is open (UX-DR24) — including the
-    // standing-disclaimer footer, a background sibling outside .pd-workspace
-    // (Story 1.10), so SR/browse-mode users can't reach it past the modal.
-    expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
-    expect(await page.locator(".pd-disclaimer").getAttribute("inert")).not.toBeNull();
-
-    // Esc closes; focus returns to the exact originating row (UX-DR24).
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.locator(".pd-main")).not.toHaveAttribute("inert", /.*/);
-    await expect(page.locator(".pd-disclaimer")).not.toHaveAttribute("inert", /.*/);
-    await expect
-      .poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-claim-id")))
-      .toBe(claimId);
-  });
-
-  test("a failed claim-card load still moves focus into the dialog (not the inert background)", async ({
-    page,
-  }) => {
-    const { firstRow } = await auditAndFirstClaim(page);
-    // Force the claim-card fetch to fail so the drawer stays in its error state.
-    await page.route("**/api/claims/**", (route) =>
-      route.fulfill({ status: 500, contentType: "application/json", body: "{}" }),
+    // The workflow strip (replaces the rail, AI-10). Landing at "/" is the Audit
+    // stage; the strip reads the four journey steps left-to-right.
+    const strip = page.getByRole("navigation", { name: /Campaign|Campagne/ });
+    await expect(strip.getByRole("link", { name: /Run the audit/ })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
+    await expect(strip.getByRole("link", { name: /Set the bar/ })).toBeVisible();
+    await expect(strip.getByRole("link", { name: /Ship the report/ })).toBeVisible();
 
-    await expect(async () => {
-      await firstRow.click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
+    // Deep-linking survives a refresh: navigate to a sibling stage, reload, and the
+    // active stage is preserved (the strip reuses the four routes, zero redirects).
+    await strip.getByRole("link", { name: /Collect evidence/ }).click();
+    await expect(page).toHaveURL(/\/evidence-inbox$/);
+    await page.reload();
+    await expect(
+      page.getByRole("navigation", { name: /Campaign|Campagne/ }).getByRole("link", {
+        name: /Collect evidence/,
+      }),
+    ).toHaveAttribute("aria-current", "page");
 
-    // Even with no card content, focus must be INSIDE the drawer — never left on
-    // the now-inert background (UX-DR24).
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const drawer = document.querySelector(".pd-drawer");
-          return drawer ? drawer.contains(document.activeElement) : false;
-        }),
-      )
-      .toBe(true);
-    // And the background is inert.
-    expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
+    // The first-run explainer is re-openable from its persistent trigger.
+    await page.goto("/");
+    await page.getByRole("button", { name: /How ProofDesk works/ }).click();
+    await expect(page.getByRole("dialog", { name: /How ProofDesk works/ })).toBeVisible();
+  });
+});
+
+// Every test in this block interacts with page content beneath the explainer's
+// scrim (buttons, radios, rows) but doesn't itself exercise the first-run
+// explainer (that's covered exclusively by the "first-run explainer" describe
+// above). Pre-seed the "seen" flag before any script runs so the explainer
+// never auto-opens and steals the first click (AI-10 introduced the auto-open;
+// it would otherwise intercept pointer events in nearly every test below).
+test.describe("workflow surfaces (explainer pre-dismissed)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("proofdesk_explainer_seen", "1");
+    });
   });
 
-  test("step-to-next-claim advances without closing", async ({ page }) => {
-    const { firstRow } = await auditAndFirstClaim(page);
-    await expect(async () => {
-      await firstRow.click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    const dialog = page.getByRole("dialog");
-    const firstTitle = await dialog.getByRole("heading", { level: 2 }).textContent();
-    await dialog.getByRole("button", { name: "Next claim" }).click();
-    // Still open, and the heading updated to the next claim.
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect
-      .poll(() => page.getByRole("dialog").getByRole("heading", { level: 2 }).textContent())
-      .not.toBe(firstTitle);
+  test("audit cockpit renders the claimed-vs-proven board region", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1, name: "Campaign Board" })).toBeVisible();
+    // The board mounts server-side (ledger table when seeded, else the empty
+    // state) — either way the board renders without a server error (Story 1.6).
+    await expect(page.locator(".pd-board")).toBeVisible();
   });
 
-  test("FR drawer renders the locked provenance term without truncation", async ({
+  test("the standing disclaimers are present wherever verdicts appear (Story 1.10)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const footer = page.locator(".pd-disclaimer");
+    // Both the FR-16 automation disclaimer AND the distinct AD-22 legal disclaimer
+    // render together in the persistent shell footer (UX-DR23).
+    await expect(footer).toContainText(
+      "It does not automatically watch streams or validate viewer metrics",
+    );
+    await expect(footer).toContainText("not legal advice or a guarantee of compliance");
+  });
+
+  test("EN|FR toggle is present with EN active by default", async ({ page }) => {
+    await page.goto("/");
+    // Buttons are labelled with the full language name for AT; the visible glyph
+    // is the compact EN/FR.
+    await expect(page.getByRole("button", { name: "English" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("button", { name: "Français" })).toBeVisible();
+  });
+
+  test("locale cookie drives <html lang> and persists across surfaces", async ({
     page,
     context,
   }) => {
     await context.addCookies([
       { name: "proofdesk_locale", value: "fr", url: "http://127.0.0.1:3100" },
     ]);
-    await auditAndFirstClaim(page);
-    await expect(async () => {
-      await page.locator(".pd-ledger__row").first().click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
 
-    const chip = page.getByRole("dialog").locator(".pd-prov").first();
-    await expect(chip).toBeVisible();
-    // Locked FR glossary terms; the chip is size-to-content and not clipped.
-    await expect(chip).toHaveText(/Fait vérifié par la machine|Déclaration humaine/);
-    const clipped = await chip.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+    // The strip's FR verb label for the Evidence Inbox stage (AI-10). "Boîte à
+    // preuves" is the surface's own <h1>, not the strip link's accessible name.
+    await expect(page.getByRole("link", { name: /Rassembler les preuves/ })).toBeVisible();
+
+    // The choice persists onto another surface without re-toggling.
+    await page.goto("/client-safe-report");
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Rapport prêt-client" }),
+    ).toBeVisible();
+  });
+
+  test("Run Proof Audit resolves the seeded board to 7·1·1 with the readiness summary (Story 1.7)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    // The run button is a native, focusable control (UX-DR18).
+    const run = page.getByRole("button", { name: /Run Proof Audit/ });
+    await expect(run).toBeVisible();
+
+    // Click then wait for the reveal to settle into the magic-moment multiset.
+    // Wrapped in toPass so a click that races client hydration is retried — the
+    // run is idempotent (AD-6), so an extra click is harmless. Board stamps are
+    // three-channel; the display keys carry the R/Y/G buckets.
+    await expect(async () => {
+      await run.click();
+      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+    }).toPass({ timeout: 15000 });
+    await expect(page.locator(".pd-stamp--caveated")).toHaveCount(1);
+    await expect(page.locator(".pd-stamp--cant-claim")).toHaveCount(1);
+
+    // The Proof-Readiness summary shows transparent counts + the reading note —
+    // never an opaque score.
+    const readiness = page.getByRole("region", { name: "Proof-Readiness" });
+    await expect(readiness).toContainText("Defensible");
+    await expect(readiness).toContainText("ProofDesk can back 7");
+
+    // The aria-live region announces the outcome verbatim, once (UX-DR25, AC4).
+    await expect(page.locator('[aria-live="polite"]')).toHaveText(
+      "Audit complete. 7 Defensible, 1 Caveated, 1 Can't claim. You marked 9 of 9 done; ProofDesk can back 7.",
+    );
+
+    // After running, the button flips to the re-run label with a mono timestamp.
+    await expect(page.getByRole("button", { name: /Re-run Proof Audit · last run/ })).toBeVisible();
+  });
+
+  test.describe("reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+
+    test("renders the identical final resolved DOM immediately (NFR-D7)", async ({ page }) => {
+      await page.goto("/");
+      const run = page.getByRole("button", { name: /Proof Audit/ });
+      // No staging: the final 7·1·1 DOM is present without waiting on animation.
+      // toPass retries a click that races hydration (idempotent run).
+      await expect(async () => {
+        await run.click();
+        await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+      await expect(page.locator(".pd-stamp--caveated")).toHaveCount(1);
+      await expect(page.locator(".pd-stamp--cant-claim")).toHaveCount(1);
+    });
+  });
+
+  test("FR run button renders the locked glossary label without truncation", async ({
+    page,
+    context,
+  }) => {
+    await context.addCookies([
+      { name: "proofdesk_locale", value: "fr", url: "http://127.0.0.1:3100" },
+    ]);
+    await page.goto("/");
+    // Locked FR term "Lancer l'audit" (or its re-run form if a prior test ran the
+    // audit against the shared DB); the control renders and is not clipped.
+    const run = page.getByRole("button", { name: /l’audit/ });
+    await expect(run).toBeVisible();
+    const clipped = await run.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
     expect(clipped).toBe(false);
   });
-});
 
-test.describe("Human override & caveat (Story 1.9)", () => {
-  // Audit the seeded board (idempotent) then open the first claim card.
-  async function openFirstClaim(page: import("@playwright/test").Page) {
-    await page.goto("/");
-    const run = page.getByRole("button", { name: /audit/i });
-    await expect(async () => {
-      await run.click();
-      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
-    }).toPass({ timeout: 15000 });
-    const firstRow = page.locator(".pd-ledger__row").first();
-    await expect(async () => {
-      await firstRow.click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-    return page.getByRole("dialog");
-  }
+  test.describe("Claim Card drawer (Story 1.8)", () => {
+    // Ensure the seeded board is audited (idempotent) so the opened card shows the
+    // resolved facts, then return the first row's claim id.
+    async function auditAndFirstClaim(page: import("@playwright/test").Page) {
+      await page.goto("/");
+      // Locale-agnostic: matches EN "Run Proof Audit" and FR "Lancer l’audit".
+      const run = page.getByRole("button", { name: /audit/i });
+      await expect(async () => {
+        await run.click();
+        await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+      }).toPass({ timeout: 15000 });
+      const firstRow = page.locator(".pd-ledger__row").first();
+      const claimId = await firstRow.getAttribute("data-claim-id");
+      return { firstRow, claimId };
+    }
 
-  test("override switch sets the effective status while the machine verdict stays pinned + attributed", async ({
-    page,
-  }) => {
-    const dialog = await openFirstClaim(page);
-    const override = dialog.getByRole("region", { name: "Human override" });
+    test("opens as a dialog with the five sections + provenance, Esc closes and returns focus to the row", async ({
+      page,
+    }) => {
+      const { firstRow, claimId } = await auditAndFirstClaim(page);
 
-    // The machine verdict is pinned before any override (AD-6).
-    await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
+      // Open from the row (retry a click that races hydration).
+      await expect(async () => {
+        await firstRow.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
 
-    // The switch is a real role="switch", off by default with an ever-present word.
-    const toggle = override.getByRole("switch", { name: "Operator override" });
-    await expect(toggle).toHaveAttribute("aria-checked", "false");
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toHaveAttribute("aria-modal", "true");
+      // The dialog is labelled by its sticky <h2> title.
+      await expect(dialog.getByRole("heading", { level: 2 })).toBeVisible();
 
-    // Turn it on → the three Proof Status options appear; choose "Can't claim".
-    await toggle.click();
-    await override.getByRole("button", { name: "Can't claim" }).click();
+      // The five hairline-divided sections, in order (UX-DR13). The fifth was
+      // renamed "Operator override" pre-AI-10 (the FR locked term is still
+      // "Arbitrage humain" / EN glossary "Human override" elsewhere).
+      for (const name of [
+        "Proof Requirements",
+        "Evidence trail",
+        "Machine/Human facts",
+        "Caveat",
+        "Operator override",
+      ]) {
+        await expect(dialog.getByRole("region", { name })).toBeVisible();
+      }
 
-    // The switch reads on, the machine verdict is STILL visible (never hidden),
-    // and the change is attributed "by [operator] · [agency]".
-    await expect(toggle).toHaveAttribute("aria-checked", "true");
-    await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
-    await expect(override.getByText(/by operator · ProofDesk/)).toBeVisible();
+      // Provenance chips render (cool-slate machine / warm-taupe human), OFF the
+      // R/Y/G scale (UX-DR10).
+      await expect(dialog.locator(".pd-prov").first()).toBeVisible();
 
-    // Toggling off clears the override.
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-checked", "false");
-  });
+      // The background is inert while the dialog is open (UX-DR24) — including the
+      // standing-disclaimer footer, a background sibling outside .pd-workspace
+      // (Story 1.10), so SR/browse-mode users can't reach it past the modal.
+      expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
+      expect(await page.locator(".pd-disclaimer").getAttribute("inert")).not.toBeNull();
 
-  test("a caveat records with its operator attribution", async ({ page }) => {
-    const dialog = await openFirstClaim(page);
-    const caveatSection = dialog.getByRole("region", { name: "Caveat" });
-
-    await caveatSection.getByRole("button", { name: /Add caveat/ }).click();
-    await caveatSection
-      .getByRole("textbox", { name: "Caveat" })
-      .fill("Rests on the creator's word — needs a timestamped clip.");
-    await caveatSection.getByRole("button", { name: "Record caveat" }).click();
-
-    // The caveat surfaces with its mono "by [operator]" attribution.
-    await expect(
-      caveatSection.getByText("Rests on the creator's word — needs a timestamped clip."),
-    ).toBeVisible();
-    await expect(caveatSection.getByText("by operator")).toBeVisible();
-  });
-});
-
-test.describe("Evidence Inbox ingest (Story 2.1)", () => {
-  test("renders the intake surface and ingests a note as a Human assertion", async ({ page }) => {
-    await page.goto("/evidence-inbox");
-    // The single intake surface renders (FR-5).
-    await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
-    // The four intake kinds are offered as native radios.
-    await expect(page.getByRole("radio", { name: "Paste a link" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "Upload a metric screenshot" })).toBeVisible();
-
-    // Add a free-text note. Retry the submit click to ride out client hydration.
-    await page.getByRole("radio", { name: "Paste a note" }).check();
-    const noteText = `E2E note ${Date.now()}`;
-    await page.getByRole("textbox", { name: "Note", exact: true }).fill(noteText);
-    await page
-      .getByRole("textbox", { name: "Type label", exact: true })
-      .fill("Discord confirmation");
-    await expect(async () => {
-      await page.getByRole("button", { name: "Add to Inbox" }).click();
-      await expect(page.getByText(noteText)).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    // The new card carries a warm-taupe Human-assertion provenance chip (AD-3/AD-19),
-    // OFF the R/Y/G status scale — a note is never machine-verified.
-    const card = page.locator(".pd-ev", { hasText: noteText });
-    await expect(card.locator(".pd-prov--human")).toContainText("Human assertion");
-  });
-});
-
-test.describe("Deterministic matching & operator affirmation (Story 2.2)", () => {
-  test("a matching link is suggested by rule, then Confirmed into an operator match", async ({
-    page,
-  }) => {
-    await page.goto("/evidence-inbox");
-    await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
-
-    // Paste a link that is a sub-path of PixelForge's D1 platform URL — the
-    // deterministic URL rule resolves it to exactly one Deliverable.
-    const url = `https://twitch.tv/pixelforge/segment-aurora/vod-${Date.now()}`;
-    await page.getByRole("radio", { name: "Paste a link" }).check();
-    await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
-    await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
-
-    await expect(async () => {
-      await page.getByRole("button", { name: "Add to Inbox" }).click();
-      await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    const card = page.locator(".pd-ev", { hasText: url });
-    // The suggested-match block shows the ONE rule-matched Deliverable + Creator,
-    // with no confidence/ranking — just the deterministic suggestion.
-    await expect(card.locator(".pd-match__cap")).toContainText("Suggested match");
-    await expect(card.locator(".pd-match__target")).toContainText(
-      "PixelForge · Twitch sponsor segment",
-    );
-
-    // Confirm affirms it — writing the operator link that (alone) enters the audit.
-    await expect(async () => {
-      await card.getByRole("button", { name: "Confirm" }).click();
-      await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-    await expect(card.locator(".pd-match__cap")).toContainText("Matched");
-    await expect(card.locator(".pd-match__target")).toContainText(
-      "PixelForge · Twitch sponsor segment",
-    );
-  });
-});
-
-test.describe("Confirm the page shows the Deliverable (Story 2.3)", () => {
-  test("an operator confirms a matched link and it surfaces as a Human assertion", async ({
-    page,
-  }) => {
-    // 1. Create an UNCONFIRMED operator link: paste a link that the deterministic
-    //    rule matches to PixelForge's D1 (Twitch sponsor segment), then Confirm the
-    //    match. That writes an operator EvidenceLink with no confirmation yet — the
-    //    exact pre-state Story 2.3 acts on.
-    await page.goto("/evidence-inbox");
-    const url = `https://twitch.tv/pixelforge/segment-aurora/confirm-${Date.now()}`;
-    await page.getByRole("radio", { name: "Paste a link" }).check();
-    await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
-    await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
-    await expect(async () => {
-      await page.getByRole("button", { name: "Add to Inbox" }).click();
-      await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-    const card = page.locator(".pd-ev", { hasText: url });
-    await expect(async () => {
-      await card.getByRole("button", { name: "Confirm" }).click();
-      await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    // 2. Open D1's Claim Card from the board (creator + type pin the exact row).
-    await page.goto("/");
-    const run = page.getByRole("button", { name: /audit/i });
-    await expect(async () => {
-      await run.click();
-      await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
-    }).toPass({ timeout: 15000 });
-    const row = page
-      .locator(".pd-ledger__row")
-      .filter({ has: page.locator(".pd-ledger__creator", { hasText: "PixelForge" }) })
-      .filter({ has: page.locator(".pd-ledger__type", { hasText: "Twitch sponsor segment" }) });
-    await expect(async () => {
-      await row.click();
-      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
-
-    // 3. The Evidence trail offers "Confirm page shows the Deliverable" on the
-    //    unconfirmed matched link. Confirming it records a Human assertion and the
-    //    control gives way to the "Confirmed by [operator]" attribution (no revoke).
-    const dialog = page.getByRole("dialog");
-    const confirmBtn = dialog.getByRole("button", {
-      name: /Confirm the resolved page shows the Deliverable/,
+      // Esc closes; focus returns to the exact originating row (UX-DR24).
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(page.locator(".pd-main")).not.toHaveAttribute("inert", /.*/);
+      await expect(page.locator(".pd-disclaimer")).not.toHaveAttribute("inert", /.*/);
+      await expect
+        .poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-claim-id")))
+        .toBe(claimId);
     });
-    await expect(confirmBtn.first()).toBeVisible();
-    await expect(async () => {
-      await confirmBtn.first().click();
-      await expect(dialog.getByText(/Confirmed by operator/)).toBeVisible({ timeout: 2000 });
-    }).toPass({ timeout: 15000 });
+
+    test("a failed claim-card load still moves focus into the dialog (not the inert background)", async ({
+      page,
+    }) => {
+      const { firstRow } = await auditAndFirstClaim(page);
+      // Force the claim-card fetch to fail so the drawer stays in its error state.
+      await page.route("**/api/claims/**", (route) =>
+        route.fulfill({ status: 500, contentType: "application/json", body: "{}" }),
+      );
+
+      await expect(async () => {
+        await firstRow.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      // Even with no card content, focus must be INSIDE the drawer — never left on
+      // the now-inert background (UX-DR24).
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const drawer = document.querySelector(".pd-drawer");
+            return drawer ? drawer.contains(document.activeElement) : false;
+          }),
+        )
+        .toBe(true);
+      // And the background is inert.
+      expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
+    });
+
+    test("step-to-next-claim advances without closing", async ({ page }) => {
+      const { firstRow } = await auditAndFirstClaim(page);
+      await expect(async () => {
+        await firstRow.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      const dialog = page.getByRole("dialog");
+      const firstTitle = await dialog.getByRole("heading", { level: 2 }).textContent();
+      await dialog.getByRole("button", { name: "Next claim" }).click();
+      // Still open, and the heading updated to the next claim.
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect
+        .poll(() => page.getByRole("dialog").getByRole("heading", { level: 2 }).textContent())
+        .not.toBe(firstTitle);
+    });
+
+    test("FR drawer renders the locked provenance term without truncation", async ({
+      page,
+      context,
+    }) => {
+      await context.addCookies([
+        { name: "proofdesk_locale", value: "fr", url: "http://127.0.0.1:3100" },
+      ]);
+      await auditAndFirstClaim(page);
+      await expect(async () => {
+        await page.locator(".pd-ledger__row").first().click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      const chip = page.getByRole("dialog").locator(".pd-prov").first();
+      await expect(chip).toBeVisible();
+      // Locked FR glossary terms; the chip is size-to-content and not clipped.
+      await expect(chip).toHaveText(/Fait vérifié par la machine|Déclaration humaine/);
+      const clipped = await chip.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+      expect(clipped).toBe(false);
+    });
+  });
+
+  test.describe("Human override & caveat (Story 1.9)", () => {
+    // Audit the seeded board (idempotent) then open the first claim card.
+    async function openFirstClaim(page: import("@playwright/test").Page) {
+      await page.goto("/");
+      const run = page.getByRole("button", { name: /audit/i });
+      await expect(async () => {
+        await run.click();
+        await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+      }).toPass({ timeout: 15000 });
+      const firstRow = page.locator(".pd-ledger__row").first();
+      await expect(async () => {
+        await firstRow.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+      return page.getByRole("dialog");
+    }
+
+    test("override switch sets the effective status while the machine verdict stays pinned + attributed", async ({
+      page,
+    }) => {
+      const dialog = await openFirstClaim(page);
+      const override = dialog.getByRole("region", { name: "Operator override" });
+
+      // The machine verdict is pinned before any override (AD-6).
+      await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
+
+      // The switch is a real role="switch", off by default with an ever-present word.
+      const toggle = override.getByRole("switch", { name: "Operator override" });
+      await expect(toggle).toHaveAttribute("aria-checked", "false");
+
+      // Turn it on → the three Proof Status options appear; choose "Can't claim".
+      await toggle.click();
+      await override.getByRole("button", { name: "Can't claim" }).click();
+
+      // The switch reads on, the machine verdict is STILL visible (never hidden),
+      // and the change is attributed "by [operator] · [agency]".
+      await expect(toggle).toHaveAttribute("aria-checked", "true");
+      await expect(override.getByText("Machine verdict", { exact: true })).toBeVisible();
+      await expect(override.getByText(/by operator · ProofDesk/)).toBeVisible();
+
+      // Toggling off clears the override.
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-checked", "false");
+    });
+
+    test("a caveat records with its operator attribution", async ({ page }) => {
+      const dialog = await openFirstClaim(page);
+      const caveatSection = dialog.getByRole("region", { name: "Caveat" });
+
+      await caveatSection.getByRole("button", { name: /Add caveat/ }).click();
+      await caveatSection
+        .getByRole("textbox", { name: "Caveat" })
+        .fill("Rests on the creator's word — needs a timestamped clip.");
+      await caveatSection.getByRole("button", { name: "Record caveat" }).click();
+
+      // The caveat surfaces with its mono "by [operator]" attribution.
+      await expect(
+        caveatSection.getByText("Rests on the creator's word — needs a timestamped clip."),
+      ).toBeVisible();
+      await expect(caveatSection.getByText("by operator")).toBeVisible();
+    });
+  });
+
+  test.describe("Evidence Inbox ingest (Story 2.1)", () => {
+    test("renders the intake surface and ingests a note as a Human assertion", async ({ page }) => {
+      await page.goto("/evidence-inbox");
+      // The single intake surface renders (FR-5).
+      await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
+      // The four intake kinds are offered as native radios.
+      await expect(page.getByRole("radio", { name: "Paste a link" })).toBeVisible();
+      await expect(page.getByRole("radio", { name: "Upload a metric screenshot" })).toBeVisible();
+
+      // Add a free-text note. Retry the submit click to ride out client hydration.
+      await page.getByRole("radio", { name: "Paste a note" }).check();
+      const noteText = `E2E note ${Date.now()}`;
+      await page.getByRole("textbox", { name: "Note", exact: true }).fill(noteText);
+      await page
+        .getByRole("textbox", { name: "Type label", exact: true })
+        .fill("Discord confirmation");
+      await expect(async () => {
+        await page.getByRole("button", { name: "Add to Inbox" }).click();
+        await expect(page.getByText(noteText)).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      // The new card carries a warm-taupe Human-assertion provenance chip (AD-3/AD-19),
+      // OFF the R/Y/G status scale — a note is never machine-verified.
+      const card = page.locator(".pd-ev", { hasText: noteText });
+      await expect(card.locator(".pd-prov--human")).toContainText("Human assertion");
+    });
+  });
+
+  test.describe("Deterministic matching & operator affirmation (Story 2.2)", () => {
+    test("a matching link is suggested by rule, then Confirmed into an operator match", async ({
+      page,
+    }) => {
+      await page.goto("/evidence-inbox");
+      await expect(page.getByRole("heading", { level: 1, name: "Evidence Inbox" })).toBeVisible();
+
+      // Paste a link that is a sub-path of PixelForge's D1 platform URL — the
+      // deterministic URL rule resolves it to exactly one Deliverable.
+      const url = `https://twitch.tv/pixelforge/segment-aurora/vod-${Date.now()}`;
+      await page.getByRole("radio", { name: "Paste a link" }).check();
+      await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
+      await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
+
+      await expect(async () => {
+        await page.getByRole("button", { name: "Add to Inbox" }).click();
+        await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      const card = page.locator(".pd-ev", { hasText: url });
+      // The suggested-match block shows the ONE rule-matched Deliverable + Creator,
+      // with no confidence/ranking — just the deterministic suggestion.
+      await expect(card.locator(".pd-match__cap")).toContainText("Suggested match");
+      await expect(card.locator(".pd-match__target")).toContainText(
+        "PixelForge · Twitch sponsor segment",
+      );
+
+      // Confirm affirms it — writing the operator link that (alone) enters the audit.
+      await expect(async () => {
+        await card.getByRole("button", { name: "Confirm" }).click();
+        await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+      await expect(card.locator(".pd-match__cap")).toContainText("Matched");
+      await expect(card.locator(".pd-match__target")).toContainText(
+        "PixelForge · Twitch sponsor segment",
+      );
+    });
+  });
+
+  test.describe("Confirm the page shows the Deliverable (Story 2.3)", () => {
+    test("an operator confirms a matched link and it surfaces as a Human assertion", async ({
+      page,
+    }) => {
+      // 1. Create an UNCONFIRMED operator link: paste a link that the deterministic
+      //    rule matches to PixelForge's D1 (Twitch sponsor segment), then Confirm the
+      //    match. That writes an operator EvidenceLink with no confirmation yet — the
+      //    exact pre-state Story 2.3 acts on.
+      await page.goto("/evidence-inbox");
+      const url = `https://twitch.tv/pixelforge/segment-aurora/confirm-${Date.now()}`;
+      await page.getByRole("radio", { name: "Paste a link" }).check();
+      await page.getByRole("textbox", { name: "Link", exact: true }).fill(url);
+      await page.getByRole("textbox", { name: "Type label", exact: true }).fill("Twitch VOD");
+      await expect(async () => {
+        await page.getByRole("button", { name: "Add to Inbox" }).click();
+        await expect(page.getByText(url)).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+      const card = page.locator(".pd-ev", { hasText: url });
+      await expect(async () => {
+        await card.getByRole("button", { name: "Confirm" }).click();
+        await expect(card.locator(".pd-match--assigned")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      // 2. Open D1's Claim Card from the board (creator + type pin the exact row).
+      await page.goto("/");
+      const run = page.getByRole("button", { name: /audit/i });
+      await expect(async () => {
+        await run.click();
+        await expect(page.locator(".pd-stamp--defensible")).toHaveCount(7, { timeout: 3000 });
+      }).toPass({ timeout: 15000 });
+      const row = page
+        .locator(".pd-ledger__row")
+        .filter({ has: page.locator(".pd-ledger__creator", { hasText: "PixelForge" }) })
+        .filter({ has: page.locator(".pd-ledger__type", { hasText: "Twitch sponsor segment" }) });
+      await expect(async () => {
+        await row.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+
+      // 3. The Evidence trail offers "Confirm page shows the Deliverable" on the
+      //    unconfirmed matched link. Confirming it records a Human assertion and the
+      //    control gives way to the "Confirmed by [operator]" attribution (no revoke).
+      const dialog = page.getByRole("dialog");
+      const confirmBtn = dialog.getByRole("button", {
+        name: /Confirm the resolved page shows the Deliverable/,
+      });
+      await expect(confirmBtn.first()).toBeVisible();
+      await expect(async () => {
+        await confirmBtn.first().click();
+        await expect(dialog.getByText(/Confirmed by operator/)).toBeVisible({ timeout: 2000 });
+      }).toPass({ timeout: 15000 });
+    });
   });
 });
 
