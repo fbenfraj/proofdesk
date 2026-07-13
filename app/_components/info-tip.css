@@ -1,0 +1,45 @@
+/* AI-9 term tooltip: a dotted-underline affordance on Record terms. Reveals a
+   plain-language definition on hover and keyboard focus. Sober register: quiet
+   hairline card on the warm canvas, no animation beyond a calm fade. */
+.pd-infotip {
+  position: relative;
+  display: inline;
+}
+
+.pd-infotip__term {
+  border-bottom: 1px dotted var(--ink-muted, #8a7f66);
+  cursor: help;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.pd-infotip__bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: max-content;
+  max-width: 22rem;
+  padding: 8px 10px;
+  background: var(--surface, #fffaf0);
+  color: var(--ink, #2b2519);
+  border: 1px solid var(--hairline, #e4dcc9);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(43, 37, 25, 0.12);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease;
+}
+
+.pd-infotip__term:hover + .pd-infotip__bubble,
+.pd-infotip__term:focus-visible + .pd-infotip__bubble {
+  opacity: 1;
+  visibility: visible;
+}
