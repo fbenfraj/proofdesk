@@ -26,3 +26,5 @@ export * from "./override-caveat";
 export * from "./proof-brief";
 // The report assembler + frozen-snapshot builder view + inclusion resolver (Story 4.1).
 export * from "./report";
+// The workflow-first stage-strip honest state (Story AI-10).
+export * from "./stage-state";
