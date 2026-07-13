@@ -378,7 +378,7 @@ const EN: Strings = {
   operatorLabel: "Operator",
   railCap: "Campaign",
   rail: {
-    "audit-cockpit": "Audit Cockpit",
+    "audit-cockpit": "Campaign Board",
     "proof-brief": "Proof Brief",
     "evidence-inbox": "Evidence Inbox",
     "client-safe-report": "Client-Safe Report",
@@ -433,7 +433,7 @@ const EN: Strings = {
       evidence: "Evidence trail",
       facts: "Machine/Human facts",
       caveat: "Caveat",
-      override: "Human override",
+      override: "Operator override",
     },
     criticality: { critical: "Critical", supporting: "Supporting" },
     // Locked glossary terms (EXPERIENCE.md#Voice and Tone) — verbatim.
@@ -664,9 +664,9 @@ const FR: Strings = {
   operatorLabel: "Opérateur",
   railCap: "Campagne",
   rail: {
-    // PROVISIONAL — "Audit Cockpit" has no locked FR term in the EXPERIENCE
-    // glossary (see story Questions §1). Do not treat as final.
-    "audit-cockpit": "Cockpit d’audit",
+    // AI-9: "Audit Cockpit" retired as Chrome jargon; working label per AI-9 spec.
+    // AI-10 confirms the final label.
+    "audit-cockpit": "Tableau de campagne",
     // Locked FR glossary terms (EXPERIENCE.md#L77) — verbatim.
     "proof-brief": "Cahier des preuves",
     "evidence-inbox": "Boîte à preuves",
@@ -726,7 +726,7 @@ const FR: Strings = {
       facts: "Faits machine/humain",
       caveat: "Réserve",
       // Locked FR glossary term (EXPERIENCE.md) — verbatim.
-      override: "Arbitrage humain",
+      override: "Contournement opérateur",
     },
     criticality: { critical: "Essentiel", supporting: "Complémentaire" },
     // Locked FR glossary terms (EXPERIENCE.md#Voice and Tone) — verbatim.
