@@ -401,7 +401,8 @@ const EN: Strings = {
     claimedHeader: "Claimed",
     statusHeader: "Proof Status",
     claimedMarker: "Claimed",
-    emptyState: "No campaign loaded.",
+    emptyState:
+      "No claims yet. Add a campaign's deliverables, or load the demo, to see the claimed-vs-proven ledger.",
     lead: "Every claim your creators made, and whether the evidence backs it up.",
   },
   audit: {
@@ -641,7 +642,7 @@ const EN: Strings = {
     trustEu: "EU-hosted · RGPD-compliant",
     trustExport: "Full export · no lock-in",
     attribution: (agency, ref) => `${agency} · Proof audit by ProofDesk · ${ref}`,
-    emptyNoReport: "No report has been generated for this campaign yet.",
+    emptyNoReport: "No report yet. Run an audit first, then assemble what the evidence defends.",
     emptyNoClaims:
       "No claims are cleared for the client report - every claim is currently excluded or flagged for internal follow-up.",
     emptyStale:
@@ -692,7 +693,8 @@ const FR: Strings = {
     // Locked FR glossary term (EXPERIENCE.md) — verbatim.
     statusHeader: "Statut de preuve",
     claimedMarker: "Revendiqué",
-    emptyState: "Aucune campagne chargée.",
+    emptyState:
+      "Aucune revendication pour l'instant. Ajoutez les livrables d'une campagne, ou chargez la démo, pour voir le registre revendiqué-vs-prouvé.",
     lead: "Chaque revendication de vos créateurs, et si les preuves la soutiennent.",
   },
   audit: {
@@ -940,7 +942,8 @@ const FR: Strings = {
     trustEu: "Hébergé dans l'UE · conforme RGPD",
     trustExport: "Export complet · sans verrouillage",
     attribution: (agency, ref) => `${agency} · Audit de preuve par ProofDesk · ${ref}`,
-    emptyNoReport: "Aucun rapport n'a encore été généré pour cette campagne.",
+    emptyNoReport:
+      "Aucun rapport pour l'instant. Lancez d'abord un audit, puis assemblez ce que les preuves défendent.",
     emptyNoClaims:
       "Aucune revendication n'est validée pour le rapport client - chaque revendication est actuellement exclue ou signalée pour suivi interne.",
     emptyStale:

@@ -38,3 +38,17 @@ describe("AI-9 surface leads (subheads)", () => {
     expect(localeStrings("en").board.lead.toLowerCase()).toContain("claim");
   });
 });
+
+describe("AI-9 empty-state teaching", () => {
+  const LOCALES3: Locale[] = ["en", "fr"];
+  test("the Campaign Board empty state teaches, not just 'no campaign'", () => {
+    expect(localeStrings("en").board.emptyState.toLowerCase()).toContain("claim");
+  });
+  test("board + report empty states are non-empty in both locales", () => {
+    for (const locale of LOCALES3) {
+      const s = localeStrings(locale);
+      expect(s.board.emptyState.length).toBeGreaterThan(0);
+      expect(s.report.emptyNoReport.length).toBeGreaterThan(0);
+    }
+  });
+});
