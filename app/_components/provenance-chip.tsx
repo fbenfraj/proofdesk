@@ -1,4 +1,5 @@
 import "./provenance-chip.css";
+import { InfoTip } from "@/app/_components/info-tip";
 import { PROVENANCE_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
 
@@ -24,7 +25,12 @@ export function ProvenanceChip({
       <span className="pd-prov__glyph" aria-hidden="true">
         {token.glyph}
       </span>
-      {label}
+      <InfoTip
+        termKey={provenance === "machine" ? "machine-checked" : "human-assertion"}
+        locale={locale}
+      >
+        {label}
+      </InfoTip>
     </span>
   );
 }
