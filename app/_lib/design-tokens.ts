@@ -73,7 +73,6 @@ export const RADIUS = {
 
 /** UX-DR5/UX-DR7 — fixed shell dimensions. */
 export const SHELL_DIMS = {
-  "rail-width": "214px",
   "drawer-width": "498px",
   "report-measure": "62ch",
 } as const;

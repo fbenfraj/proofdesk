@@ -36,7 +36,7 @@ type LoadState = "idle" | "loading" | "ready" | "error";
  *  standing-disclaimer footer (Story 1.10) is also a background sibling outside
  *  `.pd-workspace`, so it MUST be inerted too — otherwise browse-mode / SR users
  *  could reach it outside the `aria-modal` dialog, breaking modal isolation. */
-const BACKGROUND_SELECTORS = [".pd-topbar", ".pd-rail", ".pd-main", ".pd-disclaimer"];
+const BACKGROUND_SELECTORS = [".pd-topbar", ".pd-strip", ".pd-main", ".pd-disclaimer"];
 
 export function ClaimDrawer({ locale, agency }: { locale: Locale; agency: string }) {
   const { selectedClaimId, close, stepToNext, hasNext } = useClaimDrawer();

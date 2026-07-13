@@ -28,4 +28,19 @@ describe("the shell renders the workflow strip, not the rail (AI-10)", () => {
     expect(layout.includes("resolveCampaignStageState")).toBe(true);
     expect(layout.includes("EMPTY_STAGE_STATE")).toBe(true);
   });
+
+  // UX-DR24 regression guard: the Claim Card drawer inerts a fixed list of
+  // background regions while open. `.pd-strip` (the stage strip, rendered as a
+  // sibling OUTSIDE the drawer provider in app-shell.tsx) MUST be in that list —
+  // it replaced `.pd-rail`, which no longer exists in the DOM. If `.pd-rail`
+  // ever crept back in (or `.pd-strip` fell out), the strip's stage links would
+  // stay reachable behind the open modal for assistive-tech users on the Board.
+  test("the drawer's BACKGROUND_SELECTORS inert the strip, not the deleted rail", () => {
+    const drawer = read("app/_components/claim-drawer.tsx");
+    const match = drawer.match(/BACKGROUND_SELECTORS\s*=\s*\[([^\]]*)\]/);
+    expect(match, "BACKGROUND_SELECTORS array not found in claim-drawer.tsx").not.toBeNull();
+    const selectors = match?.[1] ?? "";
+    expect(selectors.includes(".pd-strip")).toBe(true);
+    expect(selectors.includes(".pd-rail")).toBe(false);
+  });
 });

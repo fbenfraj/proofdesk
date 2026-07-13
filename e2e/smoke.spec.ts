@@ -241,15 +241,19 @@ test.describe("workflow surfaces (explainer pre-dismissed)", () => {
 
       // The background is inert while the dialog is open (UX-DR24) — including the
       // standing-disclaimer footer, a background sibling outside .pd-workspace
-      // (Story 1.10), so SR/browse-mode users can't reach it past the modal.
+      // (Story 1.10), and the stage strip, a background sibling outside the
+      // drawer provider (AI-10), so SR/browse-mode users can't reach it past the
+      // modal.
       expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
       expect(await page.locator(".pd-disclaimer").getAttribute("inert")).not.toBeNull();
+      expect(await page.locator(".pd-strip").getAttribute("inert")).not.toBeNull();
 
       // Esc closes; focus returns to the exact originating row (UX-DR24).
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await expect(page.locator(".pd-main")).not.toHaveAttribute("inert", /.*/);
       await expect(page.locator(".pd-disclaimer")).not.toHaveAttribute("inert", /.*/);
+      await expect(page.locator(".pd-strip")).not.toHaveAttribute("inert", /.*/);
       await expect
         .poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-claim-id")))
         .toBe(claimId);
@@ -281,6 +285,7 @@ test.describe("workflow surfaces (explainer pre-dismissed)", () => {
         .toBe(true);
       // And the background is inert.
       expect(await page.locator(".pd-main").getAttribute("inert")).not.toBeNull();
+      expect(await page.locator(".pd-strip").getAttribute("inert")).not.toBeNull();
     });
 
     test("step-to-next-claim advances without closing", async ({ page }) => {
