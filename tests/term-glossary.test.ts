@@ -1,11 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { type Locale } from "@/app/_lib/i18n";
-import {
-  TERM_GLOSSARY,
-  TERM_KEYS,
-  termDefinition,
-  termLabel,
-} from "@/app/_lib/term-glossary";
+import type { Locale } from "@/app/_lib/i18n";
+import { TERM_GLOSSARY, TERM_KEYS, termDefinition, termLabel } from "@/app/_lib/term-glossary";
 
 const LOCALES: Locale[] = ["en", "fr"];
 

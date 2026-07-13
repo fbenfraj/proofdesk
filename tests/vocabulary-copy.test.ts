@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { localeStrings, type Locale } from "@/app/_lib/i18n";
+import { type Locale, localeStrings } from "@/app/_lib/i18n";
 
 const LOCALES: Locale[] = ["en", "fr"];
 
@@ -18,9 +18,11 @@ describe("AI-9 Chrome relabels", () => {
     expect(localeStrings("fr").rail["audit-cockpit"]).toBe("Tableau de campagne");
   });
 
-  test("the override section heading reads 'Operator override'", () => {
+  test("the override section heading reads 'Operator override' (EN); FR keeps the locked 'Arbitrage humain'", () => {
     expect(localeStrings("en").drawer.sections.override).toBe("Operator override");
-    expect(localeStrings("fr").drawer.sections.override).toBe("Contournement opérateur");
+    // FR override is a locked glossary term (EXPERIENCE.md#L77); AI-9 does not
+    // retranslate it, so it stays "Arbitrage humain" and matches switchLabel.
+    expect(localeStrings("fr").drawer.sections.override).toBe("Arbitrage humain");
   });
 });
 

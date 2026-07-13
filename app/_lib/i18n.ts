@@ -666,7 +666,8 @@ const EN: Strings = {
       "Sample campaign - the export is disabled. A demo renders on-screen only; clone into a real campaign to export a client bundle.",
   },
   explainer: {
-    intro: "ProofDesk turns what your creators claimed into a report you can defend to a client. Four steps:",
+    intro:
+      "ProofDesk turns what your creators claimed into a report you can defend to a client. Four steps:",
     steps: [
       "Set the bar (Proof Brief). Decide what each deliverable must prove.",
       "Collect evidence (Evidence Inbox). Gather screenshots, links, and files, then match them to claims.",
@@ -749,8 +750,10 @@ const FR: Strings = {
       evidence: "Trace des preuves",
       facts: "Faits machine/humain",
       caveat: "Réserve",
-      // Locked FR glossary term (EXPERIENCE.md) — verbatim.
-      override: "Contournement opérateur",
+      // Locked FR glossary term (EXPERIENCE.md#L77) — verbatim. The EN "Human
+      // override" heading became "Operator override" (AI-9), but the FR locked
+      // term stays "Arbitrage humain" and matches override.switchLabel.
+      override: "Arbitrage humain",
     },
     criticality: { critical: "Essentiel", supporting: "Complémentaire" },
     // Locked FR glossary terms (EXPERIENCE.md#Voice and Tone) — verbatim.
@@ -978,7 +981,8 @@ const FR: Strings = {
       "Campagne de démonstration - l'export est désactivé. Une démo s'affiche à l'écran uniquement ; clonez-la dans une campagne réelle pour exporter une archive client.",
   },
   explainer: {
-    intro: "ProofDesk transforme ce que vos créateurs ont revendiqué en un rapport défendable devant un client. Quatre étapes :",
+    intro:
+      "ProofDesk transforme ce que vos créateurs ont revendiqué en un rapport défendable devant un client. Quatre étapes :",
     steps: [
       "Fixez le seuil (Cahier des preuves). Décidez ce que chaque livrable doit prouver.",
       "Collectez les preuves (Boîte à preuves). Rassemblez captures, liens et fichiers, puis rattachez-les aux revendications.",
