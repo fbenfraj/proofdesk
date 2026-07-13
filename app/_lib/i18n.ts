@@ -344,6 +344,14 @@ export interface Strings {
      *  on-screen SAMPLE view is all a demo may produce. */
     readonly demoNotExportable: string;
   };
+  /** First-run "How ProofDesk works" explainer copy (AI-9). Intro + 4 steps +
+   *  dismiss + reopen labels. The overlay itself is wired by AI-10. */
+  readonly explainer: {
+    readonly intro: string;
+    readonly steps: readonly string[];
+    readonly dismiss: string;
+    readonly reopen: string;
+  };
 }
 
 /** The three France/EU disclosure checklist keys (mirrors FRANCE_EU_DISCLOSURE in
@@ -657,6 +665,17 @@ const EN: Strings = {
     demoNotExportable:
       "Sample campaign - the export is disabled. A demo renders on-screen only; clone into a real campaign to export a client bundle.",
   },
+  explainer: {
+    intro: "ProofDesk turns what your creators claimed into a report you can defend to a client. Four steps:",
+    steps: [
+      "Set the bar (Proof Brief). Decide what each deliverable must prove.",
+      "Collect evidence (Evidence Inbox). Gather screenshots, links, and files, then match them to claims.",
+      "Run the audit (Campaign Board). ProofDesk sorts every claim into Defensible, Caveated, or Can't claim.",
+      "Ship the report (Client-Safe Report). Hand the client only what the evidence backs, caveats and all.",
+    ],
+    dismiss: "Got it",
+    reopen: "How ProofDesk works",
+  },
 };
 
 const FR: Strings = {
@@ -957,6 +976,17 @@ const FR: Strings = {
     downloadAction: "Télécharger l'archive (ZIP)",
     demoNotExportable:
       "Campagne de démonstration - l'export est désactivé. Une démo s'affiche à l'écran uniquement ; clonez-la dans une campagne réelle pour exporter une archive client.",
+  },
+  explainer: {
+    intro: "ProofDesk transforme ce que vos créateurs ont revendiqué en un rapport défendable devant un client. Quatre étapes :",
+    steps: [
+      "Fixez le seuil (Cahier des preuves). Décidez ce que chaque livrable doit prouver.",
+      "Collectez les preuves (Boîte à preuves). Rassemblez captures, liens et fichiers, puis rattachez-les aux revendications.",
+      "Lancez l'audit (Tableau de campagne). ProofDesk classe chaque revendication en Défendable, Sous réserve ou Non défendable.",
+      "Livrez le rapport (Rapport prêt-client). Ne remettez au client que ce que les preuves soutiennent, réserves comprises.",
+    ],
+    dismiss: "Compris",
+    reopen: "Comment fonctionne ProofDesk",
   },
 };
 

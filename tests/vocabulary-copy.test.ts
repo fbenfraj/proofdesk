@@ -52,3 +52,17 @@ describe("AI-9 empty-state teaching", () => {
     }
   });
 });
+
+describe("AI-9 first-run explainer copy", () => {
+  const LOCALES4: Locale[] = ["en", "fr"];
+  test("explainer has intro, 4 steps, dismiss and reopen in both locales", () => {
+    for (const locale of LOCALES4) {
+      const e = localeStrings(locale).explainer;
+      expect(e.intro.length).toBeGreaterThan(0);
+      expect(e.steps).toHaveLength(4);
+      for (const step of e.steps) expect(step.length).toBeGreaterThan(0);
+      expect(e.dismiss.length).toBeGreaterThan(0);
+      expect(e.reopen.length).toBeGreaterThan(0);
+    }
+  });
+});
