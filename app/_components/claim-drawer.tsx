@@ -10,6 +10,7 @@ import { PROOF_STATUS_TOKENS } from "../_lib/design-tokens";
 import { type Locale, localeStrings } from "../_lib/i18n";
 import { proofStatusToDisplayKey } from "../_lib/proof-status";
 import { useClaimDrawer } from "./claim-drawer-context";
+import { InfoTip } from "./info-tip";
 import { ProvenanceChip } from "./provenance-chip";
 
 // The Claim Card right-side drawer (Story 1.8, UX-DR13/DR14/DR10/DR24). It fills
@@ -615,7 +616,11 @@ function CaveatSection({
 
   return (
     <section className="pd-cc__section" aria-label={d.sections.caveat}>
-      <h3 className="label-caps pd-cc__section-title">{d.sections.caveat}</h3>
+      <h3 className="label-caps pd-cc__section-title">
+        <InfoTip termKey="caveat" locale={locale}>
+          {d.sections.caveat}
+        </InfoTip>
+      </h3>
 
       {view.caveats.length === 0 ? (
         <div className="pd-cc__caveat pd-cc__caveat--empty">
