@@ -58,7 +58,7 @@ export function audit(snapshot: AuditSnapshot): AuditVerdict {
           requirementId: "",
           satisfied: false,
           reason:
-            "No Proof Requirements defined — the proof bar is unset, so delivery is unproven.",
+            "No Proof Requirements defined - the proof bar is unset, so delivery is unproven.",
           machineOrHuman: "machine",
         },
       ],
@@ -126,8 +126,8 @@ function evalLinkReachability(req: SnapshotProofRequirement): RequirementEvaluat
       requirementId: req.proofRequirementId,
       satisfied: live,
       reason: live
-        ? "Link resolved live — machine-checked reachability (content not verified)."
-        : "No live link backs the confirmed page — no machine reachability.",
+        ? "Link resolved live - machine-checked reachability (content not verified)."
+        : "No live link backs the confirmed page - no machine reachability.",
       machineOrHuman: "machine",
     },
     {
@@ -170,7 +170,7 @@ function evalDisclosure(req: SnapshotProofRequirement): RequirementEvaluation {
     case "partial":
       satisfied = true;
       capsAtYellow = true;
-      reason = "Required disclosure ambiguous/partial — a caveat is required.";
+      reason = "Required disclosure ambiguous/partial - a caveat is required.";
       break;
     case "missing":
       satisfied = false;
@@ -219,7 +219,7 @@ function evalHumanAssertion(req: SnapshotProofRequirement): RequirementEvaluatio
         requirementId: req.proofRequirementId,
         satisfied,
         reason: present
-          ? "Human-asserted figure present (operator-entered) — never machine-verified."
+          ? "Human-asserted figure present (operator-entered) - never machine-verified."
           : "No operator-affirmed evidence for this human-asserted requirement.",
         machineOrHuman: "human",
       },
@@ -242,7 +242,7 @@ function evalStructuredField(req: SnapshotProofRequirement): RequirementEvaluati
         requirementId: req.proofRequirementId,
         satisfied,
         reason: present
-          ? "Structured field present — machine-checkable."
+          ? "Structured field present - machine-checkable."
           : "Structured field absent.",
         machineOrHuman: "machine",
       },

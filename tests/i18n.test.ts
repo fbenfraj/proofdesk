@@ -88,7 +88,7 @@ describe("Standing disclaimers (Story 1.10, FR-16 / AD-22, EN|FR)", () => {
   test("EN legal disclaimer is the verbatim AD-22 string, distinct from the automation one", () => {
     const en = localeStrings("en");
     expect(en.legalDisclaimer).toBe(
-      "Evidence management and reporting support — not legal advice or a guarantee of compliance.",
+      "Evidence management and reporting support - not legal advice or a guarantee of compliance.",
     );
     // AD-22: the legal disclaimer is a DISTINCT artifact, never a substitute.
     expect(en.legalDisclaimer).not.toBe(en.automationDisclaimer);
@@ -318,10 +318,10 @@ describe("France/EU disclosure copy is LOCKED (Story 3.3 GATE a/3)", () => {
 
   test("the disclosure framing is the verbatim NFR-D3 evidence-assistance string", () => {
     expect(localeStrings("en").proofBrief.disclosure.framing).toBe(
-      "evidence assistance — not legal advice",
+      "evidence assistance - not legal advice",
     );
     expect(localeStrings("fr").proofBrief.disclosure.framing).toBe(
-      "assistance à la preuve — pas un conseil juridique",
+      "assistance à la preuve - pas un conseil juridique",
     );
   });
 
@@ -337,7 +337,7 @@ describe("France/EU disclosure copy is LOCKED (Story 3.3 GATE a/3)", () => {
   test("the legal disclaimer (Story 1.10) remains the locked AD-22 string — the copy lock holds", () => {
     // GATE a/3 pins the SAME legal disclaimer 3.3's disclosure surface leans on.
     expect(localeStrings("en").legalDisclaimer).toBe(
-      "Evidence management and reporting support — not legal advice or a guarantee of compliance.",
+      "Evidence management and reporting support - not legal advice or a guarantee of compliance.",
     );
   });
 

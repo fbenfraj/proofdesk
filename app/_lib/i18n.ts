@@ -392,7 +392,7 @@ const EN: Strings = {
   automationDisclaimer:
     "ProofDesk verifies structured proof fields and link status. It does not automatically watch streams or validate viewer metrics.",
   legalDisclaimer:
-    "Evidence management and reporting support — not legal advice or a guarantee of compliance.",
+    "Evidence management and reporting support - not legal advice or a guarantee of compliance.",
   board: {
     indexHeader: "#",
     creatorHeader: "Creator",
@@ -408,7 +408,7 @@ const EN: Strings = {
     reRunPrefix: "Re-run Proof Audit · last run ",
     runningLine: "evaluating structured proof fields · link status",
     readinessTitle: "Proof-Readiness",
-    readinessCaption: "Counts only — never a single score.",
+    readinessCaption: "Counts only - never a single score.",
     readinessPending: "Run the audit to see how many claims ProofDesk can back.",
     statusLabel: {
       defensible: "Defensible",
@@ -470,9 +470,9 @@ const EN: Strings = {
     },
     mutationError: "Couldn't save. Try again.",
     liveness: {
-      live: "link resolves — content not verified",
+      live: "link resolves - content not verified",
       dead: "link doesn't resolve",
-      blocked: "blocked — could not check (not gone)",
+      blocked: "blocked - could not check (not gone)",
       unresolved: "couldn't be checked",
       deadPrompt: "This link doesn't resolve. Capture an alternative.",
     },
@@ -491,7 +491,7 @@ const EN: Strings = {
   },
   inbox: {
     title: "Evidence Inbox",
-    lead: "Drop any messy evidence here — nothing lands in a pile nobody sorts later.",
+    lead: "Drop any messy evidence here - nothing lands in a pile nobody sorts later.",
     addHeading: "Add evidence",
     intakeKind: {
       url: "Paste a link",
@@ -515,7 +515,7 @@ const EN: Strings = {
     capturedClientLabel: "Captured",
     match: {
       helper:
-        'ProofDesk suggests a match by rule. It never ranks or guesses a "most likely" — confirm or reassign. Items it can’t place stay Unassigned.',
+        'ProofDesk suggests a match by rule. It never ranks or guesses a "most likely" - confirm or reassign. Items it can’t place stay Unassigned.',
       suggestedHeading: "Suggested match",
       byRule: "by rule",
       noMatchHeading: "No automatic match",
@@ -555,14 +555,14 @@ const EN: Strings = {
   },
   proofBrief: {
     title: "Proof Brief",
-    lead: "Set the proof bar per Deliverable at kickoff — so audits measure against this configured bar, not a vibe.",
+    lead: "Set the proof bar per Deliverable at kickoff - so audits measure against this configured bar, not a vibe.",
     unsetHeading: "No proof bar set yet",
     unsetBody:
-      "Pick a Deliverable-type template to pre-fill its Proof Requirements. Until a bar exists, an audit of this Deliverable is blocked — there's nothing to measure against.",
+      "Pick a Deliverable-type template to pre-fill its Proof Requirements. Until a bar exists, an audit of this Deliverable is blocked - there's nothing to measure against.",
     pickTemplate: "Deliverable-type template",
     applyTemplate: "Apply template",
     templatePreviewHeading: "Template preview",
-    provisionalBadge: "Provisional — not yet confirmed",
+    provisionalBadge: "Provisional - not yet confirmed",
     provisionalNote:
       "These defaults are not yet confirmed against real platform disclosure rules. Review and adjust them before relying on this bar.",
     requirementsHeading: "Proof Requirements",
@@ -585,7 +585,7 @@ const EN: Strings = {
       "structured-field": "a structured field",
       disclosure: "a disclosure check",
     },
-    deliverableBy: (creator, type) => `${creator} — ${type}`,
+    deliverableBy: (creator, type) => `${creator} - ${type}`,
     templateName: {
       "twitch-sponsor-segment": "Twitch sponsor segment",
       "instagram-story": "Instagram Story",
@@ -595,7 +595,7 @@ const EN: Strings = {
     },
     disclosure: {
       checklistHeading: "France/EU Disclosure Checklist",
-      framing: "evidence assistance — not legal advice",
+      framing: "evidence assistance - not legal advice",
       addLabel: "Add a France/EU disclosure",
       attached: "Already attached",
       name: {
@@ -631,19 +631,19 @@ const EN: Strings = {
     claimsHeading: "Claims",
     appendixHeading: "Proof Appendix",
     appendixNote:
-      "Every claim above is backed by the evidence below. Each receipt is labelled by how it was verified — a machine-checked fact (a link that resolves, a field present) or a human assertion (attested by a person). Viewer figures are always human-entered.",
+      "Every claim above is backed by the evidence below. Each receipt is labelled by how it was verified - a machine-checked fact (a link that resolves, a field present) or a human assertion (attested by a person). Viewer figures are always human-entered.",
     caveatLabel: "Caveat",
-    sampleBadge: "Sample — not for client use",
-    receiptRef: (ref) => `Receipts in Proof Appendix — ${ref}`,
+    sampleBadge: "Sample - not for client use",
+    receiptRef: (ref) => `Receipts in Proof Appendix - ${ref}`,
     livenessStamp: (label) => `LIVENESS: ${label.toUpperCase()}`,
     trustEu: "EU-hosted · RGPD-compliant",
     trustExport: "Full export · no lock-in",
     attribution: (agency, ref) => `${agency} · Proof audit by ProofDesk · ${ref}`,
     emptyNoReport: "No report has been generated for this campaign yet.",
     emptyNoClaims:
-      "No claims are cleared for the client report — every claim is currently excluded or flagged for internal follow-up.",
+      "No claims are cleared for the client report - every claim is currently excluded or flagged for internal follow-up.",
     emptyStale:
-      "The evidence changed after this report was frozen — regenerate the report to present current verdicts. Nothing is shown against out-of-date evidence.",
+      "The evidence changed after this report was frozen - regenerate the report to present current verdicts. Nothing is shown against out-of-date evidence.",
     previewLabel: "Client-Safe Report preview",
     printAction: "Print / Save as PDF",
     openTab: "Open in new tab",
@@ -652,7 +652,7 @@ const EN: Strings = {
     generateError: "Couldn't generate the report. Try again.",
     downloadAction: "Download bundle (ZIP)",
     demoNotExportable:
-      "Sample campaign — the export is disabled. A demo renders on-screen only; clone into a real campaign to export a client bundle.",
+      "Sample campaign - the export is disabled. A demo renders on-screen only; clone into a real campaign to export a client bundle.",
   },
 };
 
@@ -681,7 +681,7 @@ const FR: Strings = {
   automationDisclaimer:
     "ProofDesk vérifie les champs de preuve structurés et l’état des liens. Il ne visionne pas automatiquement les diffusions et ne valide pas les métriques d’audience.",
   legalDisclaimer:
-    "Support de gestion des preuves et de reporting — ni conseil juridique, ni garantie de conformité.",
+    "Support de gestion des preuves et de reporting - ni conseil juridique, ni garantie de conformité.",
   board: {
     indexHeader: "N°",
     creatorHeader: "Créateur",
@@ -699,7 +699,7 @@ const FR: Strings = {
     reRunPrefix: "Relancer l’audit · dernier lancement ",
     runningLine: "évaluation des champs de preuve structurés · état des liens",
     readinessTitle: "Niveau de preuve",
-    readinessCaption: "Uniquement des comptes — jamais un score unique.",
+    readinessCaption: "Uniquement des comptes - jamais un score unique.",
     readinessPending: "Lancez l’audit pour voir combien de revendications ProofDesk peut étayer.",
     statusLabel: {
       // Locked FR glossary status terms (EXPERIENCE.md#Proof Status) — verbatim.
@@ -766,9 +766,9 @@ const FR: Strings = {
     },
     mutationError: "Échec de l’enregistrement. Réessayez.",
     liveness: {
-      live: "le lien répond — contenu non vérifié",
+      live: "le lien répond - contenu non vérifié",
       dead: "le lien ne répond pas",
-      blocked: "bloqué — vérification impossible (pas disparu)",
+      blocked: "bloqué - vérification impossible (pas disparu)",
       unresolved: "n’a pas pu être vérifié",
       deadPrompt: "Ce lien ne répond pas. Capturez une alternative.",
     },
@@ -788,7 +788,7 @@ const FR: Strings = {
   inbox: {
     // Locked FR glossary term (EXPERIENCE.md#L77): Evidence Inbox → Boîte à preuves.
     title: "Boîte à preuves",
-    lead: "Déposez ici toute preuve, même en vrac — rien ne finit dans une pile que personne ne trie.",
+    lead: "Déposez ici toute preuve, même en vrac - rien ne finit dans une pile que personne ne trie.",
     addHeading: "Ajouter une preuve",
     intakeKind: {
       url: "Coller un lien",
@@ -812,7 +812,7 @@ const FR: Strings = {
     capturedClientLabel: "Capturé",
     match: {
       helper:
-        "ProofDesk suggère une correspondance par règle. Il ne classe jamais et ne devine pas une « plus probable » — confirmez ou réattribuez. Les éléments qu’il ne peut placer restent Non attribués.",
+        "ProofDesk suggère une correspondance par règle. Il ne classe jamais et ne devine pas une « plus probable » - confirmez ou réattribuez. Les éléments qu’il ne peut placer restent Non attribués.",
       suggestedHeading: "Correspondance suggérée",
       byRule: "par règle",
       noMatchHeading: "Aucune correspondance automatique",
@@ -852,14 +852,14 @@ const FR: Strings = {
   },
   proofBrief: {
     title: "Cahier de preuve",
-    lead: "Fixez le seuil de preuve par Livrable au lancement — pour que les audits mesurent selon ce seuil défini, pas une impression.",
+    lead: "Fixez le seuil de preuve par Livrable au lancement - pour que les audits mesurent selon ce seuil défini, pas une impression.",
     unsetHeading: "Aucun seuil de preuve défini",
     unsetBody:
-      "Choisissez un modèle par type de Livrable pour pré-remplir ses Exigences de preuve. Tant qu'aucun seuil n'existe, l'audit de ce Livrable est bloqué — il n'y a rien à mesurer.",
+      "Choisissez un modèle par type de Livrable pour pré-remplir ses Exigences de preuve. Tant qu'aucun seuil n'existe, l'audit de ce Livrable est bloqué - il n'y a rien à mesurer.",
     pickTemplate: "Modèle par type de Livrable",
     applyTemplate: "Appliquer le modèle",
     templatePreviewHeading: "Aperçu du modèle",
-    provisionalBadge: "Provisoire — non confirmé",
+    provisionalBadge: "Provisoire - non confirmé",
     provisionalNote:
       "Ces valeurs par défaut ne sont pas encore confirmées au regard des règles réelles de divulgation des plateformes. Vérifiez-les et ajustez-les avant de vous y fier.",
     requirementsHeading: "Exigences de preuve",
@@ -882,7 +882,7 @@ const FR: Strings = {
       "structured-field": "un champ structuré",
       disclosure: "un contrôle de divulgation",
     },
-    deliverableBy: (creator, type) => `${creator} — ${type}`,
+    deliverableBy: (creator, type) => `${creator} - ${type}`,
     templateName: {
       "twitch-sponsor-segment": "Segment sponsorisé Twitch",
       "instagram-story": "Story Instagram",
@@ -892,7 +892,7 @@ const FR: Strings = {
     },
     disclosure: {
       checklistHeading: "Liste de divulgation France/UE",
-      framing: "assistance à la preuve — pas un conseil juridique",
+      framing: "assistance à la preuve - pas un conseil juridique",
       addLabel: "Ajouter une divulgation France/UE",
       attached: "Déjà ajoutée",
       name: {
@@ -929,19 +929,19 @@ const FR: Strings = {
     claimsHeading: "Revendications",
     appendixHeading: "Annexe de preuves",
     appendixNote:
-      "Chaque revendication ci-dessus est étayée par les preuves ci-dessous. Chaque preuve est étiquetée selon son mode de vérification — un fait vérifié par la machine (un lien qui résout, un champ présent) ou une déclaration humaine (attestée par une personne). Les chiffres d'audience sont toujours saisis par une personne.",
+      "Chaque revendication ci-dessus est étayée par les preuves ci-dessous. Chaque preuve est étiquetée selon son mode de vérification - un fait vérifié par la machine (un lien qui résout, un champ présent) ou une déclaration humaine (attestée par une personne). Les chiffres d'audience sont toujours saisis par une personne.",
     caveatLabel: "Réserve",
-    sampleBadge: "Exemple — usage client interdit",
-    receiptRef: (ref) => `Preuves en annexe — ${ref}`,
+    sampleBadge: "Exemple - usage client interdit",
+    receiptRef: (ref) => `Preuves en annexe - ${ref}`,
     livenessStamp: (label) => `ÉTAT DU LIEN : ${label.toUpperCase()}`,
     trustEu: "Hébergé dans l'UE · conforme RGPD",
     trustExport: "Export complet · sans verrouillage",
     attribution: (agency, ref) => `${agency} · Audit de preuve par ProofDesk · ${ref}`,
     emptyNoReport: "Aucun rapport n'a encore été généré pour cette campagne.",
     emptyNoClaims:
-      "Aucune revendication n'est validée pour le rapport client — chaque revendication est actuellement exclue ou signalée pour suivi interne.",
+      "Aucune revendication n'est validée pour le rapport client - chaque revendication est actuellement exclue ou signalée pour suivi interne.",
     emptyStale:
-      "Les preuves ont changé après le gel de ce rapport — régénérez-le pour présenter les verdicts actuels. Rien n'est affiché face à des preuves périmées.",
+      "Les preuves ont changé après le gel de ce rapport - régénérez-le pour présenter les verdicts actuels. Rien n'est affiché face à des preuves périmées.",
     previewLabel: "Aperçu du rapport prêt-client",
     printAction: "Imprimer / Enregistrer en PDF",
     openTab: "Ouvrir dans un nouvel onglet",
@@ -950,7 +950,7 @@ const FR: Strings = {
     generateError: "Échec de la génération du rapport. Réessayez.",
     downloadAction: "Télécharger l'archive (ZIP)",
     demoNotExportable:
-      "Campagne de démonstration — l'export est désactivé. Une démo s'affiche à l'écran uniquement ; clonez-la dans une campagne réelle pour exporter une archive client.",
+      "Campagne de démonstration - l'export est désactivé. Une démo s'affiche à l'écran uniquement ; clonez-la dans une campagne réelle pour exporter une archive client.",
   },
 };
 

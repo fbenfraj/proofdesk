@@ -251,7 +251,7 @@ function toItemView(
   const effective = readEffectiveStatus(db, item.claimId);
   if (!effective) {
     throw new Error(
-      `Report item ${item.id} references un-audited Claim ${item.claimId} — a Report is only assembled over audited Claims (AD-20).`,
+      `Report item ${item.id} references un-audited Claim ${item.claimId} - a Report is only assembled over audited Claims (AD-20).`,
     );
   }
   const header = getClaimHeader(db, item.claimId);

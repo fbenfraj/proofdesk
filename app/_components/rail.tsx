@@ -48,7 +48,7 @@ export function Rail({ locale, evidenceCount = 0 }: { locale: Locale; evidenceCo
                         : strings.railBadgeEmpty
                     }
                   >
-                    {evidenceCount > 0 ? evidenceCount : "—"}
+                    {evidenceCount > 0 ? evidenceCount : "-"}
                   </span>
                 ) : null}
               </Link>

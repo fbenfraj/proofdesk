@@ -234,7 +234,7 @@ function UnsetState({
               setSelected(e.target.value as TemplateOptionView["deliverableType"] | "")
             }
           >
-            <option value="">—</option>
+            <option value="">-</option>
             {templates.map((t) => (
               <option key={t.deliverableType} value={t.deliverableType}>
                 {p.templateName[t.deliverableType]}

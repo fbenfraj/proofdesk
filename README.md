@@ -1,14 +1,14 @@
 # ProofDesk
 
-**ProofDesk Validation Prototype** — a "claimed-vs-proven" audit tool for creator/influencer campaign deliverables. An operator loads a campaign, runs a proof audit, and sees each creator's *claimed* deliverables next to what is actually *proven*, with honest machine-vs-human provenance on every check.
+**ProofDesk Validation Prototype** - a "claimed-vs-proven" audit tool for creator/influencer campaign deliverables. An operator loads a campaign, runs a proof audit, and sees each creator's *claimed* deliverables next to what is actually *proven*, with honest machine-vs-human provenance on every check.
 
-This is an early-stage validation prototype. **Epic 1 (the Magic-Moment Audit Demo) is complete**; Epics 2–4 are backlog. See [Project status](#project-status).
+This is a validation prototype. **All four MVP epics are complete** - the audit demo, real evidence capture, the configurable proof bar, and the client-safe report/export. See [Project status](#project-status).
 
 ---
 
 ## Prerequisites
 
-- **Node ≥ 24** (pinned in `.nvmrc`). The project uses the native `better-sqlite3` module — it must be compiled against your running Node ABI.
+- **Node ≥ 24** (pinned in `.nvmrc`). The project uses the native `better-sqlite3` module - it must be compiled against your running Node ABI.
 - **npm** (ships with Node).
 
 If you use `nvm`:
@@ -31,9 +31,9 @@ nvm use                      # Node 24
 npm install                  # if node_modules is missing
 cp .env.example .env         # local operator credentials + SQLite path
 
-npm run db:migrate           # apply Drizzle migrations → ./data/proofdesk.db
+npm run db:migrate           # apply Drizzle migrations -> ./data/proofdesk.db
 npm run seed:demo            # load the "Aurora Energy" demo campaign
-# (or: npm run seed   — runs migrate + seed:demo together)
+# (or: npm run seed        runs migrate + seed:demo together)
 
 npm run dev                  # Next.js dev server on http://localhost:3000
 ```
@@ -59,8 +59,9 @@ The demo campaign seeds **9 deliverables across 6 creators** with a designed aud
 | `npm run build` | Production build (`output: 'standalone'`) + copies static assets |
 | `npm start` | Runs the standalone server (`.next/standalone/server.js`), loading `.env` / `.env.local` |
 | `npm run db:migrate` | Apply Drizzle migrations |
-| `npm run seed:demo` | Seed the demo campaign (assumes migrations applied) |
+| `npm run seed:demo` | Seed the demo campaign (idempotent - skips if already present) |
 | `npm run seed` | `db:migrate` + `seed:demo` |
+| `npm run reset:demo` | Drop the DB (file + WAL/SHM) and reseed a clean demo - re-runnable in front of a client |
 | `npm run lint` / `lint:fix` | Biome lint (`--write` to fix) |
 | `npm run format` | Biome format |
 | `npm run typecheck` | `next typegen` + `tsc --noEmit` |
@@ -68,7 +69,7 @@ The demo campaign seeds **9 deliverables across 6 creators** with a designed aud
 | `npm run test:e2e` | Playwright smoke tests |
 | `npm run ci` | Full quality gate: biome → typegen → tsc → vitest → build |
 
-> **Migrations are not part of `ci`** — CI is a pure quality gate. The long-lived host owns migrate/deploy.
+> **Migrations are not part of `ci`** - CI is a pure quality gate. The long-lived host owns migrate/deploy.
 
 ---
 
@@ -78,7 +79,7 @@ Copy `.env.example` → `.env` and adjust:
 
 | Var | Purpose | Default (non-prod) |
 |---|---|---|
-| `OPERATOR_USER` | Basic-auth user (single shared operator credential — no per-user accounts) | `operator` |
+| `OPERATOR_USER` | Basic-auth user (single shared operator credential - no per-user accounts) | `operator` |
 | `OPERATOR_PASSWORD` | Basic-auth password | `changeme` |
 | `DB_PATH` | SQLite file location (`/data` is gitignored) | `./data/proofdesk.db` |
 
@@ -107,10 +108,10 @@ tests/          heavy table-driven core tests + mandatory honesty-regression sui
 
 Key invariants (from the Architecture Spine):
 
-- **The audit core is pure** — a function of an `AuditSnapshot`; it imports nothing effectful and never re-classifies a value the shell resolved.
-- **Effective Proof Status is derived, never materialized** — `override.final_status ?? machine_verdict`, computed in one resolver every consumer reads.
-- **Capability & liability honesty are structural** — machine-verified labels never appear where the value is a human assertion; disclaimers are always present with verdicts. This is enforced by `tests/honesty-anchor.test.ts` and is never skipped.
-- **EN + FR are both first-class** — user-facing strings are externalized and localized; glossary terms stay English in code.
+- **The audit core is pure** - a function of an `AuditSnapshot`; it imports nothing effectful and never re-classifies a value the shell resolved.
+- **Effective Proof Status is derived, never materialized** - `override.final_status ?? machine_verdict`, computed in one resolver every consumer reads.
+- **Capability & liability honesty are structural** - machine-verified labels never appear where the value is a human assertion; disclaimers are always present with verdicts. This is enforced by `tests/honesty-anchor.test.ts` and is never skipped.
+- **EN + FR are both first-class** - user-facing strings are externalized and localized; glossary terms stay English in code.
 
 The stack is intentionally minimal: Next.js 16 (App Router), React 19, TypeScript strict, Drizzle over `better-sqlite3`, Zod v4, Biome, Vitest, Playwright. No serverless, no per-user auth/billing, no US-parent host in the real-client-data path.
 
@@ -119,27 +120,27 @@ The stack is intentionally minimal: Next.js 16 (App Router), React 19, TypeScrip
 ## Testing
 
 ```bash
-npm test           # Vitest — unit + integration (core is the test-heavy zone)
-npm run test:e2e   # Playwright — smoke only
+npm test           # Vitest - unit + integration (core is the test-heavy zone)
+npm run test:e2e   # Playwright - smoke only
 npm run ci         # everything the quality gate checks
 ```
 
-The core's purity makes exhaustive `test.each` table tests cheap — every decision-table path and per-requirement predicate is covered there.
+The core's purity makes exhaustive `test.each` table tests cheap - every decision-table path and per-requirement predicate is covered there.
 
 ---
 
 ## Project status
 
-Sprint state lives in `../_bmad-output/implementation-artifacts/sprint-status.yaml`.
+Sprint state lives in `../_bmad-output/implementation-artifacts/sprint-status.yaml`. **All four MVP epics are `done` (22 stories).** The engine is functionally complete and internally honest end-to-end; usability with a real agency operator is the next epic (Clarity + Consolidation), not more capability.
 
-- ✅ **Epic 1 — The Magic-Moment Audit Demo** — all 10 stories `done`: project skeleton & CI gate, design foundation/app shell, `AuditSnapshot` data model, demo seed, pure audit engine + effective-status resolver, campaign board, staged proof-audit reveal, Claim Card drawer with machine/human provenance, human-override caveat, and the cross-cutting honesty/legal disclaimer anchor.
-- ⏳ **Epic 2** — Real Evidence Capture Loop *(backlog)*
-- ⏳ **Epic 3** — Proof Brief & Requirement Templates *(backlog)*
-- ⏳ **Epic 4** — Client-Safe Report & Export *(backlog)*
+- ✅ **Epic 1 - The Magic-Moment Audit Demo** (10 stories): project skeleton & CI gate, design foundation/app shell, the `AuditSnapshot` data model, the demo seed, the pure audit engine + effective-status resolver, the campaign board, the staged proof-audit reveal, the Claim Card drawer with machine/human provenance, human override + caveat, and the cross-cutting honesty/legal disclaimer anchor.
+- ✅ **Epic 2 - Real Evidence Capture Loop** (5 stories): Evidence Inbox ingest, deterministic Evidence->Deliverable matching with operator affirmation, the "confirm the page shows the Deliverable" HumanConfirmation, SSRF-hardened link liveness (four-value taxonomy), and the mobile capture-only path feeding the same ingest pipeline.
+- ✅ **Epic 3 - Proof Brief & Requirement Templates** (3 stories): the ruleset foundation (criticality + satisfaction taxonomy + default critical sets), the Proof Brief template picker + per-Deliverable requirement authoring, and the France/EU Disclosure Checklist with three-tier severity.
+- ✅ **Epic 4 - Client-Safe Report & Export** (4 stories): report assembly against a frozen snapshot with a no-verdict-field inclusion resolver, agency branding + Proof Appendix, the self-contained print-ready HTML report, and the portable ZIP bundle + manifests with the demo export hard-wall.
 
 ---
 
 ## Notes for the next run
 
-- Always `nvm use` (Node 24) before any npm command — a wrong Node version breaks `better-sqlite3` until you `npm rebuild better-sqlite3`.
-- The SQLite file under `./data/` is gitignored; re-run `npm run seed` to recreate the demo data.
+- Always `nvm use` (Node 24) before any npm command - a wrong Node version breaks `better-sqlite3` until you `npm rebuild better-sqlite3`.
+- The SQLite file under `./data/` is gitignored; run `npm run reset:demo` to drop and recreate a clean demo (or `npm run seed` to seed only if empty).

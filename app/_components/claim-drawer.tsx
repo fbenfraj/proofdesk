@@ -377,7 +377,7 @@ function EvidenceSection({
     <section className="pd-cc__section" aria-label={d.sections.evidence}>
       <h3 className="label-caps pd-cc__section-title">{d.sections.evidence}</h3>
       {items.length === 0 ? (
-        <p className="pd-cc__note">—</p>
+        <p className="pd-cc__note">-</p>
       ) : (
         <ul className="pd-cc__evidence">
           {items.map(({ ev, satisfactionType, key }) => (

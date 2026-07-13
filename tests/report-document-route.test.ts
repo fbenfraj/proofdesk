@@ -84,6 +84,6 @@ describe("GET /api/campaigns/[campaignId]/report/document", () => {
   test("a demo campaign's document carries the SAMPLE marker (AD-9)", async () => {
     const res = await documentGET(req(), ctx(SEED_DEMO_CAMPAIGN_ID));
     const html = await res.text();
-    expect(html).toContain("Sample — not for client use");
+    expect(html).toContain("Sample - not for client use");
   });
 });

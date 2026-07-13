@@ -49,7 +49,7 @@ export async function GET(
       );
     case "stale":
       return Response.json(
-        { error: "Report is stale — regenerate it before exporting" },
+        { error: "Report is stale - regenerate it before exporting" },
         { status: 409, headers: { "Cache-Control": NO_STORE } },
       );
     case "none":

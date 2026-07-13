@@ -41,7 +41,7 @@ const ALLOWED_SCHEMES = new Set(["http:", "https:"]);
 const USER_AGENT = "ProofDesk-LinkCheck/1.0 (+liveness; content-not-verified)";
 
 /** Attached to every non-`dead` label (AD-7). Reachability ≠ content proof. */
-export const LIVENESS_TAGLINE = "link resolves — content not verified";
+export const LIVENESS_TAGLINE = "link resolves - content not verified";
 
 // --- Result shape ----------------------------------------------------------
 

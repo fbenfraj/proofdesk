@@ -122,7 +122,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
         provisionalSupporting(
           "channel-match",
           "Channel matches the creator",
-          "Twitch-only scoping stated nowhere — why here but not IG/TikTok/YouTube? Rationale-or-removal (AI-2): reconfirm only with a stated Twitch-identity basis that either generalizes to the other platforms or earns a Twitch-specific judgment source; no stated reason → drop.",
+          "Twitch-only scoping stated nowhere - why here but not IG/TikTok/YouTube? Rationale-or-removal (AI-2): reconfirm only with a stated Twitch-identity basis that either generalizes to the other platforms or earns a Twitch-specific judgment source; no stated reason → drop.",
         ),
         supporting("reach-screenshot", "Reach screenshot"),
       ],
@@ -154,7 +154,7 @@ export const DEFAULT_REQUIREMENT_SETS: Readonly<Record<DeliverableType, Delivera
         provisionalSupporting(
           "reach-screenshot",
           "Reach screenshot",
-          'Window unspecified — the earlier "within 48h" carried no sourced basis for why a window exists or why Reel-only (every other set\'s reach-screenshot is window-free). Number stripped; provisional pending a sourced basis (AI-2).',
+          'Window unspecified - the earlier "within 48h" carried no sourced basis for why a window exists or why Reel-only (every other set\'s reach-screenshot is window-free). Number stripped; provisional pending a sourced basis (AI-2).',
         ),
       ],
     },

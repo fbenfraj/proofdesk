@@ -29,7 +29,7 @@ import type { Criticality, LivenessLabel, ProofStatus } from "@/src/schema";
 
 /** Stable id so a re-run can detect the demo Campaign and skip (idempotency). */
 export const SEED_DEMO_CAMPAIGN_ID = "seed-demo-campaign-0001";
-export const SEED_DEMO_CAMPAIGN_NAME = "Aurora Energy — Q2 Creator Push";
+export const SEED_DEMO_CAMPAIGN_NAME = "Aurora Energy - Q2 Creator Push";
 export const SEED_DEMO_CLIENT_NAME = "Aurora Energy";
 /** Every Deliverable is human-marked "done" — deliberately independent of its
  *  Proof Status. 9/9 claimed is the whole premise of the magic moment. */

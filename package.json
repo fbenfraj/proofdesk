@@ -23,6 +23,7 @@
     "db:migrate": "drizzle-kit migrate",
     "seed:demo": "tsx seed/index.ts",
     "seed": "npm run db:migrate && npm run seed:demo",
+    "reset:demo": "tsx seed/reset.ts",
     "ci": "biome check && next typegen && tsc --noEmit && vitest run && npm run build",
     "review": "codex exec review --uncommitted",
     "review:base": "codex exec review --base main"

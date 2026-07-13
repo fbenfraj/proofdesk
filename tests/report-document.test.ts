@@ -428,7 +428,7 @@ describe("the demo SAMPLE marker travels with the document, not just the toolbar
     if (!view) throw new Error("view");
 
     const demo = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", true);
-    expect(demo.sampleBadge).toBe("Sample — not for client use");
+    expect(demo.sampleBadge).toBe("Sample - not for client use");
 
     const real = await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", false);
     expect(real.sampleBadge).toBeNull();
@@ -457,10 +457,10 @@ describe("the demo SAMPLE marker travels with the document, not just the toolbar
     const en = renderReportDocument(
       await buildReportDocumentModel(fakeStorage(), view, "Camp", "en", true),
     );
-    expect(en).toContain("Sample — not for client use");
+    expect(en).toContain("Sample - not for client use");
     const fr = renderReportDocument(
       await buildReportDocumentModel(fakeStorage(), view, "Camp", "fr", true),
     );
-    expect(fr).toContain("Exemple — usage client interdit");
+    expect(fr).toContain("Exemple - usage client interdit");
   });
 });

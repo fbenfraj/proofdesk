@@ -36,7 +36,7 @@ function linkReceipt(): ReportDocumentReceipt {
     provenance: MACHINE,
     value: { kind: "link", url: "https://twitch.tv/videos/2141906?t=1h12m40s" },
     livenessStamp: "LIVENESS: LIVE",
-    livenessNote: "link resolves — content not verified",
+    livenessNote: "link resolves - content not verified",
     timestamp: "2026-07-09T09:04:00.000Z",
   };
 }
