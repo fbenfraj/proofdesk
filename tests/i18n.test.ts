@@ -6,6 +6,7 @@ import {
   localeStrings,
   parseLocale,
   RAIL_SURFACES,
+  STAGE_STEPS,
 } from "@/app/_lib/i18n";
 
 describe("parseLocale (EN|FR toggle base, UX-DR26)", () => {
@@ -359,5 +360,33 @@ describe("France/EU disclosure copy is LOCKED (Story 3.3 GATE a/3)", () => {
         expect(value.length, `${locale}:disclosure`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("STAGE_STEPS (workflow-first order, AI-10)", () => {
+  test("four steps in journey order with the right routes", () => {
+    expect(STAGE_STEPS.map((s) => [s.key, s.href, s.order])).toEqual([
+      ["set-the-bar", "/proof-brief", 1],
+      ["collect-evidence", "/evidence-inbox", 2],
+      ["run-the-audit", "/", 3],
+      ["ship-the-report", "/client-safe-report", 4],
+    ]);
+  });
+
+  test("every stage has a verb label in both locales", () => {
+    for (const locale of LOCALES) {
+      const s = localeStrings(locale);
+      for (const step of STAGE_STEPS) {
+        expect(s.stage.labels[step.key].length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test("the explainer describes the same steps, in the same order (workflow described = workflow built)", () => {
+    const s = localeStrings("en");
+    expect(s.explainer.steps).toHaveLength(STAGE_STEPS.length);
+    STAGE_STEPS.forEach((step, i) => {
+      expect(s.explainer.steps[i].startsWith(s.stage.labels[step.key])).toBe(true);
+    });
   });
 });

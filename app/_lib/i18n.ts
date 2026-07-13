@@ -33,6 +33,18 @@ export const RAIL_SURFACES = [
 
 export type RailSurfaceKey = (typeof RAIL_SURFACES)[number]["key"];
 
+/** The four operator surfaces in JOURNEY order (AI-10 workflow-first nav).
+ *  `order` is the lifecycle step; `href` reuses the existing route so refresh,
+ *  browser back/forward and deep links keep working with zero redirects. */
+export const STAGE_STEPS = [
+  { key: "set-the-bar", href: "/proof-brief", order: 1 },
+  { key: "collect-evidence", href: "/evidence-inbox", order: 2 },
+  { key: "run-the-audit", href: "/", order: 3 },
+  { key: "ship-the-report", href: "/client-safe-report", order: 4 },
+] as const;
+
+export type StageKey = (typeof STAGE_STEPS)[number]["key"];
+
 export interface Strings {
   readonly langName: string;
   readonly wordmark: { readonly a: string; readonly b: string };
@@ -41,6 +53,24 @@ export interface Strings {
   readonly operatorLabel: string;
   readonly railCap: string;
   readonly rail: Record<RailSurfaceKey, string>;
+  /** Workflow-first stage strip (AI-10). Verb-first journey labels, the "Next:"
+   *  handoff prefix, and the honest per-stage progress signals. Signals are
+   *  workflow progress ONLY - never a proof verdict (no green/yellow/red). */
+  readonly stage: {
+    readonly labels: Record<StageKey, string>;
+    readonly nextPrefix: string;
+    readonly state: {
+      readonly setBarNone: string;
+      readonly setBarSome: (set: number, total: number) => string;
+      readonly collectEmpty: string;
+      readonly collectCount: (n: number) => string;
+      readonly auditNone: string;
+      readonly auditCount: (n: number) => string;
+      readonly shipNone: string;
+      readonly shipReady: string;
+      readonly shipStale: string;
+    };
+  };
   readonly cockpitLead: string;
   readonly surfaceComingSoon: string;
   readonly railBadgeEmpty: string;
@@ -311,6 +341,9 @@ export interface Strings {
      *  come from PROOF_STATUS_TOKENS; the legal disclaimer + provenance + liveness
      *  are reused from the locked cross-cutting strings, never re-authored here. */
     readonly kicker: string;
+    /** The Ship-stage subhead (AI-10) - the "what is this" line for the report
+     *  surface, mirroring board.lead / inbox.lead / proofBrief.lead. */
+    readonly lead: string;
     readonly refLabel: string;
     readonly issuedLabel: string;
     readonly summaryCaption: string;
@@ -391,6 +424,26 @@ const EN: Strings = {
     "proof-brief": "Proof Brief",
     "evidence-inbox": "Evidence Inbox",
     "client-safe-report": "Client-Safe Report",
+  },
+  stage: {
+    labels: {
+      "set-the-bar": "Set the bar",
+      "collect-evidence": "Collect evidence",
+      "run-the-audit": "Run the audit",
+      "ship-the-report": "Ship the report",
+    },
+    nextPrefix: "Next: ",
+    state: {
+      setBarNone: "not started",
+      setBarSome: (set, total) => `${set} of ${total} set`,
+      collectEmpty: "empty",
+      collectCount: (n) => `${n} in inbox`,
+      auditNone: "not run",
+      auditCount: (n) => `${n} audited`,
+      shipNone: "not yet",
+      shipReady: "ready",
+      shipStale: "needs re-assembly",
+    },
   },
   cockpitLead: "The claimed-vs-proven ledger arrives in a later story.",
   surfaceComingSoon:
@@ -635,6 +688,7 @@ const EN: Strings = {
   report: {
     byline: (agency) => `Prepared by ${agency} · Proof audit by ProofDesk`,
     kicker: "Proof of Performance",
+    lead: "The deliverable you hand the client: only what the evidence defends, caveats attached.",
     refLabel: "Report ref",
     issuedLabel: "Issued",
     summaryCaption: "Summary",
@@ -694,6 +748,26 @@ const FR: Strings = {
     "proof-brief": "Cahier des preuves",
     "evidence-inbox": "Boîte à preuves",
     "client-safe-report": "Rapport prêt-client",
+  },
+  stage: {
+    labels: {
+      "set-the-bar": "Définir le seuil",
+      "collect-evidence": "Rassembler les preuves",
+      "run-the-audit": "Lancer l’audit",
+      "ship-the-report": "Livrer le rapport",
+    },
+    nextPrefix: "Suivant : ",
+    state: {
+      setBarNone: "à définir",
+      setBarSome: (set, total) => `${set} sur ${total} définis`,
+      collectEmpty: "vide",
+      collectCount: (n) => `${n} en boîte`,
+      auditNone: "non lancé",
+      auditCount: (n) => `${n} audités`,
+      shipNone: "pas encore",
+      shipReady: "prêt",
+      shipStale: "à régénérer",
+    },
   },
   cockpitLead: "Le registre revendiqué-vs-prouvé arrivera dans une prochaine étape.",
   surfaceComingSoon:
@@ -948,6 +1022,7 @@ const FR: Strings = {
   report: {
     byline: (agency) => `Préparé par ${agency} · Audit de preuve par ProofDesk`,
     kicker: "Preuve de performance",
+    lead: "Le livrable remis au client : seulement ce que les preuves défendent, réserves comprises.",
     refLabel: "Réf. du rapport",
     issuedLabel: "Émis le",
     summaryCaption: "Synthèse",
